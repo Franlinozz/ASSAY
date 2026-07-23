@@ -1,0 +1,174 @@
+import type { Claim, EvidenceItem, Profile } from '@xyndicate/assay-core'
+import { ProfileSchema, computeStrength, newClaimId, newEvidenceId } from '@xyndicate/assay-core'
+import type { ModelRouter } from './router'
+import { EXTRACTION_SYSTEM, buildExtractionPrompt } from './prompts'
+import { sanitizeGap, logRaw, type Gap } from './gaps'
+import { significantTokens } from './text'
+
+export interface IngestedDoc {
+  label: string
+  contentText: string
+  sourceRef?: string
+}
+
+export interface ExtractInput {
+  documents: IngestedDoc[]
+  answers?: string
+  router: ModelRouter
+  dossierId?: string
+}
+
+export interface ExtractResult {
+  profile: Profile
+  claims: Claim[]
+  evidence: EvidenceItem[]
+  gaps: Gap[]
+}
+
+interface RawExtraction {
+  profile?: {
+    fullName?: string
+    headline?: string
+    contact?: { email?: string; phone?: string; links?: string[] }
+    timezone?: string
+    skills?: string[]
+  }
+  experiences?: Array<{
+    org: string
+    title: string
+    startYm: string
+    endYm: string | null
+    location?: string
+  }>
+  claims?: Array<{
+    text: string
+    numericFacts?: Array<{ value: number; unit?: string; context: string }>
+    tags?: string[]
+  }>
+}
+
+const GROUNDED_THRESHOLD = 0.5
+
+function emptyProfile(tz: string): Profile {
+  return ProfileSchema.parse({ fullName: '', timezone: tz })
+}
+
+export async function extractProfile(input: ExtractInput): Promise<ExtractResult> {
+  const gaps: Gap[] = []
+  const evidence: EvidenceItem[] = []
+
+  // One evidence item per document (kind 'document'), plus an attestation for typed answers.
+  for (const doc of input.documents) {
+    evidence.push({
+      id: newEvidenceId(),
+      kind: 'document',
+      label: doc.label,
+      sourceRef: doc.sourceRef ?? doc.label,
+      contentText: doc.contentText,
+      addedAt: new Date().toISOString(),
+    })
+  }
+  if (input.answers && input.answers.trim()) {
+    evidence.push({
+      id: newEvidenceId(),
+      kind: 'attestation',
+      label: 'Typed answers',
+      sourceRef: 'user-answers',
+      contentText: input.answers,
+      addedAt: new Date().toISOString(),
+    })
+  }
+
+  const tz = 'UTC'
+  const prompt = buildExtractionPrompt({
+    documents: input.documents.map((d) => ({ label: d.label, text: d.contentText })),
+    ...(input.answers ? { answers: input.answers } : {}),
+  })
+
+  const res = await input.router.generate(
+    { role: 'extractor', system: EXTRACTION_SYSTEM, prompt, json: true },
+    input.dossierId ? { dossierId: input.dossierId } : {},
+  )
+  if (res.degraded) {
+    gaps.push(sanitizeGap(res.gap ?? 'PROVIDER_ERROR'))
+    return { profile: emptyProfile(tz), claims: [], evidence, gaps }
+  }
+
+  const raw = res.json as RawExtraction
+  let profile: Profile
+  try {
+    profile = ProfileSchema.parse({
+      fullName: raw.profile?.fullName ?? '',
+      ...(raw.profile?.headline ? { headline: raw.profile.headline } : {}),
+      ...(raw.profile?.contact ? { contact: raw.profile.contact } : {}),
+      timezone: raw.profile?.timezone ?? tz,
+      experiences: raw.experiences ?? [],
+      skills: raw.profile?.skills ?? [],
+    })
+  } catch (e) {
+    logRaw('PROVIDER_BADJSON', e)
+    gaps.push(sanitizeGap('PROVIDER_BADJSON'))
+    return { profile: emptyProfile(tz), claims: [], evidence, gaps }
+  }
+
+  // Source token set for the groundedness post-check.
+  const sourceTokens = new Set<string>()
+  for (const e of evidence) for (const t of significantTokens(e.contentText ?? '')) sourceTokens.add(t)
+  const sourceTextLower = evidence.map((e) => (e.contentText ?? '').toLowerCase()).join('\n')
+
+  const claims: Claim[] = []
+  const seen = new Set<string>()
+
+  for (const rc of raw.claims ?? []) {
+    const norm = rc.text.trim().toLowerCase().replace(/\s+/g, ' ')
+    if (seen.has(norm)) continue // dedupe
+    seen.add(norm)
+
+    const claimTokens = [...new Set(significantTokens(rc.text))]
+    if (claimTokens.length === 0) continue
+    const matched = claimTokens.filter((t) => sourceTokens.has(t)).length / claimTokens.length
+
+    // Deterministic post-check: drop any claim whose text does not appear in the source evidence.
+    if (matched < GROUNDED_THRESHOLD) {
+      logRaw('EXTRACT_UNGROUNDED', `dropped ungrounded claim: ${rc.text}`)
+      gaps.push(sanitizeGap('EXTRACT_UNGROUNDED'))
+      continue
+    }
+
+    // Link to the evidence item with the strongest token overlap.
+    const linked = bestEvidence(evidence, claimTokens)
+    const evidenceIds = linked ? [linked.id] : []
+
+    // A quantified claim whose number is absent from the source needs the user's confirmation.
+    const numbers = rc.numericFacts ?? []
+    const numberMissing = numbers.some((f) => !sourceTextLower.includes(String(f.value)))
+    const status = numberMissing ? 'needs_confirmation' : 'extracted'
+
+    const base: Claim = {
+      id: newClaimId(),
+      text: rc.text,
+      evidenceIds,
+      strength: 'attested',
+      status,
+      numericFacts: numbers,
+      tags: rc.tags ?? [],
+    }
+    claims.push({ ...base, strength: computeStrength(base, evidence) })
+  }
+
+  return { profile, claims, evidence, gaps }
+}
+
+function bestEvidence(evidence: EvidenceItem[], claimTokens: string[]): EvidenceItem | undefined {
+  let best: EvidenceItem | undefined
+  let bestScore = 0
+  for (const e of evidence) {
+    const tokens = new Set(significantTokens(e.contentText ?? ''))
+    const score = claimTokens.filter((t) => tokens.has(t)).length
+    if (score > bestScore) {
+      bestScore = score
+      best = e
+    }
+  }
+  return best
+}

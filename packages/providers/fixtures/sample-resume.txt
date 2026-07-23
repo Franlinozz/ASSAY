@@ -1,0 +1,12 @@
+Chidinma Eze
+Senior Backend Engineer - Lagos, Nigeria
+chidinma.eze@example.com
+
+EXPERIENCE
+Paystack - Senior Backend Engineer (Mar 2021 - Present)
+Reduced API p95 latency by 38% using PostgreSQL connection pooling.
+Andela - Backend Engineer (Jun 2018 - Feb 2021)
+Mentored 5 junior engineers and led the migration to TypeScript.
+
+SKILLS
+TypeScript, Node.js, PostgreSQL, Redis, Kubernetes

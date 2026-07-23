@@ -14,6 +14,17 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "smoke:cheap": "tsx scripts/smoke-cheap.mjs",
     "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@xyndicate/assay-core": "*",
+    "mammoth": "^1.8.0",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "devDependencies": {
+    "docx": "^9.0.0",
+    "pdf-lib": "^1.17.1",
+    "tsx": "^4.19.0"
   }
 }

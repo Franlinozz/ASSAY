@@ -11,6 +11,14 @@
 | PolicyGate — `policyGate` (impersonation / discrimination / deception / fabricated-credential) | `@xyndicate/assay-core` | pre-payment gate (P6) | — (engine) | `packages/assay-core/src/policy.test.ts` |
 | Facts block — `buildFactsBlock` (writer-prompt injection, gotcha #14) | `@xyndicate/assay-core` | internal (`facts.ts`) | Forge (P3) | `packages/assay-core/src/facts.test.ts` |
 | Timezone-correct dates — `ymInTz` / `tenureMonths` / `isFutureYm` | `@xyndicate/assay-core` | internal (`time.ts`) | all timestamps | `packages/assay-core/src/time.test.ts` |
+| Model router — fake-first, JSON-repair, timeout→fallback→degrade, cost governor | `@xyndicate/providers` | internal `createRouter` | — (engine) | `packages/providers/src/router.test.ts` |
+| Document ingestion — pdf (pdfjs) / docx (mammoth) / txt / md, size+type limits, control-char strip | `@xyndicate/providers` | internal `ingestDocument` | Ledger upload (P3) | `packages/providers/src/ingest.test.ts` |
+| SSRF-guarded link fetcher — private-range / scheme / DNS-rebinding blocks, 1h cache | `@xyndicate/providers` | internal `createFetcher` | Tribunal LINK_LIVENESS (P3) | `packages/providers/src/fetcher.test.ts` |
+| Evidence extraction + groundedness post-check — drops ungrounded claims, marks needs_confirmation | `@xyndicate/providers` | internal `extractProfile` | Ledger (P3) | `packages/providers/src/extract.test.ts` |
+| JD decomposition — must/nice + normalized keywords | `@xyndicate/providers` | internal `decomposeJd` | Brief (P3) | `packages/providers/src/decompose.test.ts` |
+| Deterministic coverage mapper — strong / partial / missing / confirm (no LLM) | `@xyndicate/providers` | internal `computeCoverage` | Brief coverage map (P3) | `packages/providers/src/coverage.test.ts` |
+| Prompt injection framing — uploaded docs wrapped as DATA (guardrail #8) | `@xyndicate/providers` | internal `wrapDocuments` | — (engine) | `packages/providers/src/prompts.test.ts` |
+| Gap sanitizer — stable codes, raw errors to logs only (guardrail #9) | `@xyndicate/providers` | internal `sanitizeGap` | all public surfaces | `packages/providers/src/gaps.test.ts` |
 
 <!--
 Row template:
