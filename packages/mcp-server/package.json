@@ -11,9 +11,33 @@
       "default": "./dist/index.js"
     }
   },
+  "bin": {
+    "assay-mcp": "./dist/main.js"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node scripts/bundle.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "start": "node dist/main.js",
     "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@okxweb3/x402-core": "^0.1.0",
+    "@okxweb3/x402-evm": "^0.2.1",
+    "@okxweb3/x402-express": "^0.1.1",
+    "@xyndicate/assay-core": "*",
+    "@xyndicate/contracts": "*",
+    "@xyndicate/providers": "*",
+    "@xyndicate/receipts": "*",
+    "@xyndicate/renderers": "*",
+    "@xyndicate/tribunal": "*",
+    "better-sqlite3": "^13.0.1",
+    "express": "^5.2.1",
+    "viem": "^2.21.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/express": "^5.0.0"
   }
 }

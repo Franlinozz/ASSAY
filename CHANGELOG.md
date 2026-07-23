@@ -4,21 +4,48 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
-## [0.6.0] — 2026-07-23
+## [0.7.0] — 2026-07-24
+
 ### Added
+
+- `@xyndicate/mcp-server`: **the sellable ASP** — a stateless MCP server exposing all **10 Assay tools** over `POST /mcp` (streamable-HTTP, JSON responses), a fresh `McpServer` + transport per request (gotcha #1).
+  - **10 tools, prices exact per the AGENTS.md table**: `asy_ats_scan` (0.05, the traction wedge: ingest → parse-back on PDFs → format-law findings → honest JD keyword coverage), `asy_claim_audit` (0.05), `asy_fit_brief` (0.10), `asy_cover_letter` (0.15), `asy_story_bank` (0.20), `asy_tailor_resume` (0.30, evidence-constrained writers that refuse to fabricate — guardrail #1), `asy_create_dossier_job` (2.00, full extract→grade→seal as an async job), `asy_job_status`/`asy_job_result` (free), `asy_verify` (**FREE FOREVER**).
+  - **x402 PaymentGate**: `DevGate` implements the documented OKX seller-SDK shape offline (402 + base64 `PAYMENT-REQUIRED` advertising `eip155:196`/USDT → `PAYMENT-SIG` replay → 200 + `PAYMENT-RESPONSE`); `OkxGate` wires the real `@okxweb3/x402-*` SDK + Facilitator (live-verified in P7). Free tools ungated, **PolicyGate before payment**, **idempotent replay** (a duplicate never re-charges or re-runs).
+  - **better-sqlite3 store** (sync repo, gotcha #4): dossiers, evidence files (binaries with 24h HMAC signed-URL tokens at `GET /f/:id?tok=`), orders, jobs, seals_pending, shares, append-only per-dossier event log.
+  - **Async job worker** (in-process dossier pipeline) + **anchor worker** (drains `seals_pending` → `RegistryClient.sealBatch`, retries with attempt tracking, surfaces queue age as a `/health` alert, never crashes the server).
+  - **HTTP surface** (express 5): `/health` (<100ms, zero model calls), `/.well-known/assay.json` manifest, `/d-api/:id` PII-sanitized dossier JSON, `/p/:slug` portfolio, `/f/:id` signed files; per-IP 60/min token bucket; 400/402/405/413/415 mapping; sanitized gap codes only (guardrail #9).
+- **Runnable dist**: mcp-server bundles from source with esbuild into one self-contained `dist/main.js` (externalizing npm deps) — resolves the cross-package `paths→src` nesting that left sibling `dist/index.js` pointers dangling (the "bundling strategy finalized at P6" deferred in the P2 deviation).
+- 33 new mcp-server vitest tests (10-tool listing via the SDK `Client`+`InMemoryTransport`; sabotage-fixture FORMAT_LAW findings; honest `missing` coverage; dossier job queued→done with tribunal summary; seal round-trip; live-server matrix: 402 challenge shape, dev-gate 200, free-tool bypass, idempotent replay, rate limit, signed-URL rejection, health SLA, 405/415/400). **Repo total: 183 vitest + 4 foundry.**
+
+### Verified
+
+- **Live dev-mode smoke** (`node dist/main.js`): manifest + `tools/list` (10) + unpaid `asy_ats_scan` → 402 (decoded challenge = documented shape) → `PAYMENT-SIG` replay → 200 + `PAYMENT-RESPONSE` (7 real format findings) → idempotent replay returned the original result unchanged.
+
+### Doc shapes (gotcha #8, re-confirmed 2026-07-24)
+
+- OKX x402 packages resolve and are implemented-to: `@okxweb3/x402-express@0.1.1`, `@okxweb3/x402-core@0.1.0`, `@okxweb3/x402-evm@0.2.1`. Core exposes `x402HTTPResourceServer` (DynamicPrice per request, `onProtectedRequest` grant/abort hook, `processHTTPRequest`/`processSettlement`) + `OKXFacilitatorClient` + `registerExactEvmScheme` — the OkxGate is wired to these.
+
+## [0.6.0] — 2026-07-23
+
+### Added
+
 - `@xyndicate/receipts`: **EIP-712 dossier seal** (`signSeal` / `recoverSealer` / `verifySeal`, domain-bound to chainId + registry) and **salted commitments** (`commitmentLeaf` = keccak256(manifestHash ‖ salt); `buildVerifyBundle` → a public, salt-free bundle, honestly `unsigned` when no sealer key is set).
 - `@xyndicate/contracts`: **`AssayRegistry.sol`** (Solidity ^0.8.24, no imports) — immutable sealer, `mapping(bytes32 => uint256) anchoredAt`, idempotent `sealBatch` (onlySealer, `Sealed` event); **zero personal data by construction**. Built + tested with foundry (4 Solidity tests: onlySealer revert, idempotent re-seal, seal+read, batch-of-50 gas-sane).
 - `RegistryClient` (viem: `sealBatch` / `anchoredAt` / `sealer`) + `scripts/deploy.ts` for X Layer testnet (1952) / mainnet (196).
 - 13 offline TS tests (EIP-712 round-trip + tamper/domain rejection; commitment determinism; salt-absence assertions; RegistryClient against a local anvil node). Repo total: 153 vitest + 4 foundry.
 
 ### On-chain
+
 - **Testnet rehearsal complete**: `AssayRegistry` deployed to X Layer testnet (chainId **1952**) at `0x355c324eed9347ec90d098d6dcde1438e6c89a7f`; 3 fixture leaves anchored and read back on-chain.
 
 ### Fixed
+
 - Recorded that X Layer testnet chainId is **1952**, not 195 as some docs (and the plan) state.
 
 ## [0.5.0] — 2026-07-23
+
 ### Added
+
 - `@xyndicate/renderers`: the **Forge** — evidence-gated generation, Assay Office templates, PDF/DOCX, and the live ATS parse-back engine.
 - **Evidence-gated writer** (`writeArtifact`): the claim gate runs BEFORE any render; one auto-tightening reprompt; whatever still fails becomes a user question, never prose (guardrail #1).
 - **Templates**: strict ATS resume, designed resume, cover letter, STAR story bank (evidence-tier chips), fit map, gap brief, and a standalone portfolio page — in both light/dark themes, inlined CSS (no external assets).
@@ -30,11 +57,14 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - 17 renderer tests incl. a real chromium render→PDF→parse-back round-trip (repo total: 140).
 
 ### Fixed
+
 - `extractNumbers` no longer reads digits glued to letters (p95, h2, v4) as claimed quantities.
 - `FORMAT_LAW` scans only `<h2>`/`<h3>` section headings (the `<h1>` name is the résumé title).
 
 ## [0.4.0] — 2026-07-23
+
 ### Added
+
 - `@xyndicate/tribunal`: the **Assay Standard v1.0.0** — deterministic hard checks + Claude critic craft axes + a bounded repair loop + a rubric that publishes itself.
 - **12 hard checks**: `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `FORMAT_LAW`, `DOCX_INTEGRITY`, `ATS_PARSE_BACK` (registered, returns `pending` until P4 wires the engine), `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` (report-only, never fails).
 - **Craft critic** (`gradeCraft`, Claude): 6 weighted axes (voice, specificity, quantification, positioning, tailoring, evidence honesty). On degrade it does not fabricate a passing grade.
@@ -44,7 +74,9 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - 36 offline tribunal tests (repo total: 123).
 
 ## [0.3.0] — 2026-07-23
+
 ### Added
+
 - `@xyndicate/providers`: every touchpoint with the outside world, always degradable, fake-first.
 - **Model router** (`createRouter`): role→provider preference (extractor/decomposer/utility→DeepSeek, writer/critic→Claude, OpenAI fallback), strict-JSON with one repair retry, per-role timeout→fallback→graceful degrade, and a per-dossier token/cost **governor**.
 - **Fakes are the default** (`ASY_PROVIDER_MODE=fake`): deterministic offline adapters + `FakeFetcher`, zero spend.
@@ -57,11 +89,14 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - 30 offline provider tests incl. the full SSRF matrix (repo total: 88).
 
 ### Changed
+
 - Live LLM adapters call provider REST endpoints via `fetch` (no SDK dependency → no version drift).
 - Internal packages resolve to TS source in tests/typecheck (Vitest alias + tsconfig paths).
 
 ## [0.2.0] — 2026-07-23
+
 ### Added
+
 - `@xyndicate/assay-core`: the pure domain heart (zero network, zero LLM) — zod schemas + inferred types for Evidence, Claim, Experience, Profile, Brief, Requirement, Coverage, Sentence, Artifact, Dossier (plus provisional Seal / TribunalReport).
 - **Claim gate** (`assertRenderable` / `toQuestions`): flags `UNSUPPORTED_SENTENCE`, `UNCONFIRMED_CLAIM`, `DANGLING_EVIDENCE`, and `NUMBER_NOT_IN_EVIDENCE` — numbers in prose must appear in a cited claim's `numericFacts` — and turns violations into user-facing questions.
 - **Evidence-strength tiers** (`computeStrength` / `tierExplanation`): attested / documented / linked / sealed, with dead-link demotion (a link earns "linked" only when `fetchedOk === true`).
@@ -71,7 +106,9 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - 51 offline unit tests for `assay-core` (repo total: 59).
 
 ## [0.1.0] — 2026-07-23
+
 ### Added
+
 - Monorepo scaffold: npm workspaces, Node 22, TypeScript strict everywhere (incl. `exactOptionalPropertyTypes`).
 - Workspaces: `packages/assay-core`, `packages/providers`, `packages/tribunal`, `packages/renderers`, `packages/receipts`, `packages/contracts`, `packages/mcp-server`, `apps/web` (Next.js 15 app router), `apps/docs` (Fumadocs, placeholder).
 - Build constitution `AGENTS.md` (hard guardrails, price table, design tokens, gotchas, deviations log).

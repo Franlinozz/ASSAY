@@ -17,7 +17,9 @@ import {
   statusFromFindings,
 } from './types'
 
-const APPROVED_HEADINGS = new Set(['SUMMARY', 'EXPERIENCE', 'EDUCATION', 'SKILLS', 'CERTIFICATIONS'])
+// The only section headings the ATS format law permits. Exported so the mcp-server's asy_ats_scan
+// analyses uploaded résumés against the exact same list the tribunal grades against (single source).
+export const APPROVED_HEADINGS = new Set(['SUMMARY', 'EXPERIENCE', 'EDUCATION', 'SKILLS', 'CERTIFICATIONS'])
 const URL_RE = /(https?:\/\/[^\s"'<>)\]]+)/g
 
 function result(findings: CheckFinding[], evidence?: string): CheckResult {
