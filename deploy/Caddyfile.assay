@@ -14,9 +14,8 @@ assayed.xyz, www.assayed.xyz {
 
 api.assayed.xyz {
 	# Assay MCP runs on 8422 (8402 was already taken on this box).
+	# Body-size limit is enforced by the app itself (express.json 2MB → clean 413);
+	# a Caddy-level request_body max_size aborts the upstream and surfaces 502, so we don't set it.
 	reverse_proxy 127.0.0.1:8422
 	encode gzip
-	request_body {
-		max_size 2MB
-	}
 }
