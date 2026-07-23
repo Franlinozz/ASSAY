@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Assay — Proof before polish.</title>
+    <meta name="description" content="Assay — an evidence-backed career studio. Every claim traces to proof; every document is graded against a published Standard and sealed on-chain." />
+    <style>
+      :root {
+        --paper: #fbf9f3;
+        --panel: #f4f0e6;
+        --ink: #1b1f2a;
+        --viridian: #205c4c;
+        --vermilion: #c63d21;
+        --hairline: #e6e0d2;
+        --graphite: #7e7a6e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #131519;
+          --panel: #1c1f26;
+          --ink: #ede8dc;
+          --viridian: #2e7a66;
+          --vermilion: #d8532f;
+          --hairline: #2a2e37;
+          --graphite: #9a958a;
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+        -webkit-font-smoothing: antialiased;
+        display: grid;
+        place-items: center;
+        min-height: 100%;
+        padding: 6vmin;
+      }
+      .frame {
+        width: min(760px, 100%);
+        border: 1px solid var(--hairline);
+        padding: clamp(28px, 6vw, 64px);
+        position: relative;
+        background:
+          linear-gradient(var(--paper), var(--paper)) padding-box,
+          repeating-linear-gradient(45deg, var(--hairline) 0 1px, transparent 1px 7px) border-box;
+        border: 2px solid transparent;
+      }
+      /* corner registration marks */
+      .reg { position: absolute; width: 14px; height: 14px; border: 1px solid var(--graphite); opacity: 0.5; }
+      .reg.tl { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
+      .reg.tr { top: 10px; right: 10px; border-left: 0; border-bottom: 0; }
+      .reg.bl { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
+      .reg.br { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+      .kicker {
+        font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: var(--graphite);
+        margin: 0 0 22px;
+      }
+      .mark { display: block; margin: 0 auto 26px; width: 56px; height: 56px; }
+      h1 {
+        font-size: clamp(38px, 8vw, 68px);
+        line-height: 1.02;
+        letter-spacing: -0.02em;
+        margin: 0 0 14px;
+        font-weight: 560;
+      }
+      .rule { height: 1px; background: var(--hairline); margin: 26px 0; }
+      .lede { font-size: clamp(17px, 2.4vw, 20px); line-height: 1.5; color: var(--ink); margin: 0 0 8px; max-width: 54ch; }
+      .sub { color: var(--graphite); font-size: 15px; line-height: 1.6; margin: 14px 0 0; max-width: 56ch; }
+      .meta {
+        margin-top: 30px;
+        font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 12px;
+        color: var(--graphite);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 22px;
+      }
+      .meta b { color: var(--viridian); font-weight: 600; }
+      a { color: var(--viridian); text-decoration: none; border-bottom: 1px solid var(--hairline); }
+      .stamp { color: var(--vermilion); }
+    </style>
+  </head>
+  <body>
+    <main class="frame" role="main">
+      <span class="reg tl"></span><span class="reg tr"></span><span class="reg bl"></span><span class="reg br"></span>
+
+      <!-- the single vermilion assay mark: an assayer's touchstone / hallmark punch -->
+      <svg class="mark" viewBox="0 0 56 56" fill="none" aria-hidden="true">
+        <circle cx="28" cy="28" r="26" stroke="var(--hairline)" stroke-width="1" />
+        <circle cx="28" cy="28" r="19" stroke="var(--viridian)" stroke-width="1.25" />
+        <path d="M28 12 L38 32 L18 32 Z" fill="none" stroke="var(--vermilion)" stroke-width="2" stroke-linejoin="round" />
+        <circle cx="28" cy="37.5" r="2.4" fill="var(--vermilion)" />
+      </svg>
+
+      <p class="kicker">Xyndicate · Assay Office</p>
+      <h1>Proof before polish.</h1>
+      <p class="lede">Assay is an evidence-backed career studio. It turns scattered work history into a Career Dossier where every claim traces to proof.</p>
+      <div class="rule"></div>
+      <p class="sub">Every document is graded against a <b>published Standard</b>, the ATS résumé is machine-verified by actually re-parsing it, and the finished dossier is <span class="stamp">sealed with EIP-712 provenance on X Layer</span>. Built for job seekers — and for other agents, over A2MCP.</p>
+      <div class="meta">
+        <span>STATUS&nbsp; <b>opening</b></span>
+        <span>API&nbsp; <b>api.assayed.xyz/mcp</b></span>
+        <span>STANDARD&nbsp; <b>AS-1.0.0</b></span>
+        <span>CHAIN&nbsp; <b>X Layer · eip155:196</b></span>
+      </div>
+    </main>
+  </body>
+</html>

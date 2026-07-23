@@ -1,0 +1,22 @@
+# Assay site blocks — append/import into the box's main /etc/caddy/Caddyfile.
+# Caddy issues + renews TLS automatically once assayed.xyz / api.assayed.xyz A records point here.
+# This box already fronts other Xyndicate ASPs; these blocks are strictly additive.
+
+assayed.xyz, www.assayed.xyz {
+	root * /opt/assay/deploy/holding
+	file_server
+	encode gzip
+	header {
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Content-Type-Options nosniff
+	}
+}
+
+api.assayed.xyz {
+	# Assay MCP runs on 8422 (8402 was already taken on this box).
+	reverse_proxy 127.0.0.1:8422
+	encode gzip
+	request_body {
+		max_size 2MB
+	}
+}

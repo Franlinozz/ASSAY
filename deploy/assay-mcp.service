@@ -1,0 +1,25 @@
+[Unit]
+Description=Assay MCP server (the ASP) — proof before polish
+Documentation=https://github.com/Franlinozz/ASSAY
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/assay
+# Secrets live here only, chmod 600 — never in the repo (guardrail #4).
+EnvironmentFile=/etc/assay/env
+# __NODE__ is replaced with the absolute node path at install time.
+ExecStart=__NODE__ /opt/assay/packages/mcp-server/dist/main.js
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=assay-mcp
+# hardening
+NoNewPrivileges=true
+ProtectHome=false
+ReadWritePaths=/var/lib/assay
+
+[Install]
+WantedBy=multi-user.target
