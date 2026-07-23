@@ -1,0 +1,122 @@
+/* The Assay Office — holding page. Design tokens per AGENTS.md.
+   Fonts are self-hosted later; P0 uses self-contained system stacks (no network fetch). */
+
+:root {
+  --paper: #fbf9f3;
+  --panel: #f4f0e6;
+  --ink: #1b1f2a;
+  --viridian: #205c4c;
+  --vermilion: #c63d21; /* reserved for seal/stamp states only */
+  --hairline: #e6e0d2;
+  --graphite: #7e7a6e;
+
+  --serif: Fraunces, 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --ui: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131519;
+    --panel: #1c1f26;
+    --ink: #ede8dc;
+    --viridian: #2e7a66;
+    --vermilion: #d8532f;
+    --hairline: #2a2e37;
+    --graphite: #9a978c;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--ui);
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.office {
+  width: min(680px, calc(100vw - 3rem));
+  margin: 4rem 0;
+  padding: clamp(1.75rem, 5vw, 3rem);
+  background-color: var(--panel);
+  border: 1px solid var(--hairline);
+  /* hairline registration frame — a doubled rule, the security-print signature */
+  box-shadow: 0 0 0 1px var(--paper) inset, 0 0 0 2px var(--hairline) inset;
+}
+
+.regmark {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--graphite);
+  display: flex;
+  justify-content: space-between;
+}
+
+.wordmark {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(2.75rem, 12vw, 4.5rem);
+  letter-spacing: 0.14em;
+  margin: 1.25rem 0 0.25rem;
+  line-height: 1;
+}
+
+.tagline {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(1.1rem, 4vw, 1.4rem);
+  color: var(--viridian);
+  margin: 0 0 1.5rem;
+}
+
+.rule {
+  height: 1px;
+  background: var(--hairline);
+  margin: 1.5rem 0;
+}
+
+.pitch {
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0 0 1.5rem;
+}
+
+.meta {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--graphite);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+}
+
+.meta a {
+  color: var(--viridian);
+  text-decoration: none;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.status {
+  margin-top: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--graphite);
+}

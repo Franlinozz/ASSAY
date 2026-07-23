@@ -1,0 +1,50 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# builds
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# next.js (next-env.d.ts is committed so a fresh `npm run typecheck` is green)
+apps/**/.next/
+
+# testing
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# env — never commit secrets
+.env
+.env.*
+!.env.example
+
+# data stores / uploads (runtime)
+*.sqlite
+*.sqlite3
+*.db
+/data/
+/uploads/
+/artifacts/
+
+# logs
+*.log
+npm-debug.log*
+logs/
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# caches
+.turbo/
+.cache/
+.vitest/
