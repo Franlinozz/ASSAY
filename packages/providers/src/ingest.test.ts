@@ -42,14 +42,14 @@ describe('ingestDocument', () => {
     expect(r.meta.kind).toBe('pdf')
     expect(r.contentText).toContain('Chidinma')
     expect(r.contentText).toContain('38')
-  })
+  }, 30000) // pdfjs under full-suite CPU contention can exceed the default 5s
 
   it('ingests a fixture DOCX via mammoth', async () => {
     const r = await ingestDocument('sample.docx', fx('sample.docx'))
     expect(r.ok).toBe(true)
     expect(r.meta.kind).toBe('docx')
     expect(r.contentText).toContain('Chidinma')
-  })
+  }, 30000)
 
   it('dispatches to an injected pdf parser (DI)', async () => {
     const r = await ingestDocument('x.pdf', new Uint8Array([1]), { parsePdf: async () => 'injected pdf text' })

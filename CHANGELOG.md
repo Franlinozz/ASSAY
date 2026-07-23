@@ -4,6 +4,19 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-07-23
+### Added
+- `@xyndicate/receipts`: **EIP-712 dossier seal** (`signSeal` / `recoverSealer` / `verifySeal`, domain-bound to chainId + registry) and **salted commitments** (`commitmentLeaf` = keccak256(manifestHash ‖ salt); `buildVerifyBundle` → a public, salt-free bundle, honestly `unsigned` when no sealer key is set).
+- `@xyndicate/contracts`: **`AssayRegistry.sol`** (Solidity ^0.8.24, no imports) — immutable sealer, `mapping(bytes32 => uint256) anchoredAt`, idempotent `sealBatch` (onlySealer, `Sealed` event); **zero personal data by construction**. Built + tested with foundry (4 Solidity tests: onlySealer revert, idempotent re-seal, seal+read, batch-of-50 gas-sane).
+- `RegistryClient` (viem: `sealBatch` / `anchoredAt` / `sealer`) + `scripts/deploy.ts` for X Layer testnet (1952) / mainnet (196).
+- 13 offline TS tests (EIP-712 round-trip + tamper/domain rejection; commitment determinism; salt-absence assertions; RegistryClient against a local anvil node). Repo total: 153 vitest + 4 foundry.
+
+### On-chain
+- **Testnet rehearsal complete**: `AssayRegistry` deployed to X Layer testnet (chainId **1952**) at `0x355c324eed9347ec90d098d6dcde1438e6c89a7f`; 3 fixture leaves anchored and read back on-chain.
+
+### Fixed
+- Recorded that X Layer testnet chainId is **1952**, not 195 as some docs (and the plan) state.
+
 ## [0.5.0] — 2026-07-23
 ### Added
 - `@xyndicate/renderers`: the **Forge** — evidence-gated generation, Assay Office templates, PDF/DOCX, and the live ATS parse-back engine.

@@ -29,6 +29,10 @@
 | **ATS parse-back engine** — pdfjs reconstruction + field diff, honest label; flips tribunal `ATS_PARSE_BACK` live | `@xyndicate/renderers` | internal `parseBackFromBuffer` | Report "parse fidelity" badge | `packages/renderers/src/render.test.ts`, `packages/renderers/src/forge.test.ts` |
 | Manifest assembly + machine-readable agent manifest | `@xyndicate/renderers` | internal `buildAgentManifest` | For Agents | `packages/renderers/src/render.test.ts` |
 | Forge orchestrator (all artifacts, gated) + typographic SVG cover (no image model) | `@xyndicate/renderers` | internal `forgeDossier` | Forge | `packages/renderers/src/forge.test.ts` |
+| EIP-712 dossier seal — sign / recover / verify (domain-bound) | `@xyndicate/receipts` | internal `signSeal` / `verifySeal` | Verify page (P7) | `packages/receipts/src/eip712.test.ts` |
+| Salted commitment leaf + public verify bundle (no salt / no PII on-chain or public) | `@xyndicate/receipts` | internal `commitmentLeaf` / `buildVerifyBundle` | Verify page (P7) | `packages/receipts/src/commitment.test.ts` |
+| `AssayRegistry.sol` — onlySealer, idempotent `sealBatch`, zero personal data | `@xyndicate/contracts` | X Layer contract | on-chain seal | `packages/contracts/solidity/test/AssayRegistry.t.sol` |
+| RegistryClient (viem) — `sealBatch` / `anchoredAt` + deploy script (testnet 1952 / mainnet 196) | `@xyndicate/contracts` | internal `RegistryClient` | anchor worker (P6) | `packages/contracts/src/client.test.ts` |
 
 <!--
 Row template:

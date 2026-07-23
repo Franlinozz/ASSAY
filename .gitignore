@@ -49,3 +49,7 @@ logs/
 .turbo/
 .cache/
 .vitest/
+
+# foundry
+packages/contracts/cache/
+packages/contracts/solidity/out/
