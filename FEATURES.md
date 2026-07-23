@@ -19,6 +19,10 @@
 | Deterministic coverage mapper — strong / partial / missing / confirm (no LLM) | `@xyndicate/providers` | internal `computeCoverage` | Brief coverage map (P3) | `packages/providers/src/coverage.test.ts` |
 | Prompt injection framing — uploaded docs wrapped as DATA (guardrail #8) | `@xyndicate/providers` | internal `wrapDocuments` | — (engine) | `packages/providers/src/prompts.test.ts` |
 | Gap sanitizer — stable codes, raw errors to logs only (guardrail #9) | `@xyndicate/providers` | internal `sanitizeGap` | all public surfaces | `packages/providers/src/gaps.test.ts` |
+| Assay Standard v1.0.0 + self-publishing rubric (guardrail #2) | `@xyndicate/tribunal` | `renderStandardMarkdown` → `/standard` (P7) | The Standard page | `packages/tribunal/src/standard.test.ts` |
+| 12 deterministic hard checks — claim coverage, evidence resolves, link liveness, placeholder, date sanity, cross-artifact consistency, format law, docx integrity, ATS parse-back (pending→P4), contact validity, PII hygiene, JD coverage (info) | `@xyndicate/tribunal` | internal (`hard/checks.ts`) | Report | `packages/tribunal/src/hard/checks.test.ts` |
+| Craft critic (Claude, 6 weighted axes + repair brief) | `@xyndicate/tribunal` | internal `gradeCraft` | Report | `packages/tribunal/src/loop.test.ts` |
+| Pass rule (all hard pass ∧ craft mean ≥72 ∧ no axis <60) + repair loop ≤2 (reports always ship) | `@xyndicate/tribunal` | internal `passRule` / `gradeWithRepair` | Evaluation page (P7) | `packages/tribunal/src/standard.test.ts`, `packages/tribunal/src/loop.test.ts` |
 
 <!--
 Row template:

@@ -56,7 +56,7 @@ async function defaultParsePdf(data: Uint8Array): Promise<string> {
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i)
     const content = await page.getTextContent()
-    text += content.items.map((it) => it.str ?? '').join(' ') + '\n'
+    text += content.items.map((it) => ('str' in it ? it.str : '')).join(' ') + '\n'
   }
   // Best-effort teardown: pdfjs's worker destroy() can throw DataCloneError under Node, but the
   // text is already extracted, so a teardown failure must not fail ingestion.

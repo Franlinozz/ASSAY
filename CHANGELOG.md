@@ -4,6 +4,16 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-23
+### Added
+- `@xyndicate/tribunal`: the **Assay Standard v1.0.0** — deterministic hard checks + Claude critic craft axes + a bounded repair loop + a rubric that publishes itself.
+- **12 hard checks**: `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `FORMAT_LAW`, `DOCX_INTEGRITY`, `ATS_PARSE_BACK` (registered, returns `pending` until P4 wires the engine), `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` (report-only, never fails).
+- **Craft critic** (`gradeCraft`, Claude): 6 weighted axes (voice, specificity, quantification, positioning, tailoring, evidence honesty). On degrade it does not fabricate a passing grade.
+- **Pass rule** (exact): all hard checks pass **and** craft weighted mean ≥ 72 **and** no axis < 60.
+- **Repair loop** (`gradeWithRepair`): at most 2 repairs; **every draft's report ships** in the dossier, including failing first drafts; `summarize` reports an honest post-repair pass rate.
+- **`renderStandardMarkdown`** generates the `/standard` page and docs rubric from the same registry the grader runs (guardrail #2).
+- 36 offline tribunal tests (repo total: 123).
+
 ## [0.3.0] — 2026-07-23
 ### Added
 - `@xyndicate/providers`: every touchpoint with the outside world, always degradable, fake-first.

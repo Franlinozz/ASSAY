@@ -83,3 +83,6 @@ Hackathon grading may include an AI first-pass over the repo. Therefore the repo
 - **P2** — Live LLM adapters call each provider's REST endpoint via `fetch` instead of the official SDKs. Reason: zero SDK-version drift, minimal deps; only providers with a key present become active (DeepSeek key not yet supplied, so DeepSeek is inactive; Claude + OpenAI are live-capable).
 - **P2** — Cross-package resolution: Vitest `resolve.alias` + per-package tsconfig `paths` map `@xyndicate/*` to `src`. Runnable dist/bundling is still deferred to P6.
 - **P2** — `normalizeKeywords` filters an English + JD-filler stopword list so coverage overlap reflects substance, not boilerplate.
+- **P2/P3** — Removed the local pdfjs ambient shim in `providers`; use `pdfjs-dist`'s real types with a `'str' in it` guard so cross-package typecheck (`tribunal` → `providers` source) resolves consistently.
+- **P3** — `ATS_PARSE_BACK` is registered but returns `pending` (no renderer yet). **P4 MUST inject `deps.parseBack` and flip it live.**
+- **P3** — Hard checks that need rendered output (`FORMAT_LAW`, `PII_HYGIENE`, `DOCX_INTEGRITY`) read `artifact.meta` (html / flags / fileRef) + injected `deps` in P3; renderers wire the real HTML/docx/parse-back in P4. The 12 checks live in one `hard/checks.ts` (each still an `{id, run}` object) rather than one file per check.
