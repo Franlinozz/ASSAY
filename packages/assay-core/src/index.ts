@@ -1,12 +1,12 @@
-export const packageName = '@xyndicate/assay-core' as const
-
-export interface PackageInfo {
-  readonly name: string
-  readonly role: string
-}
-
-// Scaffold only — implementation lands in a later phase (see AGENTS.md).
-export const info: PackageInfo = {
-  name: packageName,
-  role: 'Pure domain heart: schemas, claim gate, strength tiers, canonical manifest, policy.',
-}
+// @xyndicate/assay-core — the pure domain heart. Zero network, zero LLM calls.
+export * from './json'
+export * from './constants'
+export * from './ids'
+export * from './schemas'
+export * from './types'
+export * from './claimGate'
+export * from './strength'
+export * from './canonical'
+export * from './policy'
+export * from './facts'
+export * from './time'
