@@ -70,6 +70,14 @@ Hackathon grading may include an AI first-pass over the repo. Therefore the repo
 - register: https://web3.okx.com/onchainos/dev-docs/okxai/registerasp
 - listing help TG: https://t.me/+Vf5RVufTTFM3Nzg1
 
+## Payment/A2MCP doc shapes (re-fetched 2026-07-23 for P6 — gotcha 8)
+Implement to THESE shapes (source: seller-sdk + howtomcp docs, fetched 2026-07-23):
+- **Seller SDK (Node):** `npm i express @okxweb3/x402-express @okxweb3/x402-core @okxweb3/x402-evm`. Middleware: `paymentMiddleware(routeConfig, resourceServer)`; `resourceServer.register(network, scheme)`.
+- **Config:** `accepts: [{ scheme: 'exact', network: 'eip155:196', payTo: PAY_TO, price: '$0.05' }]`. Price is a **USD string** ("$0.05"), auto-converted to USDT. **Testnet network = `eip155:1952`** (confirms our chainId finding). 
+- **Flow (request-level, HTTP transport, before MCP semantics):** free endpoint → 200 direct. Paid endpoint first call → **HTTP 402** with header **`PAYMENT-REQUIRED`** carrying a **base64-encoded JSON challenge** (the `accepts` array). Client retries same request with header **`PAYMENT-SIG`** (signed payment proof) → server verifies/settles via OKX Facilitator → **replays** the request → 200 + header **`PAYMENT-RESPONSE`** (settlement proof). Replay protection/settlement handled by the middleware/facilitator.
+- **A2MCP:** MCP = "the AI calling your API"; HTTPS endpoint tied to a domain. x402 sits at the HTTP layer (not inside MCP tool responses). Registration fields → registerasp doc (fetch at P7 listing).
+- **Gate implication:** /mcp pricing is per-tool (dynamic from the request body), so the static route-map middleware can't gate it alone — OkxGate parses the tool from the body, then builds/verifies the challenge via the core SDK. DevGate (ASY_PAYMENT_MODE=dev) implements the same shapes without settlement. `asy_verify` + `asy_job_status` + `asy_job_result` NEVER gated.
+
 ## Deviations
 (append-only log — one line of reasoning per entry)
 
