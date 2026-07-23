@@ -22,7 +22,13 @@
 | Assay Standard v1.0.0 + self-publishing rubric (guardrail #2) | `@xyndicate/tribunal` | `renderStandardMarkdown` → `/standard` (P7) | The Standard page | `packages/tribunal/src/standard.test.ts` |
 | 12 deterministic hard checks — claim coverage, evidence resolves, link liveness, placeholder, date sanity, cross-artifact consistency, format law, docx integrity, ATS parse-back (pending→P4), contact validity, PII hygiene, JD coverage (info) | `@xyndicate/tribunal` | internal (`hard/checks.ts`) | Report | `packages/tribunal/src/hard/checks.test.ts` |
 | Craft critic (Claude, 6 weighted axes + repair brief) | `@xyndicate/tribunal` | internal `gradeCraft` | Report | `packages/tribunal/src/loop.test.ts` |
-| Pass rule (all hard pass ∧ craft mean ≥72 ∧ no axis <60) + repair loop ≤2 (reports always ship) | `@xyndicate/tribunal` | internal `passRule` / `gradeWithRepair` | Evaluation page (P7) | `packages/tribunal/src/standard.test.ts`, `packages/tribunal/src/loop.test.ts` |
+| Pass rule (all hard pass ∧ craft mean ≥72 ∧ no axis <60; craft only for prose artifacts) + repair loop ≤2 (reports always ship) | `@xyndicate/tribunal` | internal `passRule` / `gradeWithRepair` | Evaluation page (P7) | `packages/tribunal/src/standard.test.ts`, `packages/tribunal/src/loop.test.ts` |
+| Evidence-gated writer — claim gate BEFORE render, one auto-tighten, remainder → questions (guardrail #1) | `@xyndicate/renderers` | internal `writeArtifact` | Forge drawer | `packages/renderers/src/writer.test.ts` |
+| Assay Office templates — ATS (strict) / designed / cover letter / story bank / fit map / gap brief / portfolio, both themes | `@xyndicate/renderers` | internal `renderArtifactHtml` | Forge / Share | `packages/renderers/src/render.test.ts` |
+| PDF (Playwright chromium) + DOCX (mirrors ATS headings) | `@xyndicate/renderers` | internal `htmlToPdf` / `buildResumeDocx` | Forge | `packages/renderers/src/forge.test.ts` |
+| **ATS parse-back engine** — pdfjs reconstruction + field diff, honest label; flips tribunal `ATS_PARSE_BACK` live | `@xyndicate/renderers` | internal `parseBackFromBuffer` | Report "parse fidelity" badge | `packages/renderers/src/render.test.ts`, `packages/renderers/src/forge.test.ts` |
+| Manifest assembly + machine-readable agent manifest | `@xyndicate/renderers` | internal `buildAgentManifest` | For Agents | `packages/renderers/src/render.test.ts` |
+| Forge orchestrator (all artifacts, gated) + typographic SVG cover (no image model) | `@xyndicate/renderers` | internal `forgeDossier` | Forge | `packages/renderers/src/forge.test.ts` |
 
 <!--
 Row template:

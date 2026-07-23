@@ -38,15 +38,20 @@ export async function gradeArtifact(
     hard.push(hr)
   }
 
-  const craft = await gradeCraft(artifact, dossier, deps.router)
-  const verdict = passRule(hard, craft.axes)
+  // Craft applies only to prose-bearing artifacts; structured ones (docx, json, tables) are
+  // decided by the hard checks alone — and we skip the critic call entirely (cost law).
+  const proseBearing = (artifact.sentences?.length ?? 0) > 0
+  const craft = proseBearing
+    ? await gradeCraft(artifact, dossier, deps.router)
+    : { axes: {}, findings: [], repairBrief: '', degraded: false }
+  const verdict = passRule(hard, craft.axes, { craftApplicable: proseBearing })
 
   const report: TribunalReport = {
     artifactId: artifact.id,
     artifactKind: artifact.kind,
     draftIndex,
     hard,
-    craft: CRAFT_AXES.map((a) => ({ axis: a.id, score: craft.axes[a.id] ?? 0 })),
+    craft: proseBearing ? CRAFT_AXES.map((a) => ({ axis: a.id, score: craft.axes[a.id] ?? 0 })) : [],
     craftWeightedMean: verdict.weightedMean,
     pass: verdict.pass,
     hardPass: verdict.hardPass,

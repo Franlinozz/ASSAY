@@ -191,7 +191,8 @@ export const FORMAT_LAW: HardCheck = {
       if (/<table[\s>]/i.test(html)) findings.push({ code: 'FORMAT_TABLE', detail: 'ATS variant must not use tables' })
       if (/<img[\s>]/i.test(html)) findings.push({ code: 'FORMAT_IMAGE', detail: 'ATS variant must not use images' })
       if (/column-count\s*:/i.test(html) || /<textarea[\s>]/i.test(html)) findings.push({ code: 'FORMAT_MULTICOLUMN', detail: 'ATS variant must be single-column with no text-boxes' })
-      for (const m of html.matchAll(/<h[1-3][^>]*>([^<]+)<\/h[1-3]>/gi)) {
+      // Section headings are h2/h3; h1 is the résumé title (the candidate's name), not a section.
+      for (const m of html.matchAll(/<h[23][^>]*>([^<]+)<\/h[23]>/gi)) {
         const heading = m[1]!.trim().toUpperCase()
         if (!APPROVED_HEADINGS.has(heading)) findings.push({ code: 'FORMAT_HEADING', detail: `non-standard heading "${m[1]!.trim()}"`, ref: heading })
       }

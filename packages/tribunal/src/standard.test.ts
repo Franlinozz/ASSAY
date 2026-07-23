@@ -44,6 +44,12 @@ describe('passRule (hard/craft split, exact)', () => {
   it('pending and skip hard checks do not block', () => {
     expect(passRule([s('pending'), s('skip'), s('pass')], GOOD).hardPass).toBe(true)
   })
+
+  it('non-prose (structured) artifacts pass on hard checks alone', () => {
+    expect(passRule([s('pass')], {}, { craftApplicable: false }).pass).toBe(true)
+    expect(passRule([s('pass')], {}, { craftApplicable: false }).craftPass).toBe(true)
+    expect(passRule([s('fail')], {}, { craftApplicable: false }).pass).toBe(false)
+  })
 })
 
 describe('the standard publishes itself', () => {

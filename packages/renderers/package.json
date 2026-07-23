@@ -14,6 +14,19 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "run:dossier": "tsx scripts/run-dossier.mjs",
     "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@xyndicate/assay-core": "*",
+    "@xyndicate/providers": "*",
+    "@xyndicate/tribunal": "*",
+    "docx": "^9.0.0",
+    "mammoth": "^1.8.0",
+    "pdfjs-dist": "^4.10.38",
+    "playwright": "^1.61.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
   }
 }

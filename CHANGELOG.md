@@ -4,6 +4,22 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-07-23
+### Added
+- `@xyndicate/renderers`: the **Forge** — evidence-gated generation, Assay Office templates, PDF/DOCX, and the live ATS parse-back engine.
+- **Evidence-gated writer** (`writeArtifact`): the claim gate runs BEFORE any render; one auto-tightening reprompt; whatever still fails becomes a user question, never prose (guardrail #1).
+- **Templates**: strict ATS resume, designed resume, cover letter, STAR story bank (evidence-tier chips), fit map, gap brief, and a standalone portfolio page — in both light/dark themes, inlined CSS (no external assets).
+- **PDF** via headless chromium (`htmlToPdf`) and **.docx** (`buildResumeDocx`) mirroring the ATS section headings.
+- **ATS parse-back engine** (`parseBackFromBuffer`): re-extracts the rendered ATS PDF (pdfjs, y-row reconstruction), rebuilds the structured fields, and diffs them against the source profile → `{fidelityPct, fieldDiffs}`. **This flips the tribunal `ATS_PARSE_BACK` check live.** Honest label: "verified against Assay's deterministic parser and ATS format law — not a simulation of any specific vendor."
+- **Manifest** assembly + a machine-readable **agent manifest** (coverage rollup, approved claims, risks, integrity hash).
+- **Forge orchestrator** (`forgeDossier`) + a typographic SVG dossier cover (no image-model calls).
+- `scripts/run-dossier.mjs` (full extract→coverage→forge→tribunal-with-live-parse-back→manifest). Verified: parse-back **100% fidelity** in both fake and real (DeepSeek + Claude) runs.
+- 17 renderer tests incl. a real chromium render→PDF→parse-back round-trip (repo total: 140).
+
+### Fixed
+- `extractNumbers` no longer reads digits glued to letters (p95, h2, v4) as claimed quantities.
+- `FORMAT_LAW` scans only `<h2>`/`<h3>` section headings (the `<h1>` name is the résumé title).
+
 ## [0.4.0] — 2026-07-23
 ### Added
 - `@xyndicate/tribunal`: the **Assay Standard v1.0.0** — deterministic hard checks + Claude critic craft axes + a bounded repair loop + a rubric that publishes itself.

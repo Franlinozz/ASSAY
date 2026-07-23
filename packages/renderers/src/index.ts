@@ -1,12 +1,10 @@
-export const packageName = '@xyndicate/renderers' as const
-
-export interface PackageInfo {
-  readonly name: string
-  readonly role: string
-}
-
-// Scaffold only — implementation lands in a later phase (see AGENTS.md).
-export const info: PackageInfo = {
-  name: packageName,
-  role: 'Artifact rendering: designed PDF, ATS-safe PDF, .docx, portfolio page, JSON manifest.',
-}
+// @xyndicate/renderers — the Forge. Evidence-gated generation, Assay Office templates, PDF/DOCX,
+// and the ATS parse-back engine (flips the tribunal's ATS_PARSE_BACK check live).
+export * from './templates/index'
+export * from './writer'
+export * from './pdf'
+export * from './docx'
+export * from './parseback'
+export * from './manifest'
+export * from './cover'
+export * from './forge'

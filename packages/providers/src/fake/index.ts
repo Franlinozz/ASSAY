@@ -75,6 +75,16 @@ const FAKE_CRAFT = {
   repairBrief: '',
 }
 
+// The fake writer echoes each CONFIRMED claim from the facts block as a gate-passing sentence
+// (cites the claim id; the number is already in the claim's figures). Deterministic, offline.
+function fakeWrite(prompt: string): unknown {
+  const lines = [...prompt.matchAll(/- \[(CLM-[0-9A-Z]+) \| \w+\]\s*(.+)/g)]
+  return lines.map((m) => ({
+    text: m[2]!.replace(/\s*\(figures:.*$/i, '').trim(),
+    claimIds: [m[1]!],
+  }))
+}
+
 function fakeResponse(req: GenerateRequest): string {
   switch (req.role) {
     case 'extractor':
@@ -82,7 +92,7 @@ function fakeResponse(req: GenerateRequest): string {
     case 'decomposer':
       return JSON.stringify(fakeDecompose(req.prompt))
     case 'writer':
-      return JSON.stringify([]) // proper fake writer lands in P4
+      return JSON.stringify(fakeWrite(req.prompt))
     case 'critic':
       return JSON.stringify(FAKE_CRAFT)
     case 'utility':

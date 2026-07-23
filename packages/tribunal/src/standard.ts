@@ -39,8 +39,17 @@ export function weightedMean(scores: Record<string, number>): number {
 }
 
 // The pass rule, exact: ALL hard checks pass AND weighted craft mean >= 72 AND no axis < 60.
-export function passRule(hard: Array<{ status: CheckStatus }>, craftScores: Record<string, number>): Verdict {
+// Structured artifacts with no prose (docx, json manifest, coverage tables) are not craft-graded
+// — craftApplicable=false means only the hard checks decide.
+export function passRule(
+  hard: Array<{ status: CheckStatus }>,
+  craftScores: Record<string, number>,
+  opts: { craftApplicable?: boolean } = {},
+): Verdict {
   const hardPass = hard.every((h) => h.status !== 'fail')
+  if (opts.craftApplicable === false) {
+    return { pass: hardPass, hardPass, craftPass: true, weightedMean: 0 }
+  }
   const mean = weightedMean(craftScores)
   const floorOk = CRAFT_AXES.every((a) => (craftScores[a.id] ?? 0) >= CRAFT_AXIS_FLOOR)
   const craftPass = mean >= CRAFT_PASS_MEAN && floorOk

@@ -23,9 +23,10 @@ export interface NormalizedNumber {
   unit: string
 }
 
-// Matches quantities: optional $ prefix, an integer (with thousands commas) or decimal,
-// and an optional unit suffix. "40%", "$1,200", "3x", "10k", "5".
-const NUMBER_RE = /(\$)?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(%|x|k|m|b|bn)?/gi
+// Matches quantities: optional $ prefix, an integer (with thousands commas) or decimal, and an
+// optional unit suffix. "40%", "$1,200", "3x", "10k", "5". The leading (?<![A-Za-z]) means digits
+// glued to letters (p95, h2, v4, COVID19) are NOT read as claimed quantities.
+const NUMBER_RE = /(?<![A-Za-z0-9])(\$)?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(%|x|k|m|b|bn)?/gi
 
 export function extractNumbers(text: string): NormalizedNumber[] {
   const out: NormalizedNumber[] = []

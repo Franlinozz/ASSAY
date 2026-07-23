@@ -31,6 +31,7 @@ blob-report/
 /data/
 /uploads/
 /artifacts/
+**/artifacts-out/
 
 # logs
 *.log
