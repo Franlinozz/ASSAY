@@ -4,6 +4,31 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-07-24
+
+### Added — the Studio + the recruiter Share Portal
+
+- **Studio API** (`@xyndicate/mcp-server`): the interactive, browser-driven dossier flow, reusing the SAME engine the paid MCP tools use (ingest, extract, decompose, coverage, forge, tribunal repair loop, receipts). Access model = **capability URLs**: `POST /studio/dossier` mints an HMAC token; every mutation and the owner state read require `?t=<token>` or a **403** follows. No accounts (magic-link auth is a logged future item). Endpoints: `GET /d-state/:id`, `POST /d/:id/ingest` (job), `POST /d/:id/claims/:claimId`, `POST /d/:id/brief`, `POST /d/:id/forge` (job), `GET /d/:id/job/:jobId`, `GET /d/:id/events`, `POST /d/:id/seal`, `POST /d/:id/share[/revoke]`, and the public `GET /s-api/:shareId`.
+  - **Live "role · action" feed** — a structured per-dossier event log ("Extractor · reading resume.pdf", "Tribunal · grading cover letter", "Sealer · anchoring to X Layer"), never generic noise.
+  - **Ingest** handles pdf/docx/txt uploads, pasted text, pasted links (fetched live — a dead link earns no Linked tier), and guided answers; merges into the evolving dossier.
+  - **Forge job** runs the evidence-gated writers + the tribunal **repair loop** with parse-back wired on real PDFs; persists artifacts, per-draft reports, and a signed-download set.
+  - **Seal** computes the salted commitment + EIP-712 signature, sets the seal, enqueues the anchor.
+  - **Share** stores exposure config (exposed claims, contact toggle, expiry) and a revoke flag; the recruiter view enforces PII exposure server-side and pre-builds the evidence-thread graph (claim ids never leave the server).
+- **Studio UI** (`@xyndicate/web`): `/studio` start (name · timezone · optional email → capability URL), and `/d/:id` — a four-stage flow with a persistent stage rail:
+  - **Ledger** — drag-drop upload + paste/links/answers tabs, a live event feed, claim review cards (tier chip + explanation, highlighted figures, Confirm/Edit/Reject), needs_confirmation cards asking their specific question, and a confirmed-claims progress meter. Nothing advances to Forge unconfirmed.
+  - **Brief** — JD paste (+ General-purpose preset), the coverage map (strong/partial/confirm/missing, each pointing at its strongest claim; missing rows show the "we will not claim this" line inline).
+  - **Forge** — artifact selector, live pipeline feed, and **the evidence drawer**: click any forged sentence and its claims + evidence light up via threads (the hero component, running for real).
+  - **Report** — draft-by-draft Tribunal cards (findings, craft bars, repair briefs), the honest rollup, the parse-back field-diff table, **the seal moment** (a weighted vermilion stamp, ≈400ms, no confetti → receipt), download buttons for every file, and the share controls.
+  - **`/s/:shareId`** — the recruiter portal: read-only, the résumé with hoverable evidence threads + tier chips, the Tribunal grade badge, live "Verify on X Layer", and a dignified "withdrawn by candidate" page on revoke.
+  - **`/judge`** — route stub (Phase 10).
+- **Same-origin proxy** `/api/asy/[...path]` forwards only the Studio + recruiter paths to the MCP server (no CORS surface; the capability token rides the query string).
+- **Store** gains idempotent Studio columns (safe for the live prod DB): dossier `stage`/`email`, share `config`/`revoked`/`expires_at`; structured studio events with a cursor; rich share create/read/revoke.
+
+### Tests
+
+- Full-flow **Playwright e2e** on the fake-mode stack: create → ingest fixture résumé → confirm claims (incl. answering a needs_confirmation) → paste JD → see one honest 'missing' → forge → open the evidence drawer → tribunal report **incl. a first-draft fail** → seal → open the share link → verify → revoke → withdrawn page; plus token-security (mutation without token → 403). Server-side `studio.test.ts` covers the pipeline directly. **Repo total: 201 vitest + 25 Playwright e2e + 4 foundry.**
+- The fake pipeline can exercise the repair loop deterministically via `ASY_FAKE_REPAIR_DEMO=1` (set only by the e2e stack; fails the cover letter's first draft, passes the repair) — never touches prod or unit tests. The Studio's ATS parse-back runs on real chromium PDFs (`ASY_STUDIO_REAL_PDF=1` in e2e; always on in prod).
+
 ## [0.8.0] — 2026-07-24
 
 ### Added

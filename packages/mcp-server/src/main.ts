@@ -15,19 +15,22 @@ export function main(): void {
   const cfg = loadConfig()
   const port = Number(process.env['ASY_PORT'] ?? 8402)
   const live = providerMode() === 'live'
+  // Use real chromium PDFs whenever providers are live, or when explicitly forced (e2e wants a real
+  // ATS parse-back even under fake providers).
+  const realPdf = live || process.env['ASY_STUDIO_REAL_PDF'] === '1'
 
   const store = new Store(cfg.dbPath, cfg.filesDir)
   const router = createRouter()
   const fetcher = createModeFetcher()
   const gate = createGate(cfg)
-  const toPdf = live ? htmlToPdf : devPdf
+  const toPdf = realPdf ? htmlToPdf : devPdf
 
-  const jobs = new JobRunner({ store, router, fetcher, cfg, toPdf })
+  const jobs = new JobRunner({ store, router, fetcher, cfg, toPdf, realPdf })
   jobs.start()
   const anchor = new AnchorWorker(store, cfg)
   anchor.start()
 
-  const app = buildApp({ store, router, fetcher, cfg, gate })
+  const app = buildApp({ store, router, fetcher, cfg, gate, toPdf, realPdf })
   const server = app.listen(port, () => {
     const signer = cfg.sealerKey ? 'set' : 'none (seals stay pending)'
     console.log(`[assay-mcp] listening on :${port}`)

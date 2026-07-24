@@ -10,8 +10,10 @@ import { fileURLToPath } from 'node:url'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
-export const API_PORT = Number(process.env.STACK_API_PORT ?? 8425)
-export const WEB_PORT = Number(process.env.STACK_WEB_PORT ?? 3100)
+// Non-default ports so the fake-mode stack never collides with the live prod services on this box
+// (prod MCP :8422, prod web :3100).
+export const API_PORT = Number(process.env.STACK_API_PORT ?? 8455)
+export const WEB_PORT = Number(process.env.STACK_WEB_PORT ?? 3400)
 
 const SEED_RESUME = `Chidinma Eze
 Senior Backend Engineer — Lagos, Nigeria
@@ -107,18 +109,33 @@ export async function startStack({ webDev = false } = {}) {
       ASY_BASE_URL: `http://127.0.0.1:${API_PORT}`,
       ASY_REGISTRY: '0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4',
       ASY_CHAIN_ID: '196',
+      // Studio e2e: real chromium PDFs (so ATS parse-back runs) + the deterministic repair demo
+      // (fails the cover letter's first draft). Both are e2e/prod-only knobs, never in unit tests.
+      ASY_STUDIO_REAL_PDF: '1',
+      ASY_FAKE_REPAIR_DEMO: '1',
     },
     stdio: ['ignore', logFd(dataDir, 'api.log'), logFd(dataDir, 'api.log')],
     detached: true,
   })
   await waitFor(`http://127.0.0.1:${API_PORT}/health`, 'mcp-server')
 
-  const web = spawn('npm', ['run', webDev ? 'dev' : 'start', '-w', '@xyndicate/web'], {
-    cwd: repoRoot,
-    env: { ...process.env, ASY_API_URL: `http://127.0.0.1:${API_PORT}`, PORT: String(WEB_PORT) },
-    stdio: ['ignore', logFd(dataDir, 'web.log'), logFd(dataDir, 'web.log')],
-    detached: true,
-  })
+  // Spawn next directly (not `npm run start`, whose -p is hardcoded) so WEB_PORT is honored.
+  const web = spawn(
+    process.execPath,
+    [
+      resolve(repoRoot, 'node_modules/next/dist/bin/next'),
+      'start',
+      'apps/web',
+      '-p',
+      String(WEB_PORT),
+    ],
+    {
+      cwd: repoRoot,
+      env: { ...process.env, ASY_API_URL: `http://127.0.0.1:${API_PORT}`, PORT: String(WEB_PORT) },
+      stdio: ['ignore', logFd(dataDir, 'web.log'), logFd(dataDir, 'web.log')],
+      detached: true,
+    },
+  )
   await waitFor(`http://127.0.0.1:${WEB_PORT}/`, 'web')
 
   const stop = () => {

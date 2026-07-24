@@ -13,6 +13,6 @@ An Agent Service Provider for the OKX.AI Genesis Hackathon (Lifestyle Companion 
 - **The vision:** [`ASSAY.md`](./ASSAY.md)
 - **What's shipped:** [`FEATURES.md`](./FEATURES.md) · [`CHANGELOG.md`](./CHANGELOG.md)
 
-**Tests:** 193 vitest + 22 Playwright e2e + 4 foundry, all green. `npm test` · `npm run test:e2e`
+**Tests:** 201 vitest + 25 Playwright e2e + 4 foundry, all green. `npm test` · `npm run test:e2e`
 
 > The full README — hero, architecture diagram, quickstart, tool table, Standard link, and live numbers — lands in **Phase 15**. This is the scaffold.

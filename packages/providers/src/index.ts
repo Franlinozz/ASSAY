@@ -10,7 +10,7 @@ export * from './text'
 export * from './extract'
 export * from './decompose'
 export * from './coverage'
-export { FakeAdapter, FakeFetcher, createFakeAdapters, SAMPLE_RESUME_TEXT } from './fake/index'
+export { FakeAdapter, FakeFetcher, createFakeAdapters, SAMPLE_RESUME_TEXT, resetFakeRepairDemo } from './fake/index'
 export { createLiveAdapters } from './live/index'
 
 import type { RouterOptions } from './router'

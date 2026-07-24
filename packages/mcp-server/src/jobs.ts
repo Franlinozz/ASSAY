@@ -21,6 +21,7 @@ import type { Address, Hex } from 'viem'
 import type { ServerConfig } from './config'
 import type { Store, JobRow } from './store'
 import { decodeUpload } from './util'
+import { runStudioExtract, runStudioForge, type StudioExtractInput } from './studio'
 
 // The in-process worker that runs the paid asy_create_dossier_job pipeline end-to-end. Anything slow
 // is a job (gotcha #10); the marketplace only ever sees create → status → result.
@@ -31,6 +32,9 @@ export interface JobDeps {
   fetcher: Fetcher
   cfg: ServerConfig
   toPdf: (html: string) => Promise<Uint8Array>
+  // Whether toPdf is the real chromium renderer (drives the Studio's ATS parse-back). The MCP
+  // dossier pipeline ignores it; the Studio forge job reads it.
+  realPdf: boolean
 }
 
 interface DossierJobInput {
@@ -210,9 +214,19 @@ export class JobRunner {
       const job = this.deps.store.claimNextQueuedJob()
       if (!job) return undefined
       try {
-        const input = job.input ? (JSON.parse(job.input) as DossierJobInput) : {}
-        const { dossierId, result } = await runDossierPipeline(this.deps, input)
-        this.deps.store.finishJob(job.id, { status: 'done', resultRef: dossierId, result })
+        if (job.kind === 'studio_extract') {
+          const input = JSON.parse(job.input ?? '{}') as StudioExtractInput
+          await runStudioExtract(this.deps, input)
+          this.deps.store.finishJob(job.id, { status: 'done', resultRef: input.dossierId })
+        } else if (job.kind === 'studio_forge') {
+          const input = JSON.parse(job.input ?? '{}') as { dossierId: string; selected?: string[] }
+          await runStudioForge(this.deps, input)
+          this.deps.store.finishJob(job.id, { status: 'done', resultRef: input.dossierId })
+        } else {
+          const input = job.input ? (JSON.parse(job.input) as DossierJobInput) : {}
+          const { dossierId, result } = await runDossierPipeline(this.deps, input)
+          this.deps.store.finishJob(job.id, { status: 'done', resultRef: dossierId, result })
+        }
       } catch (e) {
         this.deps.store.finishJob(job.id, {
           status: 'failed',

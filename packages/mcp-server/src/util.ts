@@ -49,6 +49,24 @@ export function verifyFileToken(
   }
 }
 
+// ── Capability tokens (P9 Studio) ──
+// The capability URL /d/:id?t=<token> IS the credential — no accounts (magic-link auth is a logged
+// future item). token = HMAC(secret, "cap:" + dossierId), non-expiring, constant-time verified.
+export function signCapabilityToken(secret: string, dossierId: string): string {
+  return createHmac('sha256', secret).update(`cap:${dossierId}`).digest('hex')
+}
+
+export function verifyCapabilityToken(secret: string, dossierId: string, token: string): boolean {
+  if (!token) return false
+  const expected = signCapabilityToken(secret, dossierId)
+  if (token.length !== expected.length) return false
+  try {
+    return timingSafeEqual(Buffer.from(token, 'hex'), Buffer.from(expected, 'hex'))
+  } catch {
+    return false
+  }
+}
+
 // Decode an uploaded document supplied as base64 or plain text. Returns bytes + a best-effort flag
 // of whether the input was base64 (so callers can pick pdf/docx parsing vs plain text).
 export function decodeUpload(input: { textB64?: string | undefined; text?: string | undefined }): {

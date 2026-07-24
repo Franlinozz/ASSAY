@@ -148,6 +148,20 @@ export class Store {
       CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
       CREATE INDEX IF NOT EXISTS idx_events_dossier ON events(dossier_id);
     `)
+    // P9 Studio columns — added idempotently so the live prod DB (existing dossiers/shares) is
+    // never dropped. SQLite has no ADD COLUMN IF NOT EXISTS, so we check table_info first.
+    this.ensureColumn('dossiers', 'stage', "TEXT NOT NULL DEFAULT 'ledger'")
+    this.ensureColumn('dossiers', 'email', 'TEXT')
+    this.ensureColumn('shares', 'config', 'TEXT')
+    this.ensureColumn('shares', 'revoked', 'INTEGER NOT NULL DEFAULT 0')
+    this.ensureColumn('shares', 'expires_at', 'TEXT')
+  }
+
+  private ensureColumn(table: string, column: string, decl: string): void {
+    const cols = this.db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>
+    if (!cols.some((c) => c.name === column)) {
+      this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`)
+    }
   }
 
   close(): void {
@@ -494,5 +508,161 @@ export class Store {
     return this.db
       .prepare(`SELECT kind, detail, at FROM events WHERE dossier_id = ? ORDER BY id ASC`)
       .all(dossierId) as Array<{ kind: string; detail: string | null; at: string }>
+  }
+
+  // ── P9 Studio ─────────────────────────────────────────────────────────────
+  // A dossier being built interactively in the browser. Stage/email live in columns; the evolving
+  // Dossier (claims, evidence, brief, artifacts, reports, seal) lives in the json blob via saveDossier.
+
+  createStudioDossier(dossier: Dossier, opts: { email?: string; salt?: string }): void {
+    this.db
+      .prepare(
+        `INSERT INTO dossiers (id, json, seal_status, salt, stage, email, created_at)
+         VALUES (@id, @json, 'unsealed', @salt, 'ledger', @email, @createdAt)`,
+      )
+      .run({
+        id: dossier.id,
+        json: JSON.stringify(dossier),
+        salt: opts.salt ?? null,
+        email: opts.email ?? null,
+        createdAt: dossier.createdAt ?? nowIso(),
+      })
+  }
+
+  setStage(id: string, stage: string): void {
+    this.db.prepare(`UPDATE dossiers SET stage = ? WHERE id = ?`).run(stage, id)
+  }
+
+  getStage(id: string): string | undefined {
+    const r = this.db.prepare(`SELECT stage FROM dossiers WHERE id = ?`).get(id) as
+      | { stage: string | null }
+      | undefined
+    return r?.stage ?? undefined
+  }
+
+  getEmail(id: string): string | undefined {
+    const r = this.db.prepare(`SELECT email FROM dossiers WHERE id = ?`).get(id) as
+      | { email: string | null }
+      | undefined
+    return r?.email ?? undefined
+  }
+
+  dossierExists(id: string): boolean {
+    return !!this.db.prepare(`SELECT 1 FROM dossiers WHERE id = ?`).get(id)
+  }
+
+  setSalt(id: string, salt: string): void {
+    this.db.prepare(`UPDATE dossiers SET salt = ? WHERE id = ?`).run(salt, id)
+  }
+
+  // A structured live-feed event ("role · action"), stored under kind 'studio' with a JSON detail.
+  recordStudioEvent(dossierId: string, role: string, action: string): number {
+    const info = this.db
+      .prepare(`INSERT INTO events (dossier_id, kind, detail, at) VALUES (?, 'studio', ?, ?)`)
+      .run(dossierId, JSON.stringify({ role, action }), nowIso())
+    return Number(info.lastInsertRowid)
+  }
+
+  // Events after a cursor (id), for the incremental feed. Only 'studio' events carry role/action.
+  listStudioEventsSince(
+    dossierId: string,
+    sinceId = 0,
+  ): Array<{ id: number; role: string; action: string; at: string }> {
+    const rows = this.db
+      .prepare(
+        `SELECT id, detail, at FROM events WHERE dossier_id = ? AND kind = 'studio' AND id > ? ORDER BY id ASC`,
+      )
+      .all(dossierId, sinceId) as Array<{ id: number; detail: string | null; at: string }>
+    return rows.map((r) => {
+      let role = 'System'
+      let action = ''
+      try {
+        const d = JSON.parse(r.detail ?? '{}') as { role?: string; action?: string }
+        role = d.role ?? role
+        action = d.action ?? ''
+      } catch {
+        action = r.detail ?? ''
+      }
+      return { id: r.id, role, action, at: r.at }
+    })
+  }
+
+  // ── rich shares (recruiter portal) ──
+  createStudioShare(input: {
+    dossierId: string
+    fileId?: string
+    config: unknown
+    expiresAt?: string
+  }): string {
+    const slug = newId('s')
+    this.db
+      .prepare(
+        `INSERT INTO shares (slug, dossier_id, file_id, config, revoked, expires_at, created_at)
+         VALUES (?, ?, ?, ?, 0, ?, ?)`,
+      )
+      .run(
+        slug,
+        input.dossierId,
+        input.fileId ?? null,
+        JSON.stringify(input.config ?? {}),
+        input.expiresAt ?? null,
+        nowIso(),
+      )
+    return slug
+  }
+
+  getShareFull(slug: string):
+    | {
+        dossierId: string
+        fileId: string | null
+        config: unknown
+        revoked: boolean
+        expiresAt: string | null
+        createdAt: string
+      }
+    | undefined {
+    const r = this.db
+      .prepare(
+        `SELECT dossier_id, file_id, config, revoked, expires_at, created_at FROM shares WHERE slug = ?`,
+      )
+      .get(slug) as
+      | {
+          dossier_id: string
+          file_id: string | null
+          config: string | null
+          revoked: number
+          expires_at: string | null
+          created_at: string
+        }
+      | undefined
+    if (!r) return undefined
+    return {
+      dossierId: r.dossier_id,
+      fileId: r.file_id,
+      config: r.config ? JSON.parse(r.config) : {},
+      revoked: r.revoked === 1,
+      expiresAt: r.expires_at,
+      createdAt: r.created_at,
+    }
+  }
+
+  // The newest share for a dossier (a dossier has at most one active share link in the Studio).
+  latestShareForDossier(dossierId: string): string | undefined {
+    const r = this.db
+      .prepare(
+        `SELECT slug FROM shares WHERE dossier_id = ? AND config IS NOT NULL ORDER BY created_at DESC LIMIT 1`,
+      )
+      .get(dossierId) as { slug: string } | undefined
+    return r?.slug
+  }
+
+  setShareRevoked(slug: string, revoked: boolean): void {
+    this.db.prepare(`UPDATE shares SET revoked = ? WHERE slug = ?`).run(revoked ? 1 : 0, slug)
+  }
+
+  updateShareConfig(slug: string, config: unknown, expiresAt?: string | null): void {
+    this.db
+      .prepare(`UPDATE shares SET config = ?, expires_at = ? WHERE slug = ?`)
+      .run(JSON.stringify(config ?? {}), expiresAt ?? null, slug)
   }
 }

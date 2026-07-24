@@ -10,6 +10,8 @@ import type { Store } from './store'
 import type { PaymentGate } from './gate'
 import { readPaymentSig } from './gate'
 import { buildServer } from './server'
+import { buildStudioRouter } from './studioHttp'
+import { devPdf } from './jobs'
 import { TokenBucket, verifyFileToken, sha256Hex, toJson } from './util'
 
 export interface AppRuntime {
@@ -18,6 +20,10 @@ export interface AppRuntime {
   fetcher: Fetcher
   cfg: ServerConfig
   gate: PaymentGate
+  // The Studio's inline steps (brief/seal) render + hash; forge runs in a job. toPdf is the
+  // headless-chromium renderer in prod, the dev stub in fake/CI. Optional so tests can omit it.
+  toPdf?: (html: string) => Promise<Uint8Array>
+  realPdf?: boolean
 }
 
 interface JsonRpcBody {
@@ -55,6 +61,18 @@ export function buildApp(rt: AppRuntime): Express {
   const app = express()
   app.disable('x-powered-by')
   const bucket = new TokenBucket(cfg.rateLimitPerMin)
+
+  // ── The Studio surface (P9): capability-URL dossier flow + recruiter portal. ──
+  app.use(
+    buildStudioRouter({
+      store,
+      router: rt.router,
+      fetcher: rt.fetcher,
+      cfg,
+      toPdf: rt.toPdf ?? devPdf,
+      realPdf: rt.realPdf ?? false,
+    }),
+  )
 
   // ── GET /health — zero model calls, <100ms. Surfaces the anchor-queue age as an alert. ──
   app.get('/health', (_req: Request, res: Response) => {

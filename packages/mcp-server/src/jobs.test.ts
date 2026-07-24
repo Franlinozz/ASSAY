@@ -15,6 +15,7 @@ function rig(): { r: TestRig; deps: JobDeps; pipe: PipelineCtx } {
     fetcher: r.fetcher,
     cfg: r.cfg,
     toPdf: devPdf,
+    realPdf: false,
   }
   const pipe = makeCtx(r.store, r.router, r.cfg, r.fetcher)
   return { r, deps, pipe }
