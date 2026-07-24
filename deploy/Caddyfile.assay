@@ -1,21 +1,24 @@
-# Assay site blocks — append/import into the box's main /etc/caddy/Caddyfile.
-# Caddy issues + renews TLS automatically once assayed.xyz / api.assayed.xyz A records point here.
-# This box already fronts other Xyndicate ASPs; these blocks are strictly additive.
+# Assay Caddy blocks (P8: web :3100 + docs :3101 + api :8422) — additive to the shared box.
+# Copy into /etc/caddy/Caddyfile, then: caddy validate && systemctl reload caddy
 
 assayed.xyz, www.assayed.xyz {
-	root * /opt/assay/deploy/holding
-	file_server
 	encode gzip
 	header {
 		Referrer-Policy strict-origin-when-cross-origin
 		X-Content-Type-Options nosniff
 	}
+	# Docs (Fumadocs, basePath /docs) on :3101 — matched first, prefix preserved.
+	handle /docs* {
+		reverse_proxy 127.0.0.1:3101
+	}
+	# The public Assay Office (Next 15) on :3100.
+	handle {
+		reverse_proxy 127.0.0.1:3100
+	}
 }
 
 api.assayed.xyz {
 	# Assay MCP runs on 8422 (8402 was already taken on this box).
-	# Body-size limit is enforced by the app itself (express.json 2MB → clean 413);
-	# a Caddy-level request_body max_size aborts the upstream and surfaces 502, so we don't set it.
 	reverse_proxy 127.0.0.1:8422
 	encode gzip
 }

@@ -1,0 +1,20 @@
+[Unit]
+Description=Assay web (the public Assay Office, apps/web) — Next 15
+Documentation=https://github.com/Franlinozz/ASSAY
+After=network-online.target assay-mcp.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/assay/apps/web
+EnvironmentFile=/etc/assay/web.env
+ExecStart=/usr/bin/node /opt/assay/node_modules/next/dist/bin/next start -p 3100
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=assay-web
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

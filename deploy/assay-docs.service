@@ -1,0 +1,20 @@
+[Unit]
+Description=Assay docs (Fumadocs, apps/docs) — served at /docs
+Documentation=https://github.com/Franlinozz/ASSAY
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/assay/apps/docs
+EnvironmentFile=/etc/assay/docs.env
+ExecStart=/usr/bin/node /opt/assay/node_modules/next/dist/bin/next start -p 3101
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=assay-docs
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,10 +1,21 @@
-# Assay — deploy runbook (P7)
+# Assay — deploy runbook (P7 + P8)
 
 Live host: a shared Xyndicate VPS (already fronts Occestra via Caddy). Assay is **strictly additive**.
 
-- **Domain:** `assayed.xyz` (apex + www = holding page; `api.assayed.xyz` = MCP).
-- **MCP port:** `8422` (8402 was taken on this box).
-- **Deploy dir:** `/opt/assay` (git clone). **Data:** `/var/lib/assay`. **Secrets:** `/etc/assay/env` (chmod 600).
+- **Domain:** `assayed.xyz` (apex + www = the public Assay Office; `assayed.xyz/docs` = Fumadocs; `api.assayed.xyz` = MCP).
+- **Ports:** MCP `8422` · web `3100` · docs `3101` (8402 was taken on this box).
+- **Deploy dir:** `/opt/assay` (git clone). **Data:** `/var/lib/assay`. **Secrets:** `/etc/assay/env`, `/etc/assay/web.env`, `/etc/assay/docs.env` (chmod 600).
+
+## Redeploy (P8 web + docs)
+
+```bash
+cd /opt/assay && git pull && npm install
+npm run build -w @xyndicate/mcp-server && systemctl restart assay-mcp   # toolspec/server changes
+npm run build -w @xyndicate/web  && systemctl restart assay-web         # prebuild regenerates the Standard
+npm run build -w @xyndicate/docs && systemctl restart assay-docs        # prebuild regenerates tools/standard MDX
+```
+
+`apps/web/lib/demo-run.generated.json` (the /evaluation content) is a committed **real pipeline run**, not rebuilt at deploy — regenerate it deliberately with `ASY_PROVIDER_MODE=live node apps/web/scripts/gen-demo.mjs` when the pipeline changes.
 
 ## 1. DNS (Namecheap → Advanced DNS)
 
@@ -40,18 +51,22 @@ ASY_DEPLOYER_PK=0x… npx tsx packages/contracts/scripts/deploy.ts mainnet
 # → records address + deployTx + sealTx; put the address in ASY_REGISTRY.
 ```
 
-## 5. Service
+## 5. Services
 
 ```bash
-sed "s#__NODE__#$(command -v node)#" deploy/assay-mcp.service > /etc/systemd/system/assay-mcp.service
-systemctl daemon-reload && systemctl enable --now assay-mcp
-curl -s localhost:8422/health    # ok:true
+NODE=$(command -v node)
+for svc in assay-mcp assay-web assay-docs; do
+  sed "s#/usr/bin/node#$NODE#" deploy/$svc.service > /etc/systemd/system/$svc.service
+done
+# web/docs env (chmod 600): PORT + HOSTNAME=127.0.0.1; web also ASY_API_URL=http://127.0.0.1:8422
+systemctl daemon-reload && systemctl enable --now assay-mcp assay-web assay-docs
+curl -s localhost:8422/health && curl -s -o /dev/null -w '%{http_code}\n' localhost:3100/ localhost:3101/docs
 ```
 
 ## 6. Caddy (after DNS resolves)
 
-Append `deploy/Caddyfile.assay` blocks into the box's `/etc/caddy/Caddyfile`, then
-`caddy validate --config /etc/caddy/Caddyfile && systemctl reload caddy`.
+Replace the box's `assayed.xyz` block with `deploy/Caddyfile.assay` (web `:3100`, `/docs*` → `:3101`,
+`api.assayed.xyz` → `:8422`), then `caddy validate --config /etc/caddy/Caddyfile && systemctl reload caddy`.
 
 ## 7. External verification (from a different network)
 
