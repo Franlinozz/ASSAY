@@ -201,6 +201,39 @@ describe('studio flow', () => {
     expect(revoked.revoked).toBe(true)
   })
 
+  it('a share ACTUALLY expires once its expiry passes (P11 clock injection)', async () => {
+    const rig = testRuntime()
+    const { id } = await buildConfirmed(rig)
+    await runBrief(deps(rig), id, '- Backend engineering')
+    await runStudioForge(deps(rig), { dossierId: id })
+    await sealDossier(deps(rig), id)
+    const confirmedIds = stateOf(rig, id)
+      .claims.filter((c) => c.status === 'confirmed')
+      .map((c) => c.id)
+    const share = createOrUpdateShare(rig.store, id, {
+      exposedClaimIds: confirmedIds,
+      showContact: false,
+      expiryDays: 7,
+    })
+    // Now: fully visible.
+    const live = getShareView(rig.store, rig.cfg, share.shareId, Date.now()) as { found: boolean; expired?: boolean; claims?: unknown[] }
+    expect(live.found).toBe(true)
+    expect(live.expired).toBeUndefined()
+    expect((live.claims ?? []).length).toBe(confirmedIds.length)
+    // Eight days later (injected clock): the portal is expired — and leaks NO dossier content.
+    const later = Date.now() + 8 * 86_400_000
+    const expired = getShareView(rig.store, rig.cfg, share.shareId, later) as {
+      found: boolean
+      expired?: boolean
+      claims?: unknown[]
+      candidate?: unknown
+    }
+    expect(expired.found).toBe(true)
+    expect(expired.expired).toBe(true)
+    expect(expired.claims).toBeUndefined()
+    expect(expired.candidate).toBeUndefined()
+  })
+
   it('a share exposing a subset hides the rest (PII_HYGIENE)', async () => {
     const rig = testRuntime()
     const { id } = await buildConfirmed(rig)

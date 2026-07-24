@@ -8,6 +8,7 @@ export function CopyButton({ text, label = 'copy' }: { text: string; label?: str
     <button
       type="button"
       className="copy-btn"
+      data-testid="copy-btn"
       onClick={() => {
         void navigator.clipboard?.writeText(text).then(() => {
           setDone(true)

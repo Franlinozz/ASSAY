@@ -99,6 +99,25 @@ async function main() {
     const portfolio = seeded.result?.portfolio
     if (portfolio) await hit(api, new URL(portfolio).pathname, { expect: [200] })
     else failures.push('asy_job_result did not surface a portfolio URL (/p/:slug invisible)')
+
+    console.log('\n[route-sweep] artifact downloads are real files')
+    const arts = seeded.result?.artifacts ?? []
+    const pdf = arts.find((a) => a.kind === 'resume_ats' || a.kind === 'resume_designed')
+    if (pdf) {
+      const res = await fetch(pdf.url)
+      const buf = Buffer.from(await res.arrayBuffer())
+      const magic = buf.subarray(0, 5).toString('latin1')
+      const ok = res.status === 200 && magic.startsWith('%PDF') && buf.length > 1000
+      console.log(`  ${ok ? '✓' : '✗'} ${res.status}  download ${pdf.kind} → ${magic.trim()} (${buf.length}B)`)
+      if (!ok) failures.push(`download ${pdf.kind}: status ${res.status}, magic "${magic}", ${buf.length}B`)
+    } else {
+      failures.push('no downloadable PDF artifact in the dossier result')
+    }
+    // A tampered/absent token must be refused (403), never served.
+    if (pdf) {
+      const bad = pdf.url.replace(/tok=[^&]+/, 'tok=forged')
+      await hit('', bad, { expect: [403], allowRawGap: true })
+    }
   } finally {
     stop()
   }

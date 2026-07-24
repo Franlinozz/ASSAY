@@ -4,6 +4,24 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [0.10.1] — 2026-07-24
+
+### Audit — the surfacing pass (Phase 11, guardrail #10: nothing exists invisibly)
+
+- **FEATURES.md reconciliation**: walked every MCP tool, HTTP route, Next route, and store table and classified each SURFACED / API-ONLY (documented) / ORPHANED. Findings table added to FEATURES.md. **Zero ORPHANED remain.**
+- **Fixed an invisible capability**: `asy_create_dossier_job` created the public portfolio page (`/p/:slug`) but `asy_job_result` never returned its URL — it existed but nothing could reach it. Now surfaced as an absolute `portfolio` URL in the job result.
+- **New `/docs/api` page** documents the machine-facing endpoints (`/health`, `/.well-known/assay.json`, `/d-api`, `/d-api/:id`, `/p/:slug`, `/f/:id`); the two previously-undocumented API-only routes now have a home.
+- **Route sweep** (`scripts/route-sweep.mjs`, `npm run sweep`): boots the fake stack and hits every Next page + API + mcp-server public HTTP endpoint, asserting healthy status, zero raw-error leaks, a **real downloadable PDF** (`%PDF` magic bytes), and that a **forged file token is refused (403)**. Fails loudly if any capability goes invisible again.
+- **Consistency sweep**: prices trace to one constant (`TOOL_PRICES` → `priceOf` → generated site/docs/listing), verified by test; test-count claims reconciled to reality (**210 vitest + 47 Playwright e2e + 4 foundry**).
+- **Bug-taxonomy defenses** — each past bug class reproduced and pinned (`packages/mcp-server/src/taxonomy.test.ts` + Studio expiry test):
+  - **asset-referenced-but-missing** (broken-image-PASS): a missing-file document is a hard FAIL, and `summarize` excludes a failed artifact from the pass-rate — never a broken artifact wearing a PASS badge.
+  - **timezone** (the UTC bug): an instant near UTC midnight renders on the correct day in `Asia/Tokyo` (UTC+9), and `DATE_SANITY` evaluates in the dossier timezone.
+  - **placeholder leak**: a `[BRACKET]` placeholder is a hard FAIL.
+  - **raw provider error leak**: `sanitizeGap` returns only `{code, message}` — no stack, host, or raw error.
+  - **stale price display**: `priceOf()` equals `TOOL_PRICES` for every tool; the free set is exactly `asy_verify`/`asy_job_status`/`asy_job_result`.
+  - **share expiry actually expires** (clock injection): `getShareView` takes an injectable clock; a 7-day share is live now and `expired` (leaking no content) eight days later; revocation is immediate.
+- **Full-product e2e** (`e2e/product.spec.ts`): theme toggle persists across navigation; mobile nav opens and navigates; the `/agents` copy button copies the MCP config; persona fixture pages are live + labeled fictional; persona live-source chips point at real `/fixtures` pages.
+
 ## [0.10.0] — 2026-07-24
 
 ### Added — Judge mode + the sealed gallery personas (Phase 10)

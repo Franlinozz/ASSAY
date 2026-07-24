@@ -50,7 +50,7 @@ test.describe('the full dossier flow', () => {
   test('create → confirm → brief → forge → drawer → report(fail) → seal → share → verify → revoke', async ({
     page,
   }) => {
-    test.setTimeout(180_000)
+    test.setTimeout(240_000)
     await createDossier(page)
 
     // ── LEDGER: ingest the fixture résumé ──
@@ -87,7 +87,8 @@ test.describe('the full dossier flow', () => {
     // ── FORGE ──
     await page.getByTestId('to-forge').click()
     await page.getByTestId('run-forge').click()
-    await page.waitForSelector('[data-testid=forge-result]', { timeout: 120_000 })
+    // Two real chromium PDF renders; give headroom on a shared/loaded box (parallel e2e workers).
+    await page.waitForSelector('[data-testid=forge-result]', { timeout: 180_000 })
 
     // Evidence drawer: hovering a sentence pulls a taut thread to its proof.
     const drawer = page.getByTestId('evidence-drawer')

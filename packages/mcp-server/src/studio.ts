@@ -569,11 +569,12 @@ export function getShareView(
   store: Store,
   cfg: ServerConfig,
   shareId: string,
+  now: number = Date.now(), // injectable clock so expiry is testable (P11 taxonomy)
 ): Record<string, unknown> {
   const share = store.getShareFull(shareId)
   if (!share) return { found: false }
   if (share.revoked) return { found: true, revoked: true }
-  if (share.expiresAt && new Date(share.expiresAt).getTime() < Date.now())
+  if (share.expiresAt && new Date(share.expiresAt).getTime() < now)
     return { found: true, expired: true, expiresAt: share.expiresAt }
 
   const dossier = store.getDossier(share.dossierId)
