@@ -67,6 +67,27 @@
 | **Persona generation + mainnet seal (P10)** — `gen-personas.mjs` runs the real pipeline per persona (fake=deterministic / live=one LLM run each); link evidence fetch-checked for the linked tier; `seal-personas.mjs` anchors all leaves in ONE mainnet `sealBatch` (salt sidecar gitignored, guardrail #3); `gen-fixtures.mjs` emits the live `/fixtures/*` pages LINK_LIVENESS checks | `@xyndicate/web`        | `scripts/gen-personas.mjs` · `scripts/seal-personas.mjs` · `scripts/gen-fixtures.mjs` | `/fixtures/*` (live sources) | `e2e/judge.spec.ts` (seals verify vs mainnet) |
 | **/judge — the 90-second run (P10)** — scripted, pausable, skippable replay of the featured persona's SEALED run; 14 beats (ledger → question → JD → coverage-gap → forge → threads → **BLOCKED claim** → tribunal FAIL → repair → PASS → parse-back 100% → SEAL stamp → share → on-chain verify); driven only by real stored data; the sole live call (verify) has a cached fallback so it survives a total provider outage; standing "replaying a sealed run" caption | `@xyndicate/web`        | `/judge` (`JudgeTour.tsx`) + `POST /api/verify` | /judge · landing "Watch the 90-second run" CTA | `e2e/judge.spec.ts` (skippable, blocked+seal+verify beats, outage fallback) |
 
+## Surfacing audit (Phase 11 — guardrail #10, "nothing exists invisibly")
+
+Every MCP tool, HTTP route, Next route, and store table was walked and classified. **SURFACED** = a user-facing UI reaches it; **API-ONLY (documented)** = a machine endpoint with a docs page, no dashboard by design; **ORPHANED** = exists but neither surfaced nor documented (must be fixed, documented, or removed — none remain).
+
+| Item | Kind | Classification | Surface / docs |
+| --- | --- | --- | --- |
+| `asy_ats_scan` · `asy_claim_audit` · `asy_fit_brief` · `asy_cover_letter` · `asy_story_bank` · `asy_tailor_resume` · `asy_create_dossier_job` · `asy_job_status` · `asy_job_result` · `asy_verify` | MCP tool | SURFACED | Studio flow · `/agents` · `/verify` · `/pricing` · `/docs/tools` |
+| `POST /mcp` (paywall + JSON-RPC) | HTTP | SURFACED | Studio (via `/api/asy`) · `/agents` config · `/docs/x402` |
+| `POST /studio/dossier`, `GET /d-state/:id`, `POST /d/:id/{ingest,claims/:id,brief,forge,seal,share,share/revoke}`, `GET /d/:id/{job/:id,events}`, `GET /s-api/:id` | HTTP (Studio) | SURFACED | `/studio` · `/d/:id` · `/s/:shareId` (via `/api/asy` proxy) |
+| `GET /f/:id?tok=` | HTTP | SURFACED | Studio Report download buttons + recruiter portal (signed links) |
+| `GET /d-api` | HTTP | SURFACED | landing recent-seals strip (via `/api/recent-seals`) |
+| `GET /d-api/:id` | HTTP | API-ONLY (documented) | **`/docs/api`** (was undocumented → fixed P11) |
+| `GET /p/:slug` | HTTP | API-ONLY (documented) | returned by `asy_create_dossier_job`; **`/docs/api`** (fixed P11) |
+| `GET /.well-known/assay.json` | HTTP | API-ONLY (documented) | agent discovery · `/docs/api` · `/docs/index` |
+| `GET /health` | HTTP | API-ONLY (documented) | supervisor + anchor-queue alert · `/docs/api` |
+| Next routes: `/ /standard /evaluation /pricing /agents /verify /gallery /gallery/[slug] /judge /studio /d/[id] /s/[shareId]` | page | SURFACED | site nav + inter-page links; all in `sitemap.ts` |
+| Next API: `/api/verify /api/recent-seals /api/asy/[...path]` | route | SURFACED | consumed by `/verify`, landing strip, Studio |
+| store tables: `dossiers files orders jobs seals_pending shares events` | table | SURFACED | dossier job / Studio / anchor worker / recent-seals / download / share / event feed |
+
+**Result: zero ORPHANED.** Two API-only endpoints (`/d-api/:id`, `/p/:slug`) lacked a docs page; both are now documented at `/docs/api` (new). Route liveness is asserted by `scripts/route-sweep.mjs` (P11.2) and the full-product e2e (P11.3).
+
 <!--
 Row template:
 | asy_ats_scan — parse-back + format-law + keyword coverage | @xyndicate/tribunal | POST /mcp asy_ats_scan | Studio → Report | packages/tribunal/src/atsScan.test.ts |

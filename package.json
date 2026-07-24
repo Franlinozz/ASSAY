@@ -20,7 +20,8 @@
     "test:e2e": "playwright test",
     "clean": "npm run clean --workspaces --if-present",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "sweep": "node scripts/route-sweep.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

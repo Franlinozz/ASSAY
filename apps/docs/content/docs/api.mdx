@@ -1,0 +1,55 @@
+---
+title: HTTP API reference
+description: The machine-facing HTTP endpoints — health, agent discovery, public dossier reads, portfolio pages, and signed file downloads.
+---
+
+Assay's primary interface is the MCP endpoint (`POST /mcp`, see [Tools](/docs/tools)) and the
+on-chain [verify](/docs/verify) tool. A handful of plain HTTP endpoints round out the surface. These
+are **API-only** — they are consumed by agents, the public site, or download links, not by a
+dedicated dashboard — and are documented here so nothing exists invisibly.
+
+Base URL: `https://api.assayed.xyz`.
+
+## `GET /health`
+
+Liveness probe. Returns `{ ok, queueAge, ... }` in well under 100 ms with zero model calls. Used by
+the process supervisor and the anchor-queue age alert. No auth.
+
+## `GET /.well-known/assay.json`
+
+The **agent discovery manifest** — machine-readable service metadata (name, tools, prices, network,
+registry, endpoint). This is how an agent finds Assay's capabilities without reading the docs. No
+auth; safe to cache.
+
+## `GET /d-api`
+
+The **anonymized recent-seals feed** that powers the landing page's live strip. Returns at most 8
+rows, each carrying only a truncated dossier reference, seal status, standard version, and a coarse
+(day-resolution) timestamp. **Never any personal data** (guardrails #3/#9). Cached 60 s.
+
+## `GET /d-api/:id`
+
+A **public, PII-sanitized dossier summary** by dossier id (`DSR-…`). Returns the standard version,
+creation time, artifact kinds, per-claim strength/status, tribunal pass flags, and — if sealed — the
+salted commitment, chain id, and seal status. It never returns prose, contact details, evidence
+text, or salts. Anyone can inspect a dossier's shape and grade; nobody can reconstruct its contents.
+No auth (the id is the capability, and the payload is already sanitized).
+
+## `GET /p/:slug`
+
+The **public portfolio page** for a sealed dossier. `asy_create_dossier_job` returns a `portfolio`
+path (`/p/<slug>`) alongside the artifact set; the page is the rendered `portfolio_page` artifact —
+evidence-gated prose, tier chips, and a link to verify the seal. Returns `404` for an unknown or
+unshared slug.
+
+## `GET /f/:id?tok=…`
+
+**Signed file download.** Every generated artifact (ATS PDF, designed résumé, DOCX, cover letter,
+…) is fetched here with a short-lived HMAC token (`tok`) minted by the Studio or the dossier-job
+result. A missing or expired token returns `403`; an unknown id returns `404`. The token *is* the
+credential — no accounts.
+
+---
+
+> These endpoints are stable and safe to depend on. Payment-gated capability lives only behind
+> `POST /mcp` (see [x402](/docs/x402)); everything documented here is free to read.

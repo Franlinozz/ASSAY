@@ -446,18 +446,24 @@ export function jobResult(ctx: PipelineCtx, args: { jobId: string }): ToolResult
         seal?: unknown
         questions?: string[]
         dossierId?: string
+        portfolio?: string | null
       })
     : {}
   const links = (result.artifacts ?? []).map((a) => ({
     kind: a.kind,
     url: signedLink(ctx.cfg, a.fileId),
   }))
+  // Surface the public portfolio page URL (served at /p/:slug). It was computed at create time but
+  // never returned — an invisible capability (Phase 11 surfacing audit). Absolute so agents can open it.
+  const portfolio =
+    typeof result.portfolio === 'string' ? `${ctx.cfg.baseUrl}${result.portfolio}` : null
   return {
     summary: `Dossier ${result.dossierId ?? job.resultRef} ready — ${links.length} artifact(s), sealed via asy_verify.`,
     data: {
       ok: true,
       dossierId: result.dossierId ?? job.resultRef,
       artifacts: links,
+      portfolio,
       tribunal: result.tribunal,
       seal: result.seal,
       questions: result.questions ?? [],

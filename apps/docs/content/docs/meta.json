@@ -1,4 +1,4 @@
 {
   "title": "Assay",
-  "pages": ["index", "tools", "standard", "verify", "x402"]
+  "pages": ["index", "tools", "standard", "verify", "api", "x402"]
 }
