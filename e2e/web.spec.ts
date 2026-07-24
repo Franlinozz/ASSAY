@@ -9,7 +9,17 @@ import { STANDARD, STANDARD_MARKDOWN } from '../apps/web/lib/standard.generated'
 
 // P8 e2e — runs on the fake-mode stack (global-setup seeds a real dossier through the pipeline).
 
-const PAGES = ['/', '/standard', '/evaluation', '/pricing', '/agents', '/verify', '/gallery']
+const PAGES = [
+  '/',
+  '/standard',
+  '/evaluation',
+  '/pricing',
+  '/agents',
+  '/verify',
+  '/gallery',
+  '/gallery/adaeze-okonkwo',
+  '/judge',
+]
 
 function seededDossierId(): string {
   const state = JSON.parse(readFileSync(resolve(HERE, '.stack-state.json'), 'utf8')) as {

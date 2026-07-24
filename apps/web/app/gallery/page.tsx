@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { TierChip } from '../../components/TierChip'
-import type { Tier } from '../../lib/site'
-import demo from '../../lib/demo-run.generated.json'
+import { featuredPersona, otherPersonas, personaTiers, type Persona } from '../../lib/personas'
 
 export const metadata: Metadata = {
   title: 'Gallery',
@@ -11,13 +10,68 @@ export const metadata: Metadata = {
   openGraph: { images: ['/og/gallery.png'] },
 }
 
-// Guardrail #7: every gallery entry is REAL pipeline output on a clearly-labeled fictional
-// persona. No invented users, no invented grades. The full persona set lands in Phase 10; the
-// grid and the featured flag are wired to real dossier data from day one.
+// Guardrail #7: every gallery entry is REAL pipeline output on a clearly-labeled fictional persona.
+// No invented users, no invented grades. Featured = the career-ladder case; the others listed beneath
+// with no duplicates. All data comes from lib/personas.generated.json.
+
+function tierCounts(p: Persona) {
+  const confirmed = p.claims.filter((c) => c.status === 'confirmed').length
+  const questions = p.claims.filter((c) => c.status === 'needs_confirmation').length
+  const linked = p.claims.filter((c) => c.strength === 'linked').length
+  return { confirmed, questions, linked }
+}
+
+function PersonaCard({ persona, featured }: { persona: Persona; featured?: boolean }) {
+  const tiers = personaTiers(persona)
+  const rollup = persona.tribunal.rollup
+  const { confirmed, questions, linked } = tierCounts(persona)
+  const missing = persona.coverage.filter((c) => c.status === 'missing').length
+  return (
+    <Link
+      href={`/gallery/${persona.slug}`}
+      className={`dossier-card${featured ? ' dossier-card-featured' : ''}`}
+      data-featured={featured ? 'true' : undefined}
+      data-testid={`persona-card-${persona.slug}`}
+    >
+      {featured && <span className="featured-flag">featured</span>}
+      <div>
+        <p className="overline" style={{ marginBottom: '0.3rem' }}>
+          {persona.caseType}
+        </p>
+        <h3 style={{ fontSize: featured ? '1.4rem' : '1.2rem' }}>{persona.name}</h3>
+        <p className="caption">
+          {persona.headline} · <span className="fictional-tag-inline">fictional persona</span>
+        </p>
+      </div>
+      {featured && <p className="caption" style={{ color: 'var(--ink-soft)' }}>{persona.blurb}</p>}
+      <div className="dossier-meta">
+        <span className="chip chip-ok">
+          Tribunal {rollup.finalPassed}/{rollup.artifacts} PASS
+        </span>
+        <span className={`chip ${persona.seal.status === 'sealed' ? 'chip-sealed' : ''}`}>
+          {persona.seal.status === 'sealed' ? 'Sealed on X Layer' : 'Seal pending'}
+        </span>
+      </div>
+      <div className="dossier-meta">
+        {tiers.map((t) => (
+          <TierChip key={t} tier={t} />
+        ))}
+      </div>
+      <p className="caption mono">
+        {confirmed} claims confirmed
+        {questions > 0 ? ` · ${questions} question${questions > 1 ? 's' : ''}` : ''} · {linked} linked
+        {missing > 0 ? ` · ${missing} gap${missing > 1 ? 's' : ''} named` : ''}
+      </p>
+      <span className="btn btn-ghost btn-sm" style={{ marginTop: 'auto', alignSelf: 'flex-start' }}>
+        Open the dossier →
+      </span>
+    </Link>
+  )
+}
 
 export default function GalleryPage() {
-  const tiers = [...new Set(demo.claims.map((c) => c.strength))] as Tier[]
-  const rollup = demo.tribunal.rollup
+  const featured = featuredPersona()
+  const others = otherPersonas()
 
   return (
     <>
@@ -26,67 +80,25 @@ export default function GalleryPage() {
         <h1>Dossiers on display.</h1>
         <p className="lede">
           Every dossier here was produced by the same pipeline you&rsquo;d run — extracted, gated,
-          graded, and sealed. The personas are fictional and say so on the tin; the grades and seals
-          are real.
+          graded, and sealed on X Layer. The personas are fictional and say so on the tin; the grades,
+          the gaps, and the seals are real.
         </p>
       </div>
 
       <section className="section-tight">
         <div className="container">
           <div className="gallery-grid" data-testid="gallery-grid">
-            {/* featured — the fixture persona's real run */}
-            <div className="dossier-card dossier-card-featured" data-featured="true">
-              <span className="featured-flag">featured</span>
-              <div>
-                <p className="overline" style={{ marginBottom: '0.3rem' }}>
-                  Career dossier
-                </p>
-                <h3 style={{ fontSize: '1.3rem' }}>{demo.profile.fullName}</h3>
-                <p className="caption">{demo.profile.headline} · fictional persona</p>
-              </div>
-              <div className="dossier-meta">
-                <span className="chip chip-ok">
-                  Tribunal {rollup.finalPassed}/{rollup.artifacts} PASS
-                </span>
-                <span className="caption mono">
-                  {demo.claims.length} claims · {demo.coverage.length} requirements mapped
-                </span>
-              </div>
-              <div className="dossier-meta">
-                {tiers.map((t) => (
-                  <TierChip key={t} tier={t} />
-                ))}
-              </div>
-              <p className="caption" style={{ color: 'var(--ink-soft)' }}>
-                {demo.claims[0]?.text}…
-              </p>
-              <div style={{ marginTop: 'auto', display: 'flex', gap: '0.6rem' }}>
-                <Link href="/evaluation" className="btn btn-ghost btn-sm">
-                  See the full evaluation
-                </Link>
-              </div>
-            </div>
-
-            {/* honest placeholders — wired, awaiting the Phase-10 persona set */}
-            {['persona-2', 'persona-3'].map((slot) => (
-              <div
-                key={slot}
-                className="dossier-card"
-                style={{ justifyContent: 'center', alignItems: 'center', minHeight: '16rem' }}
-              >
-                <p className="overline" style={{ textAlign: 'center' }}>
-                  Awaiting assay
-                </p>
-                <p className="caption" style={{ textAlign: 'center', maxWidth: '16rem' }}>
-                  The next fictional persona&rsquo;s dossier is forged, graded, and sealed here — by
-                  the pipeline, not by hand.
-                </p>
-              </div>
+            <PersonaCard persona={featured} featured />
+            {others.map((p) => (
+              <PersonaCard key={p.slug} persona={p} />
             ))}
           </div>
           <p className="caption" style={{ marginTop: '1.2rem' }}>
-            Want yours here? Sealed dossiers can opt into the gallery from the Studio&rsquo;s share
-            controls.
+            Prefer to watch?{' '}
+            <Link href="/judge" className="claim-link">
+              Run the 90-second judge tour
+            </Link>{' '}
+            over the featured dossier — every beat driven by its real sealed data.
           </p>
         </div>
       </section>

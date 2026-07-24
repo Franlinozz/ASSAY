@@ -2,6 +2,7 @@ import type { GenerateRequest, ModelAdapter, Role, RawResult } from '../types'
 import type { Fetcher, FetchResult } from '../fetcher'
 import { isBlockedIp } from '../fetcher'
 import { extractWrapped } from '../prompts'
+import { fakePersonaExtractionFor } from './personas'
 
 // FAKES ARE THE DEFAULT (ASY_PROVIDER_MODE=fake). Deterministic, instant, offline — zero spend.
 
@@ -61,7 +62,11 @@ const FAKE_EXTRACTION = {
 // A grounded-but-unsourced-number claim, added only under the e2e repair-demo flag so the Studio
 // flow exercises the needs_confirmation path (tokens all appear in SAMPLE_RESUME_TEXT → grounded;
 // the number 8 is absent → the claim asks its specific question). Never in unit tests.
-function fakeExtraction(): unknown {
+function fakeExtraction(prompt = ''): unknown {
+  // Persona-aware: a gallery/judge persona's résumé returns that persona's deterministic extraction
+  // (guardrail #7 — real pipeline output on a clearly-labeled fictional persona). Default = Chidinma.
+  const persona = fakePersonaExtractionFor(prompt)
+  if (persona) return persona
   if (process.env['ASY_FAKE_REPAIR_DEMO'] === '1') {
     return {
       ...FAKE_EXTRACTION,
@@ -142,7 +147,7 @@ const FAKE_CRAFT_FAIL = {
     },
   ],
   repairBrief:
-    'Tighten the cover letter: lead with the 38% latency result, name the payments-scale requirement explicitly, and cut the generic opener.',
+    'Tighten the cover letter: lead with your strongest quantified result, name the specific requirement it meets, and cut the generic opener.',
 }
 
 function fakeCritic(prompt: string): unknown {
@@ -162,7 +167,7 @@ export function resetFakeRepairDemo(): void {
 function fakeResponse(req: GenerateRequest): string {
   switch (req.role) {
     case 'extractor':
-      return JSON.stringify(fakeExtraction())
+      return JSON.stringify(fakeExtraction(req.prompt))
     case 'decomposer':
       return JSON.stringify(fakeDecompose(req.prompt))
     case 'writer':

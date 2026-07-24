@@ -102,6 +102,9 @@ export default function LandingPage() {
               <Link href="/studio" className="btn btn-primary">
                 Open the Studio
               </Link>
+              <Link href="/judge" className="btn btn-ghost">
+                Watch the 90-second run
+              </Link>
               <Link href="/verify" className="btn btn-ghost">
                 Verify a dossier
               </Link>

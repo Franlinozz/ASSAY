@@ -53,3 +53,6 @@ logs/
 # foundry
 packages/contracts/cache/
 packages/contracts/solidity/out/
+
+# operator-only persona seal salts (guardrail #3 — never public)
+apps/web/.persona-salts.json

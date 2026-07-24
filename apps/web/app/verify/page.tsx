@@ -9,7 +9,13 @@ export const metadata: Metadata = {
   openGraph: { images: ['/og/verify.png'] },
 }
 
-export default function VerifyPage() {
+export default async function VerifyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ leaf?: string; dossierId?: string }>
+}) {
+  const sp = await searchParams
+  const prefill = (sp.leaf ?? sp.dossierId ?? '').trim() || undefined
   return (
     <>
       <div className="container page-head">
@@ -28,7 +34,7 @@ export default function VerifyPage() {
 
       <section className="section-tight">
         <div className="container">
-          <VerifyClient />
+          <VerifyClient {...(prefill ? { prefill, auto: true } : {})} />
         </div>
       </section>
     </>

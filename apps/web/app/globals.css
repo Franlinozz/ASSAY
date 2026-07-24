@@ -2046,3 +2046,100 @@ table.office td.num {
 .withdrawn {
   padding-block: clamp(3rem, 8vw, 6rem);
 }
+
+/* ── Fictional-persona tag (guardrail #7 — gallery/demo honesty) ── */
+.fictional-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--graphite-text, #66614f);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+}
+.fictional-tag::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--brass, #b3894d);
+}
+.fictional-tag-inline {
+  color: var(--brass-text, #7a5c2e);
+  font-weight: 560;
+}
+.persona-exp {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.persona-exp:last-child { border-bottom: 0; }
+
+/* ── Judge tour (90-second scripted replay of a sealed run) ── */
+.judge-shell { max-width: 52rem; margin: 0 auto; }
+.judge-stagebox {
+  position: relative;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: clamp(1.2rem, 4vw, 2rem);
+  min-height: 22rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  overflow: hidden;
+}
+.judge-replay-caption {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.9rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--graphite-text, #66614f);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.judge-replay-caption::before {
+  content: '';
+  width: 0.4rem; height: 0.4rem; border-radius: 999px;
+  background: var(--brass, #b3894d);
+}
+.judge-beat-kicker { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--viridian-text); font-weight: 600; }
+.judge-beat-title { font-family: var(--font-display, serif); font-size: clamp(1.2rem, 3vw, 1.6rem); margin: 0.1rem 0 0.3rem; }
+.judge-beat-body { display: flex; flex-direction: column; gap: 0.6rem; }
+.judge-progress-track { height: 4px; border-radius: 999px; background: var(--hairline); overflow: hidden; margin-top: 0.9rem; }
+.judge-progress-fill { height: 100%; background: var(--viridian); transition: width 0.2s linear; }
+.judge-controls { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.8rem; flex-wrap: wrap; }
+.judge-beat-dots { display: flex; gap: 0.3rem; margin-left: auto; flex-wrap: wrap; }
+.judge-dot { width: 0.5rem; height: 0.5rem; border-radius: 999px; background: var(--hairline); border: 0; padding: 0; cursor: pointer; }
+.judge-dot-on { background: var(--viridian); }
+.judge-dot-done { background: var(--brass, #b3894d); }
+.judge-blocked {
+  border: 1px solid var(--vermilion-text, #b23b22);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  background: color-mix(in srgb, var(--vermilion, #C63D21) 6%, transparent);
+}
+.judge-blocked-badge { color: var(--vermilion-text, #b23b22); font-weight: 640; letter-spacing: 0.04em; }
+.judge-seal-stamp {
+  align-self: flex-start;
+  border: 2px solid var(--vermilion, #C63D21);
+  color: var(--vermilion-text, #b23b22);
+  border-radius: 10px;
+  padding: 0.6rem 1.1rem;
+  font-family: var(--font-display, serif);
+  font-size: 1.3rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transform: rotate(-3deg);
+}
+.judge-jd { font-family: var(--font-mono, monospace); font-size: 0.8rem; white-space: pre-wrap; background: var(--paper); border: 1px solid var(--hairline); border-radius: 8px; padding: 0.7rem 0.9rem; }
+.judge-thread { border-left: 2px solid var(--viridian); padding-left: 0.8rem; }
+@media (prefers-reduced-motion: reduce) { .judge-progress-fill { transition: none; } }

@@ -131,7 +131,7 @@ test.describe('the full dossier flow', () => {
   })
 })
 
-test('the /judge stub renders', async ({ page }) => {
+test('the /judge tour renders (full coverage in judge.spec.ts)', async ({ page }) => {
   await page.goto('/judge')
-  await expect(page.getByRole('heading', { name: /guided tour/i })).toBeVisible()
+  await expect(page.getByTestId('judge-tour')).toBeVisible()
 })

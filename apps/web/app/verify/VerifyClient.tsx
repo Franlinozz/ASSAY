@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SITE } from '../../lib/site'
 
 interface VerifyResult {
@@ -19,12 +19,13 @@ interface VerifyResult {
 
 type State = { phase: 'idle' } | { phase: 'checking' } | { phase: 'done'; result: VerifyResult }
 
-export function VerifyClient() {
-  const [input, setInput] = useState('')
+export function VerifyClient({ prefill, auto }: { prefill?: string; auto?: boolean } = {}) {
+  const [input, setInput] = useState(prefill ?? '')
   const [state, setState] = useState<State>({ phase: 'idle' })
+  const ranAuto = useRef(false)
 
-  const check = async () => {
-    const value = input.trim()
+  const check = async (override?: string) => {
+    const value = (override ?? input).trim()
     if (!value) return
     setState({ phase: 'checking' })
     const isLeaf = /^0x[0-9a-fA-F]{64}$/.test(value)
@@ -40,6 +41,15 @@ export function VerifyClient() {
       setState({ phase: 'done', result: { error: 'verification unavailable right now' } })
     }
   }
+
+  // Auto-run when arriving from a "verify this seal" link (?leaf=… or a persona's verify button).
+  useEffect(() => {
+    if (auto && prefill && !ranAuto.current) {
+      ranAuto.current = true
+      void check(prefill)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, prefill])
 
   const r = state.phase === 'done' ? state.result : null
   const status = r?.error

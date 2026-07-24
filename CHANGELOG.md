@@ -4,6 +4,24 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-07-24
+
+### Added — Judge mode + the sealed gallery personas (Phase 10)
+
+- **Three fictional gallery personas** (`@xyndicate/providers` `fake/personas.ts`, single source of truth), each a REAL run of the same pipeline the server runs (guardrail #7 — real pipeline output on clearly-labeled fictional personas):
+  - **Adaeze Okonkwo — Product Operations, Lagos** (career-ladder case): mixed evidence tiers, one ambiguity claim that stays a question (an unsupported figure), a real FAIL→repair→PASS arc.
+  - **Tomás Rivera — Frontend Engineer, Buenos Aires** (tech case): evidence that is live and checkable; every backing link is fetch-checked to earn the Linked tier.
+  - **Mei-Lin Chao — Pharmacist → Health-Ops, Singapore** (career-changer): exercises the transferable-skills gap brief; the coverage map shows the real gaps rather than papering over them.
+  - Each carries a visible **"Fictional persona — demonstration"** tag on every surface.
+- **`/gallery`** now features the career-ladder case and lists the others beneath — no duplicates, no invented grades. **`/gallery/[slug]`** renders each persona's full dossier: the evidence ledger (tier per claim), the held-back/unsupported claims, the live fetch-checked sources, the coverage map (gaps named), a forged artifact with per-sentence claim refs, the tribunal repair story, the parse-back diff, and the seal receipt with an on-chain verify link.
+- **Persona generation + real mainnet seal**: `scripts/gen-personas.mjs` runs the pipeline per persona (`ASY_PROVIDER_MODE=fake` = deterministic/zero-spend for layout+tests; `=live` = one real LLM run each). `scripts/seal-personas.mjs` anchors all three commitment leaves in **one `sealBatch` on X Layer mainnet** (salts kept in a gitignored sidecar, guardrail #3). `scripts/gen-fixtures.mjs` emits the live `/fixtures/*` pages that `LINK_LIVENESS` fetch-checks (gotcha #11). **All three seals verify on `/verify` against mainnet** (tx `0xae83407122efebea92e422921f91dd319ad504c611388fe15196274dc92b923e`, chainId 196).
+- **`/judge` — the 90-second run**: a scripted, pausable, skippable replay of the featured persona's SEALED dossier. 14 beats — ledger builds (claims confirm) → an ambiguity question → JD pastes → coverage shows a 'missing' → forge runs → a sentence pulls its evidence thread → **ONE claim visibly BLOCKED as unsupported** (the honesty beat) → tribunal FAILS the first draft on a real check → repair → PASS → parse-back "100% fields survived" → SEAL stamp → share portal → on-chain verify. Every beat is driven by real stored data; the only live call (verify) has a **cached fallback**, so the tour survives a total provider outage; a standing "replaying a sealed run" caption keeps it honest. The landing gains a **"Watch the 90-second run"** secondary CTA.
+
+### Tests
+
+- New **`e2e/judge.spec.ts`**: gallery lists every persona with exactly one featured card (no duplicates); every persona page carries the fictional tag + its real dossier id + on-chain leaf; the featured persona shows a held-back claim; **all three seals verify against mainnet** through `/verify`; the judge tour is skippable and reaches the blocked, seal, and verify beats; the verify beat confirms live (with the cached fallback proven). `/gallery/[slug]` and `/judge` added to the axe + raw-gap sweeps. **Repo total: 201 vitest + 4 foundry + Playwright (web + studio + judge).**
+- Persona runs bake the deterministic repair loop (`resetFakeRepairDemo()` per persona) so the sealed judge data contains a genuine FAIL→repair→PASS arc offline.
+
 ## [0.9.0] — 2026-07-24
 
 ### Added — the Studio + the recruiter Share Portal
