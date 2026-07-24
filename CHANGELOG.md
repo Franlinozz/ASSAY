@@ -4,6 +4,35 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-07-24
+
+### Added
+
+- `@xyndicate/web`: **the public Assay Office** on assayed.xyz (Next 15, port 3100, replaces the holding page). Both themes first-class (pre-paint boot script + toggle, no flash, no layout shift); self-hosted variable fonts (Fraunces / Inter / JetBrains Mono, ~240KB total); guilloché SVG lattice bands + rosette + registration marks as the signature graphic language; vermilion strictly reserved for seal states.
+  - **`/` Landing** — the hero IS the signature interaction: a live evidence-threads component (SVG hairlines + framer-motion springs; hover a résumé bullet → taut threads to its evidence cards with tier chips), reused later by the Studio drawer and share portal. Plus: live anonymized recent-seals strip, the six-step loop as a hairline diagram (horizontal + mobile-vertical), four moat sections rendering **real product output** (forge sentences with claim refs, the parse-back diff, the live mainnet registry receipt, a share-portal preview), and the integrity-vs-truth line verbatim.
+  - **`/standard`** — rendered from `renderStandardMarkdown`'s source module, regenerated on every build (guardrail #2): all 12 hard checks with plain-English law glosses, craft axes + weights, the exact pass rule, repair policy. "The standard does not bend for our own marketing."
+  - **`/evaluation`** — a REAL dossier run (fictional persona, live Claude critic + DeepSeek extraction): first-draft **FAIL cards with real findings**, repair briefs verbatim, PASS cards, one honest final fail, the honest 4/8-first-draft rollup, and the full parse-back field diff (100% fidelity, 10/10 fields survived).
+  - **`/pricing`** — human framing + the full generated tool table (same source as the paywall) + the comparison line: "The incumbents charge $50/month to keyword-stuff. Assay charges cents per call to prove."
+  - **`/agents`** — endpoint, copyable MCP config, the x402 meter explained in four steps, and a tool reference **generated from the server's own zod schemas**.
+  - **`/verify`** — live on-chain check via the real free `asy_verify` MCP call (server-proxied, zero wallet), with honest sealed / pending / not-found / unavailable states.
+  - **`/gallery`** — grid wired to real dossier data with featured-flag support; honest awaiting-assay slots until the Phase-10 persona set.
+  - Global: OG images chromium-rendered from a certificate template (verified by eye), sitemap, robots, favicon, `/api/verify` + `/api/recent-seals` proxies with sanitized-gap degradation.
+- `@xyndicate/docs`: **Fumadocs skeleton** (v15 line, Tailwind v4, basePath `/docs`, port 3101): quickstart, **tools reference generated from `toolspec.ts`**, **standard mirror generated via `renderStandardMarkdown`**, verify guide, x402 notes. Search, sidebar, dark/light built in.
+- `@xyndicate/mcp-server`: `toolspec.ts` — tool titles/descriptions/zod schemas extracted to one table consumed by the server, the site, and the docs (published schemas = shipped schemas); `GET /d-api` — anonymized recent-seals strip (truncated id + status + day only).
+- **E2e suite** (Playwright on the fake-mode stack, seeded through the real pipeline): both themes, hero-threads interaction, live strip, `/standard`-vs-`renderStandardMarkdown` content equality, verify round-trip (honest `pending` without a sealer key) + bogus-ref honesty, **axe a11y zero serious/critical on all 7 pages**, raw-gap/placeholder HTML sweep. **22 e2e + 193 vitest + 4 foundry.**
+- Visual self-audit loop tooling (`scripts/audit.mjs`): every page × 1440px/390px × both themes, screenshots reviewed by the executor; defects found were fixed and re-shot (thread geometry, axis-bar rendering, loop-caption clipping, AA contrast).
+
+### Fixed (found by this phase's one real-provider run — the run exists to catch exactly these)
+
+- **ClaudeAdapter**: the Anthropic API now rejects `temperature` for claude-sonnet-5 (400) — every Claude call silently fell back to OpenAI. Temperature dropped; Claude is critic+writer again per the cost policy.
+- **Claim-gate unit canon**: live extraction writes descriptive units ("percent", "requests per second") that the suffix-only number matcher could never match, so every honest figure became a question. Units now canonicalize (`percent`→`%`, descriptive→value-only) with the embellishment protection intact (a wrong value still never passes).
+- **Extraction robustness**: live models sometimes emit `numericFacts.unit: null` — coerced to schema-legal shapes instead of failing the dossier.
+- **Critic robustness**: live critics sometimes emit findings as bare strings — coerced to `{axis, detail}`; no more `[craft:undefined]` lines in repair briefs.
+
+### Changed
+
+- Light-theme graphite/brass darkened to AA-contrast text grades and text-safe viridian/vermilion variables added in both themes (axe zero-serious is a hard requirement; decorative marks keep the AGENTS.md token values).
+
 ## [0.7.0] — 2026-07-24
 
 ### Added

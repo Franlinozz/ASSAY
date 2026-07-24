@@ -10,7 +10,7 @@ export interface CraftGrade {
 }
 
 export const CRITIC_SYSTEM =
-  'You are Assay\'s craft critic. Grade a career artifact against the published Assay Standard craft axes. ' +
+  "You are Assay's craft critic. Grade a career artifact against the published Assay Standard craft axes. " +
   'You judge craft only — never invent facts, and never reward unsupported claims. Output strict JSON only.'
 
 export function buildCriticPrompt(artifact: Artifact, dossier: Dossier): string {
@@ -32,18 +32,54 @@ function clamp(n: unknown): number {
   return Math.max(0, Math.min(100, Math.round(v)))
 }
 
-export async function gradeCraft(artifact: Artifact, dossier: Dossier, router: ModelRouter): Promise<CraftGrade> {
+export async function gradeCraft(
+  artifact: Artifact,
+  dossier: Dossier,
+  router: ModelRouter,
+): Promise<CraftGrade> {
   const res = await router.generate(
-    { role: 'critic', system: CRITIC_SYSTEM, prompt: buildCriticPrompt(artifact, dossier), json: true },
+    {
+      role: 'critic',
+      system: CRITIC_SYSTEM,
+      prompt: buildCriticPrompt(artifact, dossier),
+      json: true,
+    },
     { dossierId: dossier.id },
   )
   // On critic degradation we do NOT fabricate a passing grade — a dossier can't pass craft it
   // couldn't grade. Empty axes → weighted mean 0 → craft fails → repair (safe).
   if (res.degraded) {
-    return { axes: {}, findings: [{ axis: '*', detail: 'craft critic unavailable' }], repairBrief: '', degraded: true }
+    return {
+      axes: {},
+      findings: [{ axis: '*', detail: 'craft critic unavailable' }],
+      repairBrief: '',
+      degraded: true,
+    }
   }
-  const raw = res.json as { axes?: Record<string, number>; findings?: Array<{ axis: string; detail: string }>; repairBrief?: string }
+  const raw = res.json as {
+    axes?: Record<string, number>
+    findings?: unknown[]
+    repairBrief?: string
+  }
   const axes: Record<string, number> = {}
   for (const id of CRAFT_AXIS_IDS) axes[id] = clamp(raw.axes?.[id])
-  return { axes, findings: raw.findings ?? [], repairBrief: raw.repairBrief ?? '', degraded: false }
+  // Live critics sometimes emit findings as bare strings or partial objects — coerce to the
+  // {axis, detail} shape and drop anything empty (no "[craft:undefined] undefined" in briefs).
+  const findings = (raw.findings ?? [])
+    .map((f): { axis: string; detail: string } | null => {
+      if (typeof f === 'string' && f.trim()) return { axis: '*', detail: f.trim() }
+      if (f && typeof f === 'object') {
+        const o = f as { axis?: unknown; detail?: unknown; text?: unknown }
+        const detail =
+          typeof o.detail === 'string' && o.detail.trim()
+            ? o.detail.trim()
+            : typeof o.text === 'string' && o.text.trim()
+              ? o.text.trim()
+              : ''
+        if (detail) return { axis: typeof o.axis === 'string' && o.axis ? o.axis : '*', detail }
+      }
+      return null
+    })
+    .filter((f): f is { axis: string; detail: string } => f !== null)
+  return { axes, findings, repairBrief: raw.repairBrief ?? '', degraded: false }
 }

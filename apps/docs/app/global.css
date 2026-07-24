@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+@source '../../../node_modules/fumadocs-ui/dist/**/*.js';
+
+/* Assay Office accents — viridian primary, both themes first-class. */
+:root {
+  --color-fd-primary: hsl(162 48% 24%);
+}
+.dark {
+  --color-fd-primary: hsl(163 41% 47%);
+}

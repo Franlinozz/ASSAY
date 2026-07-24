@@ -1,0 +1,4 @@
+.next/
+.source/
+.docs-gen/
+next-env.d.ts

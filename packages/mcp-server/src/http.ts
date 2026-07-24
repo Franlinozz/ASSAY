@@ -119,6 +119,19 @@ export function buildApp(rt: AppRuntime): Express {
     return void res.send(bytes)
   })
 
+  // ── GET /d-api — anonymized recent seals (the landing page's live strip). No PII: a truncated
+  // dossier id, seal status, standard version, and a coarse timestamp only. ──
+  app.get('/d-api', (_req: Request, res: Response) => {
+    const rows = store.listRecentSealed(8).map((r) => ({
+      ref: `${r.id.slice(0, 4)}…${r.id.slice(-3)}`,
+      sealStatus: r.sealStatus,
+      standardVersion: cfg.standardVersion,
+      day: r.createdAt.slice(0, 10),
+    }))
+    res.setHeader('Cache-Control', 'public, max-age=60')
+    res.json({ recent: rows })
+  })
+
   // ── GET /d-api/:id — public, PII-sanitized dossier JSON (guardrail #3/#9). ──
   app.get('/d-api/:id', (req: Request, res: Response) => {
     const d = store.getDossier(String(req.params.id)) as Dossier | undefined

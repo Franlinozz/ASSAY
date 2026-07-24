@@ -193,6 +193,18 @@ export class Store {
     return row?.seal_status
   }
 
+  // Recent dossiers that reached the seal stage — anonymized upstream (id + status + time only).
+  listRecentSealed(limit = 8): Array<{ id: string; sealStatus: SealStatus; createdAt: string }> {
+    const rows = this.db
+      .prepare(
+        `SELECT id, seal_status, created_at FROM dossiers
+         WHERE seal_status IN ('pending','sealed')
+         ORDER BY created_at DESC LIMIT ?`,
+      )
+      .all(limit) as Array<{ id: string; seal_status: SealStatus; created_at: string }>
+    return rows.map((r) => ({ id: r.id, sealStatus: r.seal_status, createdAt: r.created_at }))
+  }
+
   // ── files (binaries + HMAC signed URLs) ──
   putFile(input: { dossierId?: string; name: string; ext: string; bytes: Uint8Array }): FileRow {
     const id = newId('file')

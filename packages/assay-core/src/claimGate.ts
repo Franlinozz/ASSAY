@@ -6,10 +6,7 @@ import type { Claim, EvidenceItem, Sentence } from './types'
 // injected or hallucinated statement with no evidence simply produces a finding, never prose.
 
 export type FindingCode =
-  | 'UNSUPPORTED_SENTENCE'
-  | 'UNCONFIRMED_CLAIM'
-  | 'DANGLING_EVIDENCE'
-  | 'NUMBER_NOT_IN_EVIDENCE'
+  'UNSUPPORTED_SENTENCE' | 'UNCONFIRMED_CLAIM' | 'DANGLING_EVIDENCE' | 'NUMBER_NOT_IN_EVIDENCE'
 
 export interface Finding {
   code: FindingCode
@@ -24,9 +21,10 @@ export interface NormalizedNumber {
 }
 
 // Matches quantities: optional $ prefix, an integer (with thousands commas) or decimal, and an
-// optional unit suffix. "40%", "$1,200", "3x", "10k", "5". The leading (?<![A-Za-z]) means digits
-// glued to letters (p95, h2, v4, COVID19) are NOT read as claimed quantities.
-const NUMBER_RE = /(?<![A-Za-z0-9])(\$)?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(%|x|k|m|b|bn)?/gi
+// optional unit suffix. "40%", "40 percent", "$1,200", "3x", "10k", "5". The leading (?<![A-Za-z])
+// means digits glued to letters (p95, h2, v4, COVID19) are NOT read as claimed quantities.
+const NUMBER_RE =
+  /(?<![A-Za-z0-9])(\$)?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(%|percent\b|pct\b|x\b|k\b|m\b|bn\b|b\b)?/gi
 
 export function extractNumbers(text: string): NormalizedNumber[] {
   const out: NormalizedNumber[] = []
@@ -35,11 +33,22 @@ export function extractNumbers(text: string): NormalizedNumber[] {
     const digits = (m[2] ?? '').replace(/,/g, '')
     const value = Number.parseFloat(digits)
     if (Number.isNaN(value)) continue
-    let suffix = (m[3] ?? '').toLowerCase()
-    if (suffix === 'bn') suffix = 'b'
-    out.push({ raw: m[0].trim(), value, unit: `${dollar}${suffix}` })
+    out.push({ raw: m[0].trim(), value, unit: `${dollar}${canonUnit(m[3] ?? '')}` })
   }
   return out
+}
+
+// Canonical unit classes for value+unit comparison. Live extraction writes descriptive units
+// ("percent", "requests per second", "junior engineers") that prose can never carry as a regex
+// suffix — those compare on VALUE alone (the embellishment protection is the value: "40%" still
+// never matches {value:30}). Suffix-expressible units keep their strict class.
+export function canonUnit(unit: string): string {
+  const t = unit.trim().toLowerCase()
+  if (t === '%' || t === 'percent' || t === 'pct') return '%'
+  if (t === '$' || t === 'usd' || t === 'dollars') return '$'
+  if (t === 'bn') return 'b'
+  if (t === 'x' || t === 'k' || t === 'm' || t === 'b') return t
+  return '' // descriptive unit → value-only match
 }
 
 // Normalized key for value+unit comparison. "30%" from a sentence and {value:30,unit:'%'}
@@ -52,7 +61,11 @@ function factKeys(claims: Claim[]): Set<string> {
   const keys = new Set<string>()
   for (const c of claims) {
     for (const f of c.numericFacts) {
-      keys.add(numberKey(f.value, f.unit ?? ''))
+      const canon = canonUnit(f.unit ?? '')
+      keys.add(numberKey(f.value, canon))
+      // A strict-unit fact also authorizes its bare-value mention ("latency down 38" citing the
+      // 38% claim) — the value is the protected quantity.
+      if (canon !== '') keys.add(numberKey(f.value, ''))
     }
   }
   return keys
@@ -71,7 +84,11 @@ export function assertRenderable(
     const cited: Claim[] = []
 
     if (s.claimIds.length === 0) {
-      findings.push({ code: 'UNSUPPORTED_SENTENCE', ref: s.text, detail: 'sentence cites no claim' })
+      findings.push({
+        code: 'UNSUPPORTED_SENTENCE',
+        ref: s.text,
+        detail: 'sentence cites no claim',
+      })
     }
 
     for (const cid of s.claimIds) {

@@ -1,0 +1,40 @@
+---
+title: Verify a seal
+description: Check any dossier against the on-chain registry — free forever, no wallet.
+---
+
+A sealed dossier's manifest is canonically hashed, EIP-712-signed, and anchored on X Layer as a
+**salted commitment** — `keccak256(manifestHash ‖ salt)` — in the `AssayRegistry` contract at
+[`0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4`](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
+(chain `eip155:196`). **No personal data goes on-chain. Ever.**
+
+## In the browser
+
+Use [assayed.xyz/verify](https://assayed.xyz/verify): paste a dossier ID (`DSR-…`) or a raw leaf
+(`0x…`, 32 bytes) and read what the chain says — sealed, pending, or not found.
+
+## Over MCP
+
+`asy_verify` is **free forever** and never payment-gated:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": { "name": "asy_verify", "arguments": { "dossierId": "DSR-…" } }
+}
+```
+
+The result carries `found`, `sealStatus`, `anchoredAt`, and an `explorerLink` for independent
+checking. With a raw `leaf` the check needs nothing from Assay at all — any X Layer RPC can read
+`anchoredAt(leaf)` on the registry directly.
+
+## What a seal means — and what it does not
+
+> A seal proves the artifact is unchanged — not that a claim is objectively true. We say exactly
+> which tier each claim earned, and we never imply more than that.
+
+Each claim inside a dossier carries its own evidence tier — **Attested**, **Documented**,
+**Linked**, or **Sealed** — and the recruiter share view shows tiers per claim. Honest scope,
+stated out loud.

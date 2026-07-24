@@ -113,7 +113,8 @@ export async function extractProfile(input: ExtractInput): Promise<ExtractResult
 
   // Source token set for the groundedness post-check.
   const sourceTokens = new Set<string>()
-  for (const e of evidence) for (const t of significantTokens(e.contentText ?? '')) sourceTokens.add(t)
+  for (const e of evidence)
+    for (const t of significantTokens(e.contentText ?? '')) sourceTokens.add(t)
   const sourceTextLower = evidence.map((e) => (e.contentText ?? '').toLowerCase()).join('\n')
 
   const claims: Claim[] = []
@@ -140,7 +141,14 @@ export async function extractProfile(input: ExtractInput): Promise<ExtractResult
     const evidenceIds = linked ? [linked.id] : []
 
     // A quantified claim whose number is absent from the source needs the user's confirmation.
-    const numbers = rc.numericFacts ?? []
+    // Live models sometimes emit unit/context as null — coerce to schema-legal shapes.
+    const numbers = (rc.numericFacts ?? [])
+      .filter((f) => f && typeof f.value === 'number' && Number.isFinite(f.value))
+      .map((f) => ({
+        value: f.value,
+        ...(typeof f.unit === 'string' && f.unit ? { unit: f.unit } : {}),
+        context: typeof f.context === 'string' ? f.context : '',
+      }))
     const numberMissing = numbers.some((f) => !sourceTextLower.includes(String(f.value)))
     const status = numberMissing ? 'needs_confirmation' : 'extracted'
 

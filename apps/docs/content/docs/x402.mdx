@@ -1,0 +1,32 @@
+---
+title: x402 payment notes
+description: How a paid call settles — the metered USDT flow on X Layer.
+---
+
+Paid tools are metered per call with the **x402** standard on X Layer (`eip155:196`), settled in
+USDT via the OKX facilitator. There are no accounts and no API keys — payment _is_ the auth.
+
+## The flow
+
+1. **POST /mcp** — call a paid tool with plain JSON-RPC.
+2. **HTTP 402** — the `PAYMENT-REQUIRED` header carries a base64 JSON challenge: scheme `exact`,
+   network `eip155:196`, the pay-to address, and the price as a USD string.
+3. **Sign** — the client signs an EIP-3009 exact-scheme authorization for the amount and retries
+   the _same_ request with the `PAYMENT-SIG` header (also accepted: `X-PAYMENT`,
+   `PAYMENT-SIGNATURE`).
+4. **200 + PAYMENT-RESPONSE** — the facilitator verifies and settles on-chain; the response
+   carries the settlement proof and your result.
+
+## Guarantees
+
+- **PolicyGate before payment.** A request Assay refuses on policy is refused politely — and never
+  charged.
+- **Idempotent replay.** A settled call is cached against its `Idempotency-Key` (or the payment
+  signature hash). Replays return the original result verbatim — never re-charged, never re-run.
+- **Free means free.** `asy_verify`, `asy_job_status`, and `asy_job_result` are never gated.
+- **Fixed prices.** The table in [pricing](https://assayed.xyz/pricing) is the table the paywall
+  enforces, published machine-readably at
+  [`/.well-known/assay.json`](https://api.assayed.xyz/.well-known/assay.json).
+
+The rail is proven end-to-end on X Layer mainnet with real USD₮0 — settlement
+tx [`0x4babf76c…`](https://www.oklink.com/x-layer/tx/0x4babf76c2b29c6a8ac0314b42ad93081213f62022d537903c99abfecf73794a7).

@@ -179,3 +179,53 @@ describe('HTTP surface', () => {
     expect(res.status).toBe(403)
   })
 })
+
+describe('GET /d-api — anonymized recent seals (P8 landing strip)', () => {
+  it('returns truncated refs only, never full ids or PII', async () => {
+    const { rig, base } = startApp()
+    const dossier = {
+      id: 'DSR-STRIPTEST01',
+      profile: {
+        fullName: 'Secret Name',
+        contact: {},
+        timezone: 'UTC',
+        experiences: [],
+        education: [],
+        certifications: [],
+        skills: [],
+      },
+      tz: 'UTC',
+      evidence: [],
+      claims: [],
+      artifacts: [],
+      tribunalReports: [],
+      seal: {
+        manifestHash: '0xabc',
+        commitment: '0xdef',
+        chainId: 196,
+        standardVersion: 'AS-1.0.0',
+      },
+      createdAt: new Date().toISOString(),
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rig.store.saveDossier(dossier as any, '0xsalt')
+    const res = await fetch(`${base}/d-api`)
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as {
+      recent: Array<{ ref: string; sealStatus: string; day: string }>
+    }
+    expect(body.recent.length).toBe(1)
+    expect(body.recent[0]!.ref).toBe('DSR-…T01')
+    expect(body.recent[0]!.sealStatus).toBe('pending')
+    const raw = JSON.stringify(body)
+    expect(raw).not.toContain('DSR-STRIPTEST01')
+    expect(raw).not.toContain('Secret Name')
+  })
+
+  it('is empty, not an error, on a fresh store', async () => {
+    const { base } = startApp()
+    const res = await fetch(`${base}/d-api`)
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as { recent: unknown[] }).recent).toEqual([])
+  })
+})

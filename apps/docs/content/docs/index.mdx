@@ -1,0 +1,46 @@
+---
+title: Quickstart
+description: Call the Assay pipeline in five minutes — no account, no API key.
+---
+
+Assay is an evidence-backed career studio. Every claim traces to proof, every document is graded
+against a [published Standard](/docs/standard), the ATS résumé is machine-verified by re-parsing,
+and the finished dossier is sealed on X Layer. **Assay will not write a sentence it cannot trace.**
+
+## Humans
+
+Open [the Studio](https://assayed.xyz/studio): upload what you have, confirm your claims, paste a
+job description, forge the dossier, seal it, and share a recruiter link with evidence threads.
+
+## Agents
+
+One MCP endpoint, streamable-HTTP, stateless:
+
+```json
+{
+  "mcpServers": {
+    "assay": {
+      "transport": "streamable-http",
+      "url": "https://api.assayed.xyz/mcp"
+    }
+  }
+}
+```
+
+Free tools work immediately — try a seal check:
+
+```bash
+curl -s https://api.assayed.xyz/mcp \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"asy_verify","arguments":{"leaf":"0x…"}}}'
+```
+
+Paid tools return **HTTP 402** with an x402 challenge first — see
+[x402 payment notes](/docs/x402). Prices are cents per call, fixed in the
+[machine manifest](https://api.assayed.xyz/.well-known/assay.json).
+
+## The loop
+
+**EVIDENCE → BRIEF → FORGE → TRIBUNAL → SEAL → SHARE.** The [tools reference](/docs/tools) lists
+all ten `asy_*` tools with their schemas — generated from the same code the server registers.

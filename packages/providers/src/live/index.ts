@@ -78,7 +78,9 @@ class ClaudeAdapter implements ModelAdapter {
     const body: Record<string, unknown> = {
       model: this.model,
       max_tokens: req.maxTokens ?? 2048,
-      temperature: req.temperature ?? 0.2,
+      // NOTE: no `temperature` — the Anthropic API rejects it for claude-sonnet-5+ (400
+      // "`temperature` is deprecated for this model", observed live 2026-07-24). Sending it made
+      // every Claude call fail and the router silently fall back to openai.
       messages: [{ role: 'user', content: req.prompt }],
     }
     if (req.system) body['system'] = req.system
