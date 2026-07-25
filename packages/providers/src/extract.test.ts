@@ -15,7 +15,8 @@ class ScriptedExtractor implements ModelAdapter {
   }
 }
 
-const SOURCE = 'Chidinma Eze. Reduced API latency by 38% using PostgreSQL pooling. Mentored 5 engineers.'
+const SOURCE =
+  'Chidinma Eze. Reduced API latency by 38% using PostgreSQL pooling. Mentored 5 engineers.'
 
 function routerWith(payload: unknown): ModelRouter {
   return new ModelRouter([new ScriptedExtractor(payload)])
@@ -28,12 +29,18 @@ describe('extractProfile groundedness post-check', () => {
       profile: { fullName: 'Chidinma Eze', timezone: 'UTC' },
       experiences: [],
       claims: [
-        { text: 'Reduced API latency by 38% using PostgreSQL pooling', numericFacts: [{ value: 38, unit: '%', context: 'latency' }] },
+        {
+          text: 'Reduced API latency by 38% using PostgreSQL pooling',
+          numericFacts: [{ value: 38, unit: '%', context: 'latency' }],
+        },
         { text: 'Won the Nobel Prize in Physics in Stockholm' },
         { text: 'Mentored 5 engineers', numericFacts: [{ value: 5, context: 'mentees' }] },
       ],
     }
-    const res = await extractProfile({ documents: [{ label: 'resume', contentText: SOURCE }], router: routerWith(payload) })
+    const res = await extractProfile({
+      documents: [{ label: 'resume', contentText: SOURCE }],
+      router: routerWith(payload),
+    })
     const texts = res.claims.map((c) => c.text)
     expect(texts).toContain('Reduced API latency by 38% using PostgreSQL pooling')
     expect(texts).toContain('Mentored 5 engineers')
@@ -45,9 +52,17 @@ describe('extractProfile groundedness post-check', () => {
     setRawSink(() => {})
     const payload = {
       profile: { fullName: 'Chidinma Eze', timezone: 'UTC' },
-      claims: [{ text: 'Reduced API latency using PostgreSQL pooling by a lot', numericFacts: [{ value: 99, unit: '%', context: 'latency' }] }],
+      claims: [
+        {
+          text: 'Reduced API latency using PostgreSQL pooling by a lot',
+          numericFacts: [{ value: 99, unit: '%', context: 'latency' }],
+        },
+      ],
     }
-    const res = await extractProfile({ documents: [{ label: 'resume', contentText: SOURCE }], router: routerWith(payload) })
+    const res = await extractProfile({
+      documents: [{ label: 'resume', contentText: SOURCE }],
+      router: routerWith(payload),
+    })
     expect(res.claims).toHaveLength(1)
     expect(res.claims[0].status).toBe('needs_confirmation')
   })
@@ -58,9 +73,32 @@ describe('extractProfile groundedness post-check', () => {
       profile: { fullName: 'Chidinma Eze', timezone: 'UTC' },
       claims: [{ text: 'Reduced API latency by 38% using PostgreSQL pooling' }],
     }
-    const res = await extractProfile({ documents: [{ label: 'resume', contentText: SOURCE }], router: routerWith(payload) })
+    const res = await extractProfile({
+      documents: [{ label: 'resume', contentText: SOURCE }],
+      router: routerWith(payload),
+    })
     expect(res.claims[0].evidenceIds).toHaveLength(1)
     expect(res.claims[0].strength).toBe('documented')
     expect(res.evidence[0].kind).toBe('document')
+  })
+
+  it('coerces a live-provider null location instead of dropping the profile', async () => {
+    const payload = {
+      profile: { fullName: 'Chidinma Eze', timezone: 'UTC' },
+      experiences: [
+        { org: 'Acme', title: 'Engineer', startYm: '2022-01', endYm: null, location: null },
+      ],
+      claims: [],
+    }
+    const res = await extractProfile({
+      documents: [{ label: 'resume', contentText: SOURCE }],
+      router: routerWith(payload),
+    })
+    expect(res.profile.experiences[0]).toMatchObject({
+      org: 'Acme',
+      title: 'Engineer',
+      endYm: null,
+    })
+    expect(res.profile.experiences[0]).not.toHaveProperty('location')
   })
 })

@@ -15,6 +15,7 @@ export function ShareControls({ state, actions }: { state: StudioState; actions:
   )
   const [showContact, setShowContact] = useState(existing?.config.showContact ?? false)
   const [expiry, setExpiry] = useState<7 | 30 | null>(30)
+  const samplesPreset = state.variant === 'freelance'
   const [copied, setCopied] = useState(false)
 
   const toggle = (id: string) =>
@@ -30,8 +31,9 @@ export function ShareControls({ state, actions }: { state: StudioState; actions:
     <div className="share-controls" data-testid="share-controls">
       <p className="overline">Share with a recruiter</p>
       <p className="caption" style={{ marginBottom: '1rem' }}>
-        Choose exactly what the other side sees. The link is read-only, revocable, and shows your
-        evidence threads — never anything you didn&rsquo;t expose.
+        {samplesPreset
+          ? 'Client preset: only the selected work samples and their evidence threads are exposed.'
+          : 'Choose exactly what the other side sees. The link is read-only, revocable, and shows your evidence threads—never anything you did not expose.'}
       </p>
 
       <fieldset className="share-fieldset">
@@ -73,7 +75,12 @@ export function ShareControls({ state, actions }: { state: StudioState; actions:
           className="btn btn-primary"
           data-testid="issue-share"
           onClick={() =>
-            actions.share({ exposedClaimIds: [...exposed], showContact, expiryDays: expiry })
+            actions.share({
+              exposedClaimIds: [...exposed],
+              showContact,
+              expiryDays: expiry,
+              preset: samplesPreset ? 'samples' : 'recruiter',
+            })
           }
         >
           {existing ? 'Update link' : 'Issue recruiter link'}

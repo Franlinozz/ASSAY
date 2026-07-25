@@ -4,6 +4,22 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-07-24
+
+### Added — Interview Room and dossier variants (Phase 12)
+
+- **Interview Room** is a first-class Studio stage and Forge artifact family: questions are generated from confirmed claims plus honest `missing` coverage rows; typed answers receive one bounded critic call for STAR structure/relevance and a deterministic ledger-number check. A planted “team of 12” answer against a confirmed “team of 8” ledger is blocked with a correction path.
+- **Promotion case** mode adds a review date range and forges a performance-review narrative, promotion memo, and manager one-pager from the same claim set; `XARTIFACT_CONSISTENCY` guards figures across all three.
+- **Client brief** mode forges a capability statement, selected project case studies, and proposal letter. Its share preset exposes work samples only.
+- **A2MCP breadth:** `asy_interview_prep` is priced at 0.20 USDT; `asy_create_dossier_job` accepts `variant=job|promotion|freelance` at the existing 2.00 USDT price. Tool schemas, generated site/docs, and manifest all read the same source.
+- Added 15 focused Phase-12 tests covering question generation, missing-row probes, STAR evaluation, planted contradictions, promotion consistency, freelance selection, and variant manifests.
+- **One real promotion run:** `DSR-1VM1N6P5` (live providers, real Chromium) produced the three promotion documents plus manifest. Honest AS 1.0 result: **1/4 final PASS** (manifest passed; all three prose artifacts failed the critic and remain visibly failed). Signed commitment leaf `0x977ad11b10ec4fe70bf44d4efe23faa2e45fc5dc620816238f3dd5fbde8d298d` is pending rather than falsely described as anchored.
+
+### Fixed
+
+- Repaired the P11 typecheck regression in the placeholder taxonomy test by awaiting the async-capable hard-check contract.
+- Live DeepSeek returned `experience.location: null`; extraction now safely omits null optional locations instead of rejecting the entire profile. The failed first operator attempt is retained in the phase record; the corrected run above is the successful checkpoint.
+
 ## [0.10.1] — 2026-07-24
 
 ### Audit — the surfacing pass (Phase 11, guardrail #10: nothing exists invisibly)

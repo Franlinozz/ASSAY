@@ -63,12 +63,48 @@ export async function updateClaim(
   return jsonOrThrow(res)
 }
 
-export async function submitBrief(id: string, token: string, jd: string): Promise<unknown> {
+export async function submitBrief(
+  id: string,
+  token: string,
+  input: {
+    text: string
+    mode: 'job' | 'promotion' | 'freelance'
+    dateFrom?: string
+    dateTo?: string
+    projectClaimIds?: string[]
+  },
+): Promise<unknown> {
   const res = await fetch(`${base}/d/${id}/brief?t=${encodeURIComponent(token)}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ jd }),
+    body: JSON.stringify(input),
   })
+  return jsonOrThrow(res)
+}
+
+export async function prepareInterview(id: string, token: string): Promise<unknown> {
+  const res = await fetch(`${base}/d/${id}/interview/generate?t=${encodeURIComponent(token)}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: '{}',
+  })
+  return jsonOrThrow(res)
+}
+
+export async function evaluateInterview(
+  id: string,
+  token: string,
+  questionId: string,
+  answer: string,
+): Promise<unknown> {
+  const res = await fetch(
+    `${base}/d/${id}/interview/${questionId}?t=${encodeURIComponent(token)}`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ answer }),
+    },
+  )
   return jsonOrThrow(res)
 }
 
@@ -126,7 +162,12 @@ export async function sealDossier(id: string, token: string): Promise<SealReceip
 export async function createShare(
   id: string,
   token: string,
-  config: { exposedClaimIds?: string[]; showContact: boolean; expiryDays: 7 | 30 | null },
+  config: {
+    exposedClaimIds?: string[]
+    showContact: boolean
+    expiryDays: 7 | 30 | null
+    preset?: 'recruiter' | 'samples'
+  },
 ): Promise<{ shareId: string; url: string; expiresAt: string | null }> {
   const res = await fetch(`${base}/d/${id}/share?t=${encodeURIComponent(token)}`, {
     method: 'POST',
@@ -228,6 +269,7 @@ export interface SealReceipt {
 export interface StudioState {
   id: string
   stage: 'ledger' | 'brief' | 'forging' | 'forged' | 'sealed'
+  variant: 'job' | 'promotion' | 'freelance'
   createdAt: string
   profile: {
     fullName: string
@@ -251,6 +293,30 @@ export interface StudioState {
     requirements: Array<{ id: string; text: string; kind: 'must' | 'nice' }>
   } | null
   coverage: CoverageRow[] | null
+  interview: {
+    questions: Array<{
+      id: string
+      kind: 'behavioral' | 'gap'
+      prompt: string
+      claimIds: string[]
+      requirementId?: string
+    }>
+    evaluations: Array<{
+      questionId: string
+      answer: string
+      claimIds: string[]
+      star: { situation: boolean; task: boolean; action: boolean; result: boolean }
+      relevance: number
+      feedback: Array<{ text: string; claimIds: string[] }>
+      contradictions: Array<{
+        answerValue: number
+        ledgerValue: number
+        claimId: string
+        detail: string
+      }>
+      final: boolean
+    }>
+  }
   forge: ForgeResult | null
   seal: SealReceipt | null
   share: {
@@ -258,6 +324,10 @@ export interface StudioState {
     url: string
     revoked: boolean
     expiresAt: string | null
-    config: { exposedClaimIds?: string[]; showContact?: boolean }
+    config: {
+      exposedClaimIds?: string[]
+      showContact?: boolean
+      preset?: 'recruiter' | 'samples'
+    }
   } | null
 }

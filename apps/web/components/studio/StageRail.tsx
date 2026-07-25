@@ -2,11 +2,12 @@
 
 import type { StudioState } from '../../lib/studio'
 
-export type Stage = 'ledger' | 'brief' | 'forge' | 'report'
+export type Stage = 'ledger' | 'brief' | 'interview' | 'forge' | 'report'
 
 const STAGES: Array<{ id: Stage; label: string; sub: string }> = [
   { id: 'ledger', label: 'Ledger', sub: 'file your evidence' },
   { id: 'brief', label: 'Brief', sub: 'map the role' },
+  { id: 'interview', label: 'Interview', sub: 'test your answers' },
   { id: 'forge', label: 'Forge', sub: 'write the dossier' },
   { id: 'report', label: 'Report', sub: 'grade & seal' },
 ]
@@ -19,6 +20,7 @@ function reached(state: StudioState | null): Record<Stage, boolean> {
   return {
     ledger: true,
     brief: confirmed,
+    interview: confirmed && hasBrief,
     forge: confirmed && hasBrief,
     report: forged,
   }
@@ -37,6 +39,7 @@ export function StageRail({
   const done: Record<Stage, boolean> = {
     ledger: (state?.counts.confirmed ?? 0) > 0,
     brief: !!state?.brief,
+    interview: (state?.interview.questions.length ?? 0) > 0,
     forge: !!state?.forge,
     report: state?.stage === 'sealed',
   }

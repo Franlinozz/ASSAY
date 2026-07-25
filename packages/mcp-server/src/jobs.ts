@@ -43,6 +43,9 @@ interface DossierJobInput {
   filename?: string
   jd?: string
   answers?: string
+  variant?: 'job' | 'promotion' | 'freelance'
+  dateFrom?: string
+  dateTo?: string
 }
 
 // Map a rich tribunal report onto the lean assay-core report shape the dossier schema stores.
@@ -95,7 +98,17 @@ export async function runDossierPipeline(
   let coverage: Coverage[] = []
   if (input.jd && input.jd.trim()) {
     const dec = await decomposeJd({ jdText: input.jd, router })
-    brief = { jdText: input.jd, decomposed: dec.requirements }
+    brief = {
+      jdText: input.jd,
+      decomposed: dec.requirements,
+      mode: input.variant ?? 'job',
+      projectClaimIds:
+        input.variant === 'freelance'
+          ? claims.filter((c) => c.status === 'confirmed').map((c) => c.id)
+          : [],
+      ...(input.dateFrom ? { dateFrom: input.dateFrom } : {}),
+      ...(input.dateTo ? { dateTo: input.dateTo } : {}),
+    }
     coverage = computeCoverage(
       dec.requirements,
       claims.filter((c) => c.status === 'confirmed'),
@@ -108,6 +121,7 @@ export async function runDossierPipeline(
     tz: extracted.profile.timezone,
     evidence: extracted.evidence,
     claims,
+    variant: input.variant ?? 'job',
     ...(brief ? { brief } : {}),
   })
   store.recordEvent(

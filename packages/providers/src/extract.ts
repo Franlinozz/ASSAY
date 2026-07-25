@@ -102,7 +102,21 @@ export async function extractProfile(input: ExtractInput): Promise<ExtractResult
       ...(raw.profile?.headline ? { headline: raw.profile.headline } : {}),
       ...(raw.profile?.contact ? { contact: raw.profile.contact } : {}),
       timezone: raw.profile?.timezone ?? tz,
-      experiences: raw.experiences ?? [],
+      experiences: (raw.experiences ?? [])
+        .filter(
+          (e) =>
+            e &&
+            typeof e.org === 'string' &&
+            typeof e.title === 'string' &&
+            typeof e.startYm === 'string',
+        )
+        .map((e) => ({
+          org: e.org,
+          title: e.title,
+          startYm: e.startYm,
+          endYm: typeof e.endYm === 'string' ? e.endYm : null,
+          ...(typeof e.location === 'string' && e.location ? { location: e.location } : {}),
+        })),
       skills: raw.profile?.skills ?? [],
     })
   } catch (e) {

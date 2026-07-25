@@ -37,14 +37,20 @@ function coerceSentences(json: unknown): Sentence[] {
   for (const item of json) {
     if (item && typeof item === 'object' && typeof (item as RawSentence).text === 'string') {
       const raw = item as RawSentence
-      out.push({ text: raw.text, claimIds: Array.isArray(raw.claimIds) ? raw.claimIds.map(String) : [] })
+      out.push({
+        text: raw.text,
+        claimIds: Array.isArray(raw.claimIds) ? raw.claimIds.map(String) : [],
+      })
     }
   }
   return out
 }
 
 // Gate each sentence individually so we can keep the good ones and question the rest.
-function gate(sentences: Sentence[], dossier: Dossier): { passing: Sentence[]; findings: Finding[] } {
+function gate(
+  sentences: Sentence[],
+  dossier: Dossier,
+): { passing: Sentence[]; findings: Finding[] } {
   const passing: Sentence[] = []
   const findings: Finding[] = []
   for (const s of sentences) {
@@ -61,15 +67,28 @@ function kindInstruction(kind: ArtifactKind): string {
       return 'Write a concise cover letter body: 3–5 sentences, each citing a confirmed claim.'
     case 'story_bank':
       return 'Write 2–4 STAR interview stories, one sentence each, each citing the confirmed claim it draws on.'
+    case 'promotion_narrative':
+      return 'Write a concise performance-review narrative grouped by impact. Every sentence cites a confirmed claim.'
+    case 'promotion_memo':
+      return 'Write a promotion case memo that leads with scope and measurable impact. Every sentence cites a confirmed claim.'
+    case 'manager_one_pager':
+      return 'Write a skimmable manager one-pager of promotion evidence. Every sentence cites a confirmed claim.'
+    case 'capability_statement':
+      return 'Write a concise freelancer capability statement for this client brief. Every sentence cites a confirmed claim.'
+    case 'case_studies':
+      return 'Write short case-study cards only from the selected project claims. Every sentence cites a confirmed claim.'
+    case 'proposal_letter':
+      return 'Write a proposal letter tailored to the client brief. Every sentence cites a confirmed claim.'
     default:
       return 'Write resume achievement bullets, one sentence each, each citing the confirmed claim it draws on.'
   }
 }
 
 function buildWriterPrompt(kind: ArtifactKind, facts: string, coverage?: Coverage[]): string {
-  const cov = coverage && coverage.length
-    ? `\nCoverage priorities (address strong/partial first; never claim 'missing'):\n${coverage.map((c) => `- ${c.requirementId}: ${c.status}`).join('\n')}`
-    : ''
+  const cov =
+    coverage && coverage.length
+      ? `\nCoverage priorities (address strong/partial first; never claim 'missing'):\n${coverage.map((c) => `- ${c.requirementId}: ${c.status}`).join('\n')}`
+      : ''
   return [
     facts,
     kindInstruction(kind),
@@ -94,7 +113,10 @@ export async function writeArtifact(input: WriteInput): Promise<WriteResult> {
   const basePrompt = buildWriterPrompt(kind, facts, coverage)
   const gaps: Gap[] = []
 
-  const res = await router.generate({ role: 'writer', system: WRITER_SYSTEM, prompt: basePrompt, json: true }, { dossierId: dossier.id })
+  const res = await router.generate(
+    { role: 'writer', system: WRITER_SYSTEM, prompt: basePrompt, json: true },
+    { dossierId: dossier.id },
+  )
   if (res.degraded) {
     gaps.push(sanitizeGap(res.gap ?? 'PROVIDER_ERROR'))
     return { kind, sentences: [], questions: [], gaps }
@@ -104,7 +126,12 @@ export async function writeArtifact(input: WriteInput): Promise<WriteResult> {
 
   if (findings.length > 0) {
     const retry = await router.generate(
-      { role: 'writer', system: WRITER_SYSTEM, prompt: tightenPrompt(basePrompt, findings), json: true },
+      {
+        role: 'writer',
+        system: WRITER_SYSTEM,
+        prompt: tightenPrompt(basePrompt, findings),
+        json: true,
+      },
       { dossierId: dossier.id },
     )
     if (!retry.degraded) {

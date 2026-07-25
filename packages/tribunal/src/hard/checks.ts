@@ -19,7 +19,13 @@ import {
 
 // The only section headings the ATS format law permits. Exported so the mcp-server's asy_ats_scan
 // analyses uploaded résumés against the exact same list the tribunal grades against (single source).
-export const APPROVED_HEADINGS = new Set(['SUMMARY', 'EXPERIENCE', 'EDUCATION', 'SKILLS', 'CERTIFICATIONS'])
+export const APPROVED_HEADINGS = new Set([
+  'SUMMARY',
+  'EXPERIENCE',
+  'EDUCATION',
+  'SKILLS',
+  'CERTIFICATIONS',
+])
 const URL_RE = /(https?:\/\/[^\s"'<>)\]]+)/g
 
 function result(findings: CheckFinding[], evidence?: string): CheckResult {
@@ -36,11 +42,13 @@ export const CLAIM_COVERAGE: HardCheck = {
     'Every rendered sentence resolves to a confirmed claim backed by existing evidence, and every number appears in that evidence. Unsupported prose cannot ship.',
   run({ dossier, artifact }: CheckContext): CheckResult {
     if (!artifact.sentences) return { status: 'skip', findings: [] }
-    const findings = assertRenderable(artifact.sentences, dossier.claims, dossier.evidence).map((f) => ({
-      code: f.code,
-      detail: f.detail,
-      ref: f.ref,
-    }))
+    const findings = assertRenderable(artifact.sentences, dossier.claims, dossier.evidence).map(
+      (f) => ({
+        code: f.code,
+        detail: f.detail,
+        ref: f.ref,
+      }),
+    )
     return result(findings)
   },
 }
@@ -56,7 +64,12 @@ export const EVIDENCE_RESOLVES: HardCheck = {
     const evById = new Map(dossier.evidence.map((e) => [e.id, e]))
     for (const claim of dossier.claims) {
       for (const eid of claim.evidenceIds) {
-        if (!evById.has(eid)) findings.push({ code: 'DANGLING_EVIDENCE', detail: `evidence ${eid} not found`, ref: claim.id })
+        if (!evById.has(eid))
+          findings.push({
+            code: 'DANGLING_EVIDENCE',
+            detail: `evidence ${eid} not found`,
+            ref: claim.id,
+          })
       }
     }
     for (const e of dossier.evidence) {
@@ -64,7 +77,11 @@ export const EVIDENCE_RESOLVES: HardCheck = {
       const hasText = typeof e.contentText === 'string' && e.contentText.length > 0
       const hasFile = deps.fileExists ? deps.fileExists(e.sourceRef) : false
       if (!hasText && !hasFile) {
-        findings.push({ code: 'UNREADABLE_FILE', detail: `document evidence ${e.id} has no readable content`, ref: e.id })
+        findings.push({
+          code: 'UNREADABLE_FILE',
+          detail: `document evidence ${e.id} has no readable content`,
+          ref: e.id,
+        })
       }
     }
     return result(findings)
@@ -75,15 +92,23 @@ export const EVIDENCE_RESOLVES: HardCheck = {
 export const LINK_LIVENESS: HardCheck = {
   id: 'LINK_LIVENESS',
   title: 'Link liveness',
-  description: 'Every URL in the artifact is fetch-checked and must resolve live. A dead or unsafe link never passes.',
+  description:
+    'Every URL in the artifact is fetch-checked and must resolve live. A dead or unsafe link never passes.',
   async run({ artifact, deps }: CheckContext): Promise<CheckResult> {
-    const urls = [...new Set((artifactText(artifact).match(URL_RE) ?? []).map((u) => u.replace(/[.,]$/, '')))]
+    const urls = [
+      ...new Set((artifactText(artifact).match(URL_RE) ?? []).map((u) => u.replace(/[.,]$/, ''))),
+    ]
     if (urls.length === 0) return { status: 'skip', findings: [] }
     if (!deps.fetcher) return { status: 'pending', findings: [] }
     const findings: CheckFinding[] = []
     for (const url of urls) {
       const r = await deps.fetcher.fetch(url)
-      if (!r.ok) findings.push({ code: 'DEAD_LINK', detail: `link did not resolve live (${r.gap ?? 'unknown'})`, ref: url })
+      if (!r.ok)
+        findings.push({
+          code: 'DEAD_LINK',
+          detail: `link did not resolve live (${r.gap ?? 'unknown'})`,
+          ref: url,
+        })
     }
     return result(findings, `${urls.length} link(s) checked`)
   },
@@ -100,7 +125,8 @@ const PLACEHOLDER_PATTERNS: Array<{ code: string; re: RegExp }> = [
 export const PLACEHOLDER_TEXT: HardCheck = {
   id: 'PLACEHOLDER_TEXT',
   title: 'No placeholders',
-  description: 'No [BRACKETS], "YOUR X HERE", TBD, lorem, or XXX placeholder text survives into any artifact.',
+  description:
+    'No [BRACKETS], "YOUR X HERE", TBD, lorem, or XXX placeholder text survives into any artifact.',
   run({ artifact }: CheckContext): CheckResult {
     const text = artifactText(artifact)
     const findings: CheckFinding[] = []
@@ -117,17 +143,32 @@ export const DATE_SANITY: HardCheck = {
   id: 'DATE_SANITY',
   title: 'Date sanity',
   description:
-    'No future dates, each end is on/after its start, tenure math is correct, and overlaps are flagged — all evaluated in the candidate\'s timezone.',
+    "No future dates, each end is on/after its start, tenure math is correct, and overlaps are flagged — all evaluated in the candidate's timezone.",
   run({ dossier }: CheckContext): CheckResult {
     const findings: CheckFinding[] = []
     const nowYm = ymInTz(nowIso(), dossier.tz)
     const spans: Array<{ label: string; start: string; end: string }> = []
     for (const exp of dossier.profile.experiences) {
       const label = `${exp.org} — ${exp.title}`
-      if (isFutureYm(exp.startYm, nowYm)) findings.push({ code: 'FUTURE_DATE', detail: `start ${exp.startYm} is in the future`, ref: label })
+      if (isFutureYm(exp.startYm, nowYm))
+        findings.push({
+          code: 'FUTURE_DATE',
+          detail: `start ${exp.startYm} is in the future`,
+          ref: label,
+        })
       if (exp.endYm) {
-        if (isFutureYm(exp.endYm, nowYm)) findings.push({ code: 'FUTURE_DATE', detail: `end ${exp.endYm} is in the future`, ref: label })
-        if (monthsBetween(exp.startYm, exp.endYm) < 0) findings.push({ code: 'END_BEFORE_START', detail: `end ${exp.endYm} is before start ${exp.startYm}`, ref: label })
+        if (isFutureYm(exp.endYm, nowYm))
+          findings.push({
+            code: 'FUTURE_DATE',
+            detail: `end ${exp.endYm} is in the future`,
+            ref: label,
+          })
+        if (monthsBetween(exp.startYm, exp.endYm) < 0)
+          findings.push({
+            code: 'END_BEFORE_START',
+            detail: `end ${exp.endYm} is before start ${exp.startYm}`,
+            ref: label,
+          })
       }
       spans.push({ label, start: exp.startYm, end: exp.endYm ?? nowYm })
     }
@@ -137,7 +178,11 @@ export const DATE_SANITY: HardCheck = {
         const a = spans[i]
         const b = spans[j]
         if (monthsBetween(a.start, b.end) >= 0 && monthsBetween(b.start, a.end) >= 0) {
-          findings.push({ code: 'OVERLAP', detail: `"${a.label}" overlaps "${b.label}"`, severity: 'warn' })
+          findings.push({
+            code: 'OVERLAP',
+            detail: `"${a.label}" overlaps "${b.label}"`,
+            severity: 'warn',
+          })
         }
       }
     }
@@ -149,7 +194,8 @@ export const DATE_SANITY: HardCheck = {
 export const XARTIFACT_CONSISTENCY: HardCheck = {
   id: 'XARTIFACT_CONSISTENCY',
   title: 'Cross-artifact consistency',
-  description: 'Every number tied to a claim renders identically wherever that claim appears across the resume, letter, and stories.',
+  description:
+    'Every number tied to a claim renders identically wherever that claim appears across the resume, letter, and stories.',
   run({ dossier }: CheckContext): CheckResult {
     // claimId → artifactId → set of number keys used in sentences citing that claim
     const index = new Map<string, Map<string, Set<string>>>()
@@ -171,7 +217,11 @@ export const XARTIFACT_CONSISTENCY: HardCheck = {
       if (byArtifact.size < 2) continue
       const sets = [...byArtifact.values()].map((s) => [...s].sort().join(','))
       if (new Set(sets).size > 1) {
-        findings.push({ code: 'NUMBER_MISMATCH', detail: `claim ${cid} renders different numbers across artifacts (${sets.join(' vs ')})`, ref: cid })
+        findings.push({
+          code: 'NUMBER_MISMATCH',
+          detail: `claim ${cid} renders different numbers across artifacts (${sets.join(' vs ')})`,
+          ref: cid,
+        })
       }
     }
     return result(findings)
@@ -185,23 +235,42 @@ export const FORMAT_LAW: HardCheck = {
   description:
     'The ATS variant is single-column with no tables/images/text-boxes, uses only approved section headings, and stays within 2 pages; the designed variant meets a 4.5:1 body-text contrast ratio.',
   run({ artifact }: CheckContext): CheckResult {
-    if (artifact.kind !== 'resume_ats' && artifact.kind !== 'resume_designed') return { status: 'skip', findings: [] }
+    if (artifact.kind !== 'resume_ats' && artifact.kind !== 'resume_designed')
+      return { status: 'skip', findings: [] }
     const html = htmlOf(artifact)
     if (!html) return { status: 'pending', findings: [] }
     const findings: CheckFinding[] = []
     if (artifact.kind === 'resume_ats') {
-      if (/<table[\s>]/i.test(html)) findings.push({ code: 'FORMAT_TABLE', detail: 'ATS variant must not use tables' })
-      if (/<img[\s>]/i.test(html)) findings.push({ code: 'FORMAT_IMAGE', detail: 'ATS variant must not use images' })
-      if (/column-count\s*:/i.test(html) || /<textarea[\s>]/i.test(html)) findings.push({ code: 'FORMAT_MULTICOLUMN', detail: 'ATS variant must be single-column with no text-boxes' })
+      if (/<table[\s>]/i.test(html))
+        findings.push({ code: 'FORMAT_TABLE', detail: 'ATS variant must not use tables' })
+      if (/<img[\s>]/i.test(html))
+        findings.push({ code: 'FORMAT_IMAGE', detail: 'ATS variant must not use images' })
+      if (/column-count\s*:/i.test(html) || /<textarea[\s>]/i.test(html))
+        findings.push({
+          code: 'FORMAT_MULTICOLUMN',
+          detail: 'ATS variant must be single-column with no text-boxes',
+        })
       // Section headings are h2/h3; h1 is the résumé title (the candidate's name), not a section.
       for (const m of html.matchAll(/<h[23][^>]*>([^<]+)<\/h[23]>/gi)) {
         const heading = m[1]!.trim().toUpperCase()
-        if (!APPROVED_HEADINGS.has(heading)) findings.push({ code: 'FORMAT_HEADING', detail: `non-standard heading "${m[1]!.trim()}"`, ref: heading })
+        if (!APPROVED_HEADINGS.has(heading))
+          findings.push({
+            code: 'FORMAT_HEADING',
+            detail: `non-standard heading "${m[1]!.trim()}"`,
+            ref: heading,
+          })
       }
-      const pageCount = typeof artifact.meta['pageCount'] === 'number' ? (artifact.meta['pageCount'] as number) : undefined
-      if (pageCount !== undefined && pageCount > 2) findings.push({ code: 'FORMAT_PAGES', detail: `ATS variant is ${pageCount} pages (max 2)` })
+      const pageCount =
+        typeof artifact.meta['pageCount'] === 'number'
+          ? (artifact.meta['pageCount'] as number)
+          : undefined
+      if (pageCount !== undefined && pageCount > 2)
+        findings.push({ code: 'FORMAT_PAGES', detail: `ATS variant is ${pageCount} pages (max 2)` })
     } else if (artifact.meta['contrastOk'] === false) {
-      findings.push({ code: 'FORMAT_CONTRAST', detail: 'designed variant body text is below 4.5:1 contrast' })
+      findings.push({
+        code: 'FORMAT_CONTRAST',
+        detail: 'designed variant body text is below 4.5:1 contrast',
+      })
     }
     return result(findings)
   },
@@ -211,16 +280,28 @@ export const FORMAT_LAW: HardCheck = {
 export const DOCX_INTEGRITY: HardCheck = {
   id: 'DOCX_INTEGRITY',
   title: 'DOCX integrity',
-  description: 'The generated .docx reopens in a parser and contains the same section headings as the ATS resume.',
+  description:
+    'The generated .docx reopens in a parser and contains the same section headings as the ATS resume.',
   async run({ artifact, deps }: CheckContext): Promise<CheckResult> {
     if (artifact.kind !== 'resume_docx') return { status: 'skip', findings: [] }
     if (!artifact.fileRef || !deps.readDocx) return { status: 'pending', findings: [] }
     try {
       const { headings } = await deps.readDocx(artifact.fileRef)
-      if (headings.length === 0) return result([{ code: 'DOCX_NO_HEADINGS', detail: 'reopened docx has no recognizable section headings' }])
+      if (headings.length === 0)
+        return result([
+          {
+            code: 'DOCX_NO_HEADINGS',
+            detail: 'reopened docx has no recognizable section headings',
+          },
+        ])
       return result([], `${headings.length} heading(s) recovered`)
     } catch (e) {
-      return result([{ code: 'DOCX_UNREADABLE', detail: `docx failed to reopen: ${e instanceof Error ? e.message : String(e)}` }])
+      return result([
+        {
+          code: 'DOCX_UNREADABLE',
+          detail: `docx failed to reopen: ${e instanceof Error ? e.message : String(e)}`,
+        },
+      ])
     }
   },
 }
@@ -230,12 +311,16 @@ export const ATS_PARSE_BACK: HardCheck = {
   id: 'ATS_PARSE_BACK',
   title: 'ATS parse-back',
   description:
-    'The ATS PDF is re-parsed by Assay\'s deterministic parser and diffed field-by-field against the source profile; 100% of required fields must survive. Verified against Assay\'s deterministic parser and ATS format law — not a simulation of any specific vendor.',
+    "The ATS PDF is re-parsed by Assay's deterministic parser and diffed field-by-field against the source profile; 100% of required fields must survive. Verified against Assay's deterministic parser and ATS format law — not a simulation of any specific vendor.",
   async run({ artifact, dossier, deps }: CheckContext): Promise<CheckResult> {
     if (artifact.kind !== 'resume_ats') return { status: 'skip', findings: [] }
     if (!deps.parseBack) return { status: 'pending', findings: [] } // P4 wires the engine and flips this live
     const { fidelityPct, fieldDiffs } = await deps.parseBack(artifact, dossier)
-    const findings = fieldDiffs.map((d) => ({ code: 'PARSE_BACK_DIFF', detail: `${d.field}: expected "${d.expected}", parsed "${d.got}"`, ref: d.field }))
+    const findings = fieldDiffs.map((d) => ({
+      code: 'PARSE_BACK_DIFF',
+      detail: `${d.field}: expected "${d.expected}", parsed "${d.got}"`,
+      ref: d.field,
+    }))
     return result(findings, `parse fidelity ${fidelityPct}%`)
   },
 }
@@ -245,11 +330,13 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 export const CONTACT_VALIDITY: HardCheck = {
   id: 'CONTACT_VALIDITY',
   title: 'Contact validity',
-  description: 'The contact email is well-formed and every contact link is a syntactically valid URL.',
+  description:
+    'The contact email is well-formed and every contact link is a syntactically valid URL.',
   run({ dossier }: CheckContext): CheckResult {
     const findings: CheckFinding[] = []
     const c = dossier.profile.contact
-    if (c.email && !EMAIL_RE.test(c.email)) findings.push({ code: 'BAD_EMAIL', detail: `invalid email "${c.email}"` })
+    if (c.email && !EMAIL_RE.test(c.email))
+      findings.push({ code: 'BAD_EMAIL', detail: `invalid email "${c.email}"` })
     for (const link of c.links) {
       try {
         new URL(link)
@@ -265,15 +352,50 @@ export const CONTACT_VALIDITY: HardCheck = {
 export const PII_HYGIENE: HardCheck = {
   id: 'PII_HYGIENE',
   title: 'PII hygiene',
-  description: 'A share-view artifact exposes only the fields the candidate approved; unapproved personal data must be redacted.',
+  description:
+    'A share-view artifact exposes only the fields the candidate approved; unapproved personal data must be redacted.',
   run({ dossier, artifact }: CheckContext): CheckResult {
     if (artifact.meta['shareView'] !== true) return { status: 'skip', findings: [] }
-    const approved = Array.isArray(artifact.meta['approvedFields']) ? (artifact.meta['approvedFields'] as string[]) : []
+    const approved = Array.isArray(artifact.meta['approvedFields'])
+      ? (artifact.meta['approvedFields'] as string[])
+      : []
     const body = artifactText(artifact)
     const findings: CheckFinding[] = []
     const { phone, email } = dossier.profile.contact
-    if (phone && body.includes(phone) && !approved.includes('phone')) findings.push({ code: 'PII_PHONE', detail: 'share view exposes an unapproved phone number' })
-    if (email && body.includes(email) && !approved.includes('email')) findings.push({ code: 'PII_EMAIL', detail: 'share view exposes an unapproved email' })
+    if (phone && body.includes(phone) && !approved.includes('phone'))
+      findings.push({ code: 'PII_PHONE', detail: 'share view exposes an unapproved phone number' })
+    if (email && body.includes(email) && !approved.includes('email'))
+      findings.push({ code: 'PII_EMAIL', detail: 'share view exposes an unapproved email' })
+    return result(findings)
+  },
+}
+
+// ── INTERVIEW_INTEGRITY — evaluation cards cannot finalize over a ledger contradiction ──
+export const INTERVIEW_INTEGRITY: HardCheck = {
+  id: 'INTERVIEW_INTEGRITY',
+  title: 'Interview answer integrity',
+  description:
+    'A finalized interview answer must be STAR-complete and every factual number must agree with the confirmed ledger; contradictions block the answer.',
+  run({ artifact }: CheckContext): CheckResult {
+    if (artifact.kind !== 'interview_evaluation') return { status: 'skip', findings: [] }
+    const contradictions = Array.isArray(artifact.meta['ledgerContradictions'])
+      ? (artifact.meta['ledgerContradictions'] as Array<{ detail?: string; claimId?: string }>)
+      : []
+    const incomplete = Array.isArray(artifact.meta['incompleteStar'])
+      ? (artifact.meta['incompleteStar'] as string[])
+      : []
+    const findings: CheckFinding[] = [
+      ...contradictions.map((c) => ({
+        code: 'INTERVIEW_LEDGER_CONTRADICTION',
+        detail: c.detail ?? 'answer contradicts the confirmed ledger',
+        ...(c.claimId ? { ref: c.claimId } : {}),
+      })),
+      ...incomplete.map((id) => ({
+        code: 'STAR_INCOMPLETE',
+        detail: `answer ${id} is missing one or more STAR components`,
+        ref: id,
+      })),
+    ]
     return result(findings)
   },
 }
@@ -282,7 +404,8 @@ export const PII_HYGIENE: HardCheck = {
 export const JD_COVERAGE: HardCheck = {
   id: 'JD_COVERAGE',
   title: 'JD keyword coverage (informational)',
-  description: 'We report weighted must/nice keyword coverage against the job description. We report coverage; we do not stuff keywords. This check never fails.',
+  description:
+    'We report weighted must/nice keyword coverage against the job description. We report coverage; we do not stuff keywords. This check never fails.',
   run({ dossier, artifact }: CheckContext): CheckResult {
     if (!dossier.brief) return { status: 'skip', findings: [] }
     const body = artifactText(artifact).toLowerCase()
@@ -291,6 +414,10 @@ export const JD_COVERAGE: HardCheck = {
       const covered = reqs.filter((r) => r.keywords.some((k) => body.includes(k)))
       return reqs.length === 0 ? 100 : Math.round((covered.length / reqs.length) * 100)
     }
-    return { status: 'pass', findings: [], evidence: `must ${tally('must')}%, nice ${tally('nice')}%` }
+    return {
+      status: 'pass',
+      findings: [],
+      evidence: `must ${tally('must')}%, nice ${tally('nice')}%`,
+    }
   },
 }

@@ -17,8 +17,28 @@ const DEFAULT_ARTIFACTS = [
   { id: 'manifest_json', label: 'Agent manifest' },
 ]
 
+const PROMOTION_ARTIFACTS = [
+  { id: 'promotion_narrative', label: 'Review narrative' },
+  { id: 'promotion_memo', label: 'Promotion memo' },
+  { id: 'manager_one_pager', label: 'Manager one-pager' },
+  { id: 'manifest_json', label: 'Agent manifest' },
+]
+
+const FREELANCE_ARTIFACTS = [
+  { id: 'capability_statement', label: 'Capability statement' },
+  { id: 'case_studies', label: 'Relevant case studies' },
+  { id: 'proposal_letter', label: 'Proposal letter' },
+  { id: 'manifest_json', label: 'Agent manifest' },
+]
+
 export function ForgeStage({ state, actions }: { state: StudioState; actions: StudioActions }) {
-  const [selected, setSelected] = useState<Set<string>>(new Set(DEFAULT_ARTIFACTS.map((a) => a.id)))
+  const available =
+    state.variant === 'promotion'
+      ? PROMOTION_ARTIFACTS
+      : state.variant === 'freelance'
+        ? FREELANCE_ARTIFACTS
+        : DEFAULT_ARTIFACTS
+  const [selected, setSelected] = useState<Set<string>>(new Set(available.map((a) => a.id)))
   const unresolved = state.claims.filter(
     (c) => c.status === 'extracted' || c.status === 'needs_confirmation',
   )
@@ -74,7 +94,7 @@ export function ForgeStage({ state, actions }: { state: StudioState; actions: St
               Artifacts to forge
             </p>
             <div className="artifact-chips">
-              {DEFAULT_ARTIFACTS.map((a) => (
+              {available.map((a) => (
                 <button
                   key={a.id}
                   type="button"
@@ -161,8 +181,8 @@ export function ForgeStage({ state, actions }: { state: StudioState; actions: St
       )}
 
       <div className="stage-footer">
-        <button type="button" className="btn btn-ghost" onClick={() => actions.goTo('brief')}>
-          ← Back to the Brief
+        <button type="button" className="btn btn-ghost" onClick={() => actions.goTo('interview')}>
+          ← Back to Interview
         </button>
         <button
           type="button"

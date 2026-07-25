@@ -22,8 +22,8 @@ describe('site constants', () => {
 })
 
 describe('generated standard (guardrail #2)', () => {
-  it('has 12 hard checks and 6 craft axes', () => {
-    expect(STANDARD.hardChecks).toHaveLength(12)
+  it('has the 13 shipped hard checks and 6 craft axes', () => {
+    expect(STANDARD.hardChecks).toHaveLength(13)
     expect(STANDARD.craftAxes).toHaveLength(6)
   })
   it('markdown carries the no-bend motto', () => {
@@ -39,6 +39,7 @@ describe('generated price table (guardrail #5)', () => {
       asy_fit_brief: 0.1,
       asy_cover_letter: 0.15,
       asy_story_bank: 0.2,
+      asy_interview_prep: 0.2,
       asy_tailor_resume: 0.3,
       asy_create_dossier_job: 2,
       asy_job_status: 0,
@@ -46,8 +47,8 @@ describe('generated price table (guardrail #5)', () => {
       asy_verify: 0,
     })
   })
-  it('documents all ten tools with schema-derived args', () => {
-    expect(TOOLS).toHaveLength(10)
+  it('documents all eleven tools with schema-derived args', () => {
+    expect(TOOLS).toHaveLength(11)
     for (const tool of TOOLS) {
       expect(tool.description.length).toBeGreaterThan(40)
       expect(Array.isArray(tool.args)).toBe(true)

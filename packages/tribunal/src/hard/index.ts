@@ -14,6 +14,7 @@ import {
   CONTACT_VALIDITY,
   PII_HYGIENE,
   JD_COVERAGE,
+  INTERVIEW_INTEGRITY,
 } from './checks'
 import type { HardCheck } from './types'
 
@@ -31,4 +32,5 @@ export const HARD_CHECKS: HardCheck[] = [
   CONTACT_VALIDITY,
   PII_HYGIENE,
   JD_COVERAGE,
+  INTERVIEW_INTEGRITY,
 ]

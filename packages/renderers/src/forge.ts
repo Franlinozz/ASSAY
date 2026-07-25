@@ -41,6 +41,10 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
   const toPdf = input.deps?.toPdf ?? htmlToPdf
   const toDocx = input.deps?.toDocx ?? buildResumeDocx
 
+  if (dossier.variant === 'promotion' || dossier.variant === 'freelance') {
+    return forgeVariant({ ...input, coverage, theme }, toPdf)
+  }
+
   const artifacts: Artifact[] = []
   const files = new Map<string, ForgeFile>()
   const questions: string[] = []
@@ -54,7 +58,12 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
   const addHtmlPdf = async (
     kind: ArtifactKind,
     id: string,
-    opts: { sentences?: Sentence[]; coverage?: Coverage[]; withTheme?: boolean; extraMeta?: Record<string, unknown> },
+    opts: {
+      sentences?: Sentence[]
+      coverage?: Coverage[]
+      withTheme?: boolean
+      extraMeta?: Record<string, unknown>
+    },
   ): Promise<void> => {
     const rb: RenderBundle = { dossier }
     if (opts.sentences) rb.sentences = opts.sentences
@@ -70,7 +79,10 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
   }
 
   await addHtmlPdf('resume_ats', 'resume_ats', { sentences: bullets.sentences })
-  await addHtmlPdf('resume_designed', 'resume_designed', { sentences: bullets.sentences, withTheme: true })
+  await addHtmlPdf('resume_designed', 'resume_designed', {
+    sentences: bullets.sentences,
+    withTheme: true,
+  })
   await addHtmlPdf('cover_letter', 'cover_letter', { sentences: letter.sentences, withTheme: true })
   await addHtmlPdf('story_bank', 'story_bank', { sentences: stories.sentences, withTheme: true })
   await addHtmlPdf('fit_map', 'fit_map', { coverage, withTheme: true })
@@ -99,7 +111,86 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
   // Machine-readable manifest for agents
   const agentManifest = buildAgentManifest(dossier, coverage)
   files.set('manifest_json', { ext: 'json', bytes: enc(JSON.stringify(agentManifest, null, 2)) })
-  artifacts.push({ id: 'manifest_json', kind: 'manifest_json', fileRef: 'manifest_json.json', meta: { agent: agentManifest } })
+  artifacts.push({
+    id: 'manifest_json',
+    kind: 'manifest_json',
+    fileRef: 'manifest_json.json',
+    meta: { agent: agentManifest },
+  })
 
+  return { artifacts, files, questions }
+}
+
+function scopedVariantDossier(dossier: Dossier): Dossier {
+  if (dossier.variant === 'freelance' && dossier.brief?.projectClaimIds.length) {
+    const selected = new Set(dossier.brief.projectClaimIds)
+    return { ...dossier, claims: dossier.claims.filter((c) => selected.has(c.id)) }
+  }
+  if (dossier.variant === 'promotion' && dossier.brief?.dateFrom && dossier.brief.dateTo) {
+    const inRange = new Set(
+      dossier.profile.experiences
+        .filter((e) => {
+          const end = e.endYm ?? dossier.brief!.dateTo!
+          return e.startYm <= dossier.brief!.dateTo! && end >= dossier.brief!.dateFrom!
+        })
+        .flatMap((e) => e.claimIds),
+    )
+    // Older extracted dossiers did not link experiences to claims. Keep those claims rather than
+    // pretending they have a date; the UI labels them as ledger-wide evidence.
+    if (inRange.size > 0)
+      return { ...dossier, claims: dossier.claims.filter((c) => inRange.has(c.id)) }
+  }
+  return dossier
+}
+
+async function forgeVariant(
+  input: ForgeInput & { coverage: Coverage[]; theme: Theme },
+  toPdf: (html: string) => Promise<Uint8Array>,
+): Promise<ForgeOutput> {
+  const dossier = scopedVariantDossier(input.dossier)
+  const kinds: ArtifactKind[] =
+    dossier.variant === 'promotion'
+      ? ['promotion_narrative', 'promotion_memo', 'manager_one_pager']
+      : ['capability_statement', 'case_studies', 'proposal_letter']
+  const artifacts: Artifact[] = []
+  const files = new Map<string, ForgeFile>()
+  const questions: string[] = []
+  for (const kind of kinds) {
+    const written = await writeArtifact({
+      kind,
+      dossier,
+      router: input.router,
+      coverage: input.coverage,
+    })
+    questions.push(...written.questions)
+    const html = renderArtifactHtml(kind, {
+      dossier,
+      sentences: written.sentences,
+      theme: input.theme,
+    })
+    const pdf = await toPdf(html)
+    files.set(kind, { ext: 'pdf', bytes: pdf })
+    artifacts.push({
+      id: kind,
+      kind,
+      sentences: written.sentences,
+      fileRef: `${kind}.pdf`,
+      meta: {
+        html,
+        variant: dossier.variant,
+        ...(dossier.brief?.dateFrom ? { dateFrom: dossier.brief.dateFrom } : {}),
+        ...(dossier.brief?.dateTo ? { dateTo: dossier.brief.dateTo } : {}),
+      },
+    })
+  }
+  const agentManifest = buildAgentManifest(dossier, input.coverage)
+  files.set('manifest_json', { ext: 'json', bytes: enc(JSON.stringify(agentManifest, null, 2)) })
+  artifacts.push({
+    id: 'manifest_json',
+    kind: 'manifest_json',
+    fileRef: 'manifest_json.json',
+    meta: { agent: agentManifest, variant: dossier.variant },
+  })
+  files.set('cover', { ext: 'svg', bytes: enc(renderCoverSvg(dossier)) })
   return { artifacts, files, questions }
 }

@@ -89,6 +89,11 @@ export const STANDARD: PublishedStandard = {
       "id": "JD_COVERAGE",
       "title": "JD keyword coverage (informational)",
       "description": "We report weighted must/nice keyword coverage against the job description. We report coverage; we do not stuff keywords. This check never fails."
+    },
+    {
+      "id": "INTERVIEW_INTEGRITY",
+      "title": "Interview answer integrity",
+      "description": "A finalized interview answer must be STAR-complete and every factual number must agree with the confirmed ledger; contradictions block the answer."
     }
   ],
   "craftAxes": [
@@ -131,7 +136,7 @@ export const STANDARD: PublishedStandard = {
   ]
 }
 
-export const STANDARD_MARKDOWN: string = "# The Assay Standard — AS-1.0.0\n\n> The standard does not bend for our own marketing.\n\nAn artifact passes only when **every hard check passes**, the craft weighted mean is **≥ 72**, and **no craft axis is below 60**. Failing drafts are repaired at most **2** times, and every draft's report ships in the dossier.\n\n## Hard checks (deterministic — any failure blocks or triggers repair)\n\n- **Claim coverage** (`CLAIM_COVERAGE`) — Every rendered sentence resolves to a confirmed claim backed by existing evidence, and every number appears in that evidence. Unsupported prose cannot ship.\n- **Evidence resolves** (`EVIDENCE_RESOLVES`) — Every referenced evidence item exists, and file-backed evidence has readable content. A dangling or unreadable source is a hard failure.\n- **Link liveness** (`LINK_LIVENESS`) — Every URL in the artifact is fetch-checked and must resolve live. A dead or unsafe link never passes.\n- **No placeholders** (`PLACEHOLDER_TEXT`) — No [BRACKETS], \"YOUR X HERE\", TBD, lorem, or XXX placeholder text survives into any artifact.\n- **Date sanity** (`DATE_SANITY`) — No future dates, each end is on/after its start, tenure math is correct, and overlaps are flagged — all evaluated in the candidate's timezone.\n- **Cross-artifact consistency** (`XARTIFACT_CONSISTENCY`) — Every number tied to a claim renders identically wherever that claim appears across the resume, letter, and stories.\n- **Format law** (`FORMAT_LAW`) — The ATS variant is single-column with no tables/images/text-boxes, uses only approved section headings, and stays within 2 pages; the designed variant meets a 4.5:1 body-text contrast ratio.\n- **DOCX integrity** (`DOCX_INTEGRITY`) — The generated .docx reopens in a parser and contains the same section headings as the ATS resume.\n- **ATS parse-back** (`ATS_PARSE_BACK`) — The ATS PDF is re-parsed by Assay's deterministic parser and diffed field-by-field against the source profile; 100% of required fields must survive. Verified against Assay's deterministic parser and ATS format law — not a simulation of any specific vendor.\n- **Contact validity** (`CONTACT_VALIDITY`) — The contact email is well-formed and every contact link is a syntactically valid URL.\n- **PII hygiene** (`PII_HYGIENE`) — A share-view artifact exposes only the fields the candidate approved; unapproved personal data must be redacted.\n- **JD keyword coverage (informational)** (`JD_COVERAGE`) — We report weighted must/nice keyword coverage against the job description. We report coverage; we do not stuff keywords. This check never fails.\n\n## Craft axes (Claude critic, scored 0–100)\n\n| Axis | Weight | What it grades |\n|---|---:|---|\n| Voice | 1 | Confident, human, and specific — not generic AI prose. |\n| Specificity | 1.5 | Concrete actions, tools, and outcomes rather than vague responsibilities. |\n| Quantification | 1.5 | Impact is measured where evidence supports it — never invented. |\n| Positioning | 1 | The strongest, most relevant evidence leads. |\n| Tailoring | 1.5 | The artifact answers this specific brief, not a generic role. |\n| Evidence honesty | 2 | Every claim is framed at the strength its evidence earns — no overreach. |\n"
+export const STANDARD_MARKDOWN: string = "# The Assay Standard — AS-1.0.0\n\n> The standard does not bend for our own marketing.\n\nAn artifact passes only when **every hard check passes**, the craft weighted mean is **≥ 72**, and **no craft axis is below 60**. Failing drafts are repaired at most **2** times, and every draft's report ships in the dossier.\n\n## Hard checks (deterministic — any failure blocks or triggers repair)\n\n- **Claim coverage** (`CLAIM_COVERAGE`) — Every rendered sentence resolves to a confirmed claim backed by existing evidence, and every number appears in that evidence. Unsupported prose cannot ship.\n- **Evidence resolves** (`EVIDENCE_RESOLVES`) — Every referenced evidence item exists, and file-backed evidence has readable content. A dangling or unreadable source is a hard failure.\n- **Link liveness** (`LINK_LIVENESS`) — Every URL in the artifact is fetch-checked and must resolve live. A dead or unsafe link never passes.\n- **No placeholders** (`PLACEHOLDER_TEXT`) — No [BRACKETS], \"YOUR X HERE\", TBD, lorem, or XXX placeholder text survives into any artifact.\n- **Date sanity** (`DATE_SANITY`) — No future dates, each end is on/after its start, tenure math is correct, and overlaps are flagged — all evaluated in the candidate's timezone.\n- **Cross-artifact consistency** (`XARTIFACT_CONSISTENCY`) — Every number tied to a claim renders identically wherever that claim appears across the resume, letter, and stories.\n- **Format law** (`FORMAT_LAW`) — The ATS variant is single-column with no tables/images/text-boxes, uses only approved section headings, and stays within 2 pages; the designed variant meets a 4.5:1 body-text contrast ratio.\n- **DOCX integrity** (`DOCX_INTEGRITY`) — The generated .docx reopens in a parser and contains the same section headings as the ATS resume.\n- **ATS parse-back** (`ATS_PARSE_BACK`) — The ATS PDF is re-parsed by Assay's deterministic parser and diffed field-by-field against the source profile; 100% of required fields must survive. Verified against Assay's deterministic parser and ATS format law — not a simulation of any specific vendor.\n- **Contact validity** (`CONTACT_VALIDITY`) — The contact email is well-formed and every contact link is a syntactically valid URL.\n- **PII hygiene** (`PII_HYGIENE`) — A share-view artifact exposes only the fields the candidate approved; unapproved personal data must be redacted.\n- **JD keyword coverage (informational)** (`JD_COVERAGE`) — We report weighted must/nice keyword coverage against the job description. We report coverage; we do not stuff keywords. This check never fails.\n- **Interview answer integrity** (`INTERVIEW_INTEGRITY`) — A finalized interview answer must be STAR-complete and every factual number must agree with the confirmed ledger; contradictions block the answer.\n\n## Craft axes (Claude critic, scored 0–100)\n\n| Axis | Weight | What it grades |\n|---|---:|---|\n| Voice | 1 | Confident, human, and specific — not generic AI prose. |\n| Specificity | 1.5 | Concrete actions, tools, and outcomes rather than vague responsibilities. |\n| Quantification | 1.5 | Impact is measured where evidence supports it — never invented. |\n| Positioning | 1 | The strongest, most relevant evidence leads. |\n| Tailoring | 1.5 | The artifact answers this specific brief, not a generic role. |\n| Evidence honesty | 2 | Every claim is framed at the strength its evidence earns — no overreach. |\n"
 
 // The fixed price table (guardrail #5) — read from assay-core, the same source the paywall reads.
 export const TOOL_PRICES: Record<string, number> = {
@@ -140,6 +145,7 @@ export const TOOL_PRICES: Record<string, number> = {
   "asy_fit_brief": 0.1,
   "asy_cover_letter": 0.15,
   "asy_story_bank": 0.2,
+  "asy_interview_prep": 0.2,
   "asy_tailor_resume": 0.3,
   "asy_create_dossier_job": 2,
   "asy_job_status": 0,
@@ -332,6 +338,50 @@ export const TOOLS: ToolDoc[] = [
     ]
   },
   {
+    "name": "asy_interview_prep",
+    "title": "Interview prep",
+    "description": "Generate evidence-grounded behavioral and gap-probing interview questions; optionally evaluate one typed answer for STAR structure, relevance, and contradictions against the confirmed ledger. Price: 0.2 USDT (x402 on X Layer, eip155:196). Example: {dossierId:\"DSR-…\", answer:\"I led 12 people…\"} → questions + ledger contradiction if the dossier says 8. Proof promise: it evaluates; it never impersonates an interviewer.",
+    "priceUsdt": 0.2,
+    "args": [
+      {
+        "name": "dossierId",
+        "type": "string",
+        "required": false,
+        "description": "An existing sealed dossier to draw evidence from."
+      },
+      {
+        "name": "profile",
+        "type": "object",
+        "required": false,
+        "description": "Profile JSON."
+      },
+      {
+        "name": "claims",
+        "type": "string[]",
+        "required": false,
+        "description": "Confirmed evidence claims to cite (required if no dossierId)."
+      },
+      {
+        "name": "evidence",
+        "type": "string",
+        "required": false,
+        "description": "Supporting evidence text."
+      },
+      {
+        "name": "jd",
+        "type": "string",
+        "required": false,
+        "description": "Optional target job description."
+      },
+      {
+        "name": "answer",
+        "type": "string",
+        "required": false,
+        "description": "Optional typed answer to evaluate against the first generated question."
+      }
+    ]
+  },
+  {
     "name": "asy_tailor_resume",
     "title": "Tailor résumé",
     "description": "Rewrite résumé achievement bullets against a target JD, evidence-constrained and format-law clean. Price: 0.3 USDT (x402 on X Layer, eip155:196). Example: {claims:[…], jd:\"…\"} → tailored bullets + tribunal grade. Proof promise: no bullet renders without a confirmed claim behind it.",
@@ -404,6 +454,24 @@ export const TOOLS: ToolDoc[] = [
         "type": "string",
         "required": false,
         "description": "Answers to clarifying questions."
+      },
+      {
+        "name": "variant",
+        "type": "unknown",
+        "required": false,
+        "description": "Dossier family. Defaults to job."
+      },
+      {
+        "name": "dateFrom",
+        "type": "string",
+        "required": false,
+        "description": "Promotion review range start (YYYY-MM)."
+      },
+      {
+        "name": "dateTo",
+        "type": "string",
+        "required": false,
+        "description": "Promotion review range end (YYYY-MM)."
       }
     ]
   },

@@ -8,6 +8,8 @@ import {
   ingest,
   updateClaim,
   submitBrief,
+  prepareInterview,
+  evaluateInterview,
   startForge,
   jobStatus,
   sealDossier,
@@ -23,6 +25,7 @@ import { LedgerStage } from './LedgerStage'
 import { BriefStage } from './BriefStage'
 import { ForgeStage } from './ForgeStage'
 import { ReportStage } from './ReportStage'
+import { InterviewStage } from './InterviewStage'
 
 function stageForServer(s: StudioState['stage']): Stage {
   if (s === 'forged' || s === 'sealed') return 'report'
@@ -39,13 +42,22 @@ export interface StudioActions {
     action: 'confirm' | 'reject' | 'edit',
     patch?: { text?: string; answer?: string },
   ) => Promise<void>
-  runBrief: (jd: string) => Promise<void>
+  runBriefMode: (input: {
+    text: string
+    mode: 'job' | 'promotion' | 'freelance'
+    dateFrom?: string
+    dateTo?: string
+    projectClaimIds?: string[]
+  }) => Promise<void>
+  prepareInterview: () => Promise<void>
+  evaluateInterview: (questionId: string, answer: string) => Promise<void>
   runForge: (selected?: string[]) => Promise<void>
   seal: () => Promise<SealReceipt | null>
   share: (config: {
     exposedClaimIds?: string[]
     showContact: boolean
     expiryDays: 7 | 30 | null
+    preset?: 'recruiter' | 'samples'
   }) => Promise<void>
   revoke: () => Promise<void>
   goTo: (s: Stage) => void
@@ -148,14 +160,38 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
         setError(e instanceof Error ? e.message : 'could not update that claim')
       }
     },
-    runBrief: async (jd) => {
+    runBriefMode: async (input) => {
       setBusy(true)
       setError(null)
       try {
-        await submitBrief(id, token, jd)
+        await submitBrief(id, token, input)
         await refresh()
       } catch (e) {
         setError(e instanceof Error ? e.message : 'could not map the brief')
+      } finally {
+        setBusy(false)
+      }
+    },
+    prepareInterview: async () => {
+      setBusy(true)
+      setError(null)
+      try {
+        await prepareInterview(id, token)
+        await refresh()
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'could not prepare the interview room')
+      } finally {
+        setBusy(false)
+      }
+    },
+    evaluateInterview: async (questionId, answer) => {
+      setBusy(true)
+      setError(null)
+      try {
+        await evaluateInterview(id, token, questionId, answer)
+        await refresh()
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'could not evaluate that answer')
       } finally {
         setBusy(false)
       }
@@ -253,6 +289,8 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
             <LedgerStage state={state} actions={actions} />
           ) : active === 'brief' ? (
             <BriefStage state={state} actions={actions} />
+          ) : active === 'interview' ? (
+            <InterviewStage state={state} actions={actions} />
           ) : active === 'forge' ? (
             <ForgeStage state={state} actions={actions} />
           ) : (

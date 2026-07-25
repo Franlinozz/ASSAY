@@ -1,7 +1,13 @@
 import type { ArtifactKind, Coverage, Dossier, Sentence } from '@xyndicate/assay-core'
 import type { Theme } from './theme'
 import { renderAtsHtml, renderDesignedHtml } from './resume'
-import { renderCoverLetterHtml, renderFitMapHtml, renderGapBriefHtml, renderStoryBankHtml } from './documents'
+import {
+  renderCoverLetterHtml,
+  renderEvidenceDocumentHtml,
+  renderFitMapHtml,
+  renderGapBriefHtml,
+  renderStoryBankHtml,
+} from './documents'
 import { renderPortfolioHtml } from './portfolio'
 
 export * from './theme'
@@ -36,6 +42,18 @@ export function renderArtifactHtml(kind: ArtifactKind, b: RenderBundle): string 
       return renderGapBriefHtml(b.dossier, cov, theme)
     case 'portfolio_page':
       return renderPortfolioHtml(b.dossier, s, theme)
+    case 'promotion_narrative':
+      return renderEvidenceDocumentHtml(b.dossier, 'Performance Review Narrative', s, theme)
+    case 'promotion_memo':
+      return renderEvidenceDocumentHtml(b.dossier, 'Promotion Memo', s, theme)
+    case 'manager_one_pager':
+      return renderEvidenceDocumentHtml(b.dossier, 'Manager One-pager', s, theme)
+    case 'capability_statement':
+      return renderEvidenceDocumentHtml(b.dossier, 'Capability Statement', s, theme)
+    case 'case_studies':
+      return renderEvidenceDocumentHtml(b.dossier, 'Relevant Case Studies', s, theme)
+    case 'proposal_letter':
+      return renderEvidenceDocumentHtml(b.dossier, 'Proposal Letter', s, theme)
     default:
       return ''
   }

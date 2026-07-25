@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net'
 import type { Server } from 'node:http'
 import { buildApp } from './http'
 import { testRuntime, type TestRig } from './testutil'
+import { TOOL_NAMES } from './config'
 
 const servers: Server[] = []
 afterEach(() => {
@@ -64,14 +65,14 @@ describe('HTTP surface', () => {
     expect(elapsed).toBeLessThan(250)
   })
 
-  it('GET /.well-known/assay.json lists 10 tools and the x402 payment standard', async () => {
+  it('GET /.well-known/assay.json lists every tool and the x402 payment standard', async () => {
     const { base } = startApp()
     const m = (await (await fetch(`${base}/.well-known/assay.json`)).json()) as {
       tools: unknown[]
       payment: { standard: string; network: string }
       prices: Record<string, number>
     }
-    expect(m.tools).toHaveLength(10)
+    expect(m.tools).toHaveLength(TOOL_NAMES.length)
     expect(m.payment.standard).toBe('x402')
     expect(m.payment.network).toBe('eip155:196')
     expect(m.prices['asy_verify']).toBe(0)
@@ -109,7 +110,7 @@ describe('HTTP surface', () => {
     const res = await mcpPost(base, toolsList)
     expect(res.status).toBe(200)
     const body = (await res.json()) as { result: { tools: unknown[] } }
-    expect(body.result.tools).toHaveLength(10)
+    expect(body.result.tools).toHaveLength(TOOL_NAMES.length)
   })
 
   it('challenges an unpaid paid-tool call with a 402 advertising eip155:196', async () => {

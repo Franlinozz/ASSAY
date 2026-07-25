@@ -77,6 +77,11 @@ test.describe('the full dossier flow', () => {
 
     // ── BRIEF: paste the JD, expect one honest 'missing' (Rust) ──
     await page.getByTestId('to-brief').click()
+    await page.getByTestId('brief-mode-promotion').click()
+    await expect(page.getByTestId('promotion-range')).toBeVisible()
+    await page.getByTestId('brief-mode-freelance').click()
+    await expect(page.getByTestId('project-claims')).toBeVisible()
+    await page.getByTestId('brief-mode-job').click()
     await page.getByTestId('brief-jd').fill(FIXTURE_JD)
     await page.getByTestId('brief-submit').click()
     await page.waitForSelector('[data-testid=coverage-map]', { timeout: 25_000 })
@@ -84,8 +89,33 @@ test.describe('the full dossier flow', () => {
       page.locator('[data-testid=coverage-row][data-status=missing]').first(),
     ).toBeVisible()
 
-    // ── FORGE ──
+    // ── INTERVIEW ROOM: both themes + planted ledger contradiction ──
     await page.getByTestId('to-forge').click()
+    await page.getByTestId('prepare-interview').click()
+    await expect(page.getByTestId('interview-room')).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByTestId('brief-mode-promotion')).toHaveCount(0) // modes live in Brief, not hidden here
+    const initialTheme = await page.locator('html').getAttribute('data-theme')
+    await page.getByTestId('theme-toggle').click()
+    await expect(page.locator('html')).not.toHaveAttribute('data-theme', initialTheme ?? 'light')
+    await page.getByTestId('theme-toggle').click()
+    await expect(page.locator('html')).toHaveAttribute('data-theme', initialTheme ?? 'light')
+
+    const firstAnswer = page.getByTestId('interview-answer-0')
+    await firstAnswer.fill(
+      'The situation was a latency incident. My task was recovery. I reduced latency by 39% and the result was a stable service.',
+    )
+    await page.getByRole('button', { name: 'Check this answer' }).first().click()
+    await expect(page.getByTestId('interview-contradiction')).toBeVisible({ timeout: 20_000 })
+    await firstAnswer.fill(
+      'The situation was a latency incident. My task was recovery. I reduced latency by 38% and the result was a stable service.',
+    )
+    await page.getByRole('button', { name: 'Check this answer' }).first().click()
+    await expect(page.getByText('final answer · stored with evidence chips')).toBeVisible({
+      timeout: 20_000,
+    })
+    await page.getByRole('button', { name: 'Continue to the Forge' }).click()
+
+    // ── FORGE ──
     await page.getByTestId('run-forge').click()
     // Two real chromium PDF renders; give headroom on a shared/loaded box (parallel e2e workers).
     await page.waitForSelector('[data-testid=forge-result]', { timeout: 180_000 })

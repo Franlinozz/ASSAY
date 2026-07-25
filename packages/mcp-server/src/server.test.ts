@@ -16,12 +16,12 @@ async function connectedClient() {
 }
 
 describe('MCP server', () => {
-  it('exposes exactly the 10 Assay tools by name', async () => {
+  it('exposes exactly the shipped Assay tools by name', async () => {
     const { client } = await connectedClient()
     const { tools } = await client.listTools()
     const names = tools.map((t) => t.name).sort()
     expect(names).toEqual([...TOOL_NAMES].sort())
-    expect(names).toHaveLength(10)
+    expect(names).toHaveLength(TOOL_NAMES.length)
   })
 
   it('every tool advertises a marketplace description', async () => {

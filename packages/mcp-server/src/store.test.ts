@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { DossierSchema } from '@xyndicate/assay-core'
 import { Store } from './store'
 import { signFileToken, verifyFileToken } from './util'
 import { testRuntime } from './testutil'
@@ -54,24 +55,26 @@ describe('Store', () => {
 
   it('queues, ages and drains the seal queue', () => {
     const { store } = testRuntime()
-    store.saveDossier({
-      id: 'dsr_x',
-      profile: {
-        fullName: 'A',
-        contact: { links: [] },
-        timezone: 'UTC',
-        experiences: [],
-        education: [],
-        certifications: [],
-        skills: [],
-      },
-      evidence: [],
-      claims: [],
-      artifacts: [],
-      tribunalReports: [],
-      createdAt: new Date().toISOString(),
-      tz: 'UTC',
-    })
+    store.saveDossier(
+      DossierSchema.parse({
+        id: 'dsr_x',
+        profile: {
+          fullName: 'A',
+          contact: { links: [] },
+          timezone: 'UTC',
+          experiences: [],
+          education: [],
+          certifications: [],
+          skills: [],
+        },
+        evidence: [],
+        claims: [],
+        artifacts: [],
+        tribunalReports: [],
+        createdAt: new Date().toISOString(),
+        tz: 'UTC',
+      }),
+    )
     store.enqueueSeal('dsr_x', '0xdeadbeef')
     expect(store.pendingSealCount()).toBe(1)
     expect(store.getSealStatus('dsr_x')).toBe('pending')

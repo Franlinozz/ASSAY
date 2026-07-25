@@ -49,6 +49,12 @@ function CoverageRowView({
 
 export function BriefStage({ state, actions }: { state: StudioState; actions: StudioActions }) {
   const [jd, setJd] = useState(state.brief?.jdText ?? '')
+  const [mode, setMode] = useState<'job' | 'promotion' | 'freelance'>(state.variant ?? 'job')
+  const [dateFrom, setDateFrom] = useState('2025-01')
+  const [dateTo, setDateTo] = useState('2026-07')
+  const [projects, setProjects] = useState<Set<string>>(
+    new Set(state.claims.filter((c) => c.status === 'confirmed').map((c) => c.id)),
+  )
   const claimText = (id: string): string => state.claims.find((c) => c.id === id)?.text ?? id
   const coverage = state.coverage ?? []
   const counts = coverage.reduce(
@@ -63,46 +69,107 @@ export function BriefStage({ state, actions }: { state: StudioState; actions: St
           <p className="overline">Stage 2 · the Role Lab</p>
           <h2>Map the brief.</h2>
           <p className="stage-lede">
-            Paste a job description. Assay decomposes it into requirements and maps your confirmed
-            evidence to each — an honest coverage report, never a fake match score.
+            Choose the case you are building. Assay maps the brief to confirmed evidence—whether the
+            next step is a job, a promotion, or a client.
           </p>
         </div>
       </header>
 
       <div className="brief-input">
-        <div className="brief-presets">
-          <button
-            type="button"
-            className="preset"
-            onClick={() => setJd('General-purpose professional résumé — no specific role.')}
-          >
-            General purpose
-          </button>
-          <button
-            type="button"
-            className="preset preset-soon"
-            disabled
-            title="Coming in a later phase"
-          >
-            Promotion case <span className="preset-soon-tag">soon</span>
-          </button>
+        <div className="brief-presets" role="tablist" aria-label="Dossier variant">
+          {(
+            [
+              ['job', 'Job search'],
+              ['promotion', 'Promotion case'],
+              ['freelance', 'Client brief'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={`preset ${mode === id ? 'preset-on' : ''}`}
+              aria-pressed={mode === id}
+              data-testid={`brief-mode-${id}`}
+              onClick={() => setMode(id)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
+        {mode === 'promotion' ? (
+          <div className="field-grid" data-testid="promotion-range">
+            <label className="field">
+              <span className="field-label">Review starts</span>
+              <input
+                className="field-input"
+                type="month"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">Review ends</span>
+              <input
+                className="field-input"
+                type="month"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+              />
+            </label>
+          </div>
+        ) : null}
+        {mode === 'freelance' ? (
+          <fieldset className="share-fieldset" data-testid="project-claims">
+            <legend className="share-legend">Work samples for this client</legend>
+            {state.claims
+              .filter((c) => c.status === 'confirmed')
+              .map((c) => (
+                <label key={c.id} className="share-check">
+                  <input
+                    type="checkbox"
+                    checked={projects.has(c.id)}
+                    onChange={() =>
+                      setProjects((old) => {
+                        const next = new Set(old)
+                        next.has(c.id) ? next.delete(c.id) : next.add(c.id)
+                        return next
+                      })
+                    }
+                  />
+                  <span>{c.text}</span>
+                </label>
+              ))}
+          </fieldset>
+        ) : null}
         <textarea
           className="field-input brief-textarea"
           data-testid="brief-jd"
           value={jd}
           onChange={(e) => setJd(e.target.value)}
           rows={7}
-          placeholder="Paste the job description here…"
+          placeholder={
+            mode === 'job'
+              ? 'Paste the job description here…'
+              : mode === 'promotion'
+                ? 'Name the level and expectations you are making the case for…'
+                : 'Paste the client brief, deliverables, and constraints…'
+          }
         />
         <button
           type="button"
           className="btn btn-primary"
           data-testid="brief-submit"
           disabled={!jd.trim() || actions.busy}
-          onClick={() => actions.runBrief(jd)}
+          onClick={() =>
+            actions.runBriefMode({
+              text: jd,
+              mode,
+              ...(mode === 'promotion' ? { dateFrom, dateTo } : {}),
+              ...(mode === 'freelance' ? { projectClaimIds: [...projects] } : {}),
+            })
+          }
         >
-          {actions.busy ? 'Mapping…' : state.brief ? 'Re-map' : 'Map my fit'}
+          {actions.busy ? 'Mapping…' : state.brief ? 'Re-map case' : 'Map this case'}
         </button>
       </div>
 
@@ -139,9 +206,9 @@ export function BriefStage({ state, actions }: { state: StudioState; actions: St
           className="btn btn-primary"
           data-testid="to-forge"
           disabled={!state.brief}
-          onClick={() => actions.goTo('forge')}
+          onClick={() => actions.goTo('interview')}
         >
-          Continue to the Forge →
+          Continue to Interview →
         </button>
       </div>
     </div>

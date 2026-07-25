@@ -23,7 +23,12 @@ import {
   type ModelRouter,
 } from '@xyndicate/providers'
 import { ingestDocument } from '@xyndicate/providers'
-import { writeArtifact } from '@xyndicate/renderers'
+import {
+  writeArtifact,
+  generateInterviewQuestions,
+  evaluateInterviewAnswer,
+  buildInterviewArtifact,
+} from '@xyndicate/renderers'
 import { gradeArtifact, APPROVED_HEADINGS } from '@xyndicate/tribunal'
 import { pdfToLines, reconstruct } from '@xyndicate/renderers'
 import { RegistryClient } from '@xyndicate/contracts'
@@ -391,10 +396,64 @@ export const tailorResume = (
   args: Parameters<typeof writerTool>[3],
 ): Promise<ToolResult> => writerTool(ctx, 'resume_ats', 'tailored résumé', args)
 
+export async function interviewPrep(
+  ctx: PipelineCtx,
+  args: Parameters<typeof writerTool>[3] & { answer?: string | undefined },
+): Promise<ToolResult> {
+  const dossier = await ephemeralDossier(ctx, args)
+  if (!dossier) {
+    return {
+      summary: `I won't invent an interview history. Provide claims + evidence (or a dossierId) first.`,
+      data: { ok: false, reason: 'NO_EVIDENCE' },
+      refused: true,
+    }
+  }
+  let coverage: Coverage[] = []
+  if (args.jd?.trim()) {
+    const { requirements } = await decomposeJd({ jdText: args.jd, router: ctx.router })
+    dossier.brief = { jdText: args.jd, decomposed: requirements, mode: 'job', projectClaimIds: [] }
+    coverage = computeCoverage(
+      requirements,
+      dossier.claims.filter((c) => c.status === 'confirmed'),
+    )
+  } else if (dossier.brief) {
+    coverage = computeCoverage(
+      dossier.brief.decomposed,
+      dossier.claims.filter((c) => c.status === 'confirmed'),
+    )
+  }
+  const questions = generateInterviewQuestions(dossier, coverage)
+  let evaluation
+  let tribunal
+  if (args.answer?.trim() && questions[0]) {
+    evaluation = await evaluateInterviewAnswer({
+      dossier,
+      question: questions[0],
+      answer: args.answer,
+      router: ctx.router,
+    })
+    const report = await gradeArtifact(dossier, buildInterviewArtifact([evaluation]), {
+      router: ctx.router,
+      fetcher: ctx.fetcher,
+    })
+    tribunal = { pass: report.pass, findings: report.hard.flatMap((h) => h.findings) }
+  }
+  return {
+    summary: `Interview room prepared ${questions.length} question(s)${evaluation ? `; answer ${evaluation.final ? 'ready' : 'needs correction'}` : ''}.`,
+    data: { ok: true, questions, ...(evaluation ? { evaluation, tribunal } : {}) },
+  }
+}
+
 // ── 7) asy_create_dossier_job ────────────────────────────────────────────────
 export function createDossierJob(
   ctx: PipelineCtx,
-  args: UploadArgs & { jd?: string | undefined; answers?: string | undefined },
+  args: UploadArgs & {
+    jd?: string | undefined
+    answers?: string | undefined
+    variant?: 'job' | 'promotion' | 'freelance' | undefined
+    dateFrom?: string | undefined
+    dateTo?: string | undefined
+  },
 ): ToolResult {
   const policy = policyGate({
     text: [args.resumeText ?? '', args.jd ?? '', args.answers ?? ''].join('\n'),

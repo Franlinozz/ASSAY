@@ -104,6 +104,7 @@ export const TOOL_NAMES: ToolName[] = [
   'asy_fit_brief',
   'asy_cover_letter',
   'asy_story_bank',
+  'asy_interview_prep',
   'asy_tailor_resume',
   'asy_create_dossier_job',
   'asy_job_status',

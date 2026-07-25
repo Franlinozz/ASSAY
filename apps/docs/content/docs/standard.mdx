@@ -28,14 +28,15 @@ An artifact passes only when **every hard check passes**, the craft weighted mea
 - **Contact validity** (`CONTACT_VALIDITY`) — The contact email is well-formed and every contact link is a syntactically valid URL.
 - **PII hygiene** (`PII_HYGIENE`) — A share-view artifact exposes only the fields the candidate approved; unapproved personal data must be redacted.
 - **JD keyword coverage (informational)** (`JD_COVERAGE`) — We report weighted must/nice keyword coverage against the job description. We report coverage; we do not stuff keywords. This check never fails.
+- **Interview answer integrity** (`INTERVIEW_INTEGRITY`) — A finalized interview answer must be STAR-complete and every factual number must agree with the confirmed ledger; contradictions block the answer.
 
 ## Craft axes (Claude critic, scored 0–100)
 
-| Axis             | Weight | What it grades                                                            |
-| ---------------- | -----: | ------------------------------------------------------------------------- |
-| Voice            |      1 | Confident, human, and specific — not generic AI prose.                    |
-| Specificity      |    1.5 | Concrete actions, tools, and outcomes rather than vague responsibilities. |
-| Quantification   |    1.5 | Impact is measured where evidence supports it — never invented.           |
-| Positioning      |      1 | The strongest, most relevant evidence leads.                              |
-| Tailoring        |    1.5 | The artifact answers this specific brief, not a generic role.             |
-| Evidence honesty |      2 | Every claim is framed at the strength its evidence earns — no overreach.  |
+| Axis | Weight | What it grades |
+|---|---:|---|
+| Voice | 1 | Confident, human, and specific — not generic AI prose. |
+| Specificity | 1.5 | Concrete actions, tools, and outcomes rather than vague responsibilities. |
+| Quantification | 1.5 | Impact is measured where evidence supports it — never invented. |
+| Positioning | 1 | The strongest, most relevant evidence leads. |
+| Tailoring | 1.5 | The artifact answers this specific brief, not a generic role. |
+| Evidence honesty | 2 | Every claim is framed at the strength its evidence earns — no overreach. |

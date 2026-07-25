@@ -216,7 +216,11 @@ describe('studio flow', () => {
       expiryDays: 7,
     })
     // Now: fully visible.
-    const live = getShareView(rig.store, rig.cfg, share.shareId, Date.now()) as { found: boolean; expired?: boolean; claims?: unknown[] }
+    const live = getShareView(rig.store, rig.cfg, share.shareId, Date.now()) as {
+      found: boolean
+      expired?: boolean
+      claims?: unknown[]
+    }
     expect(live.found).toBe(true)
     expect(live.expired).toBeUndefined()
     expect((live.claims ?? []).length).toBe(confirmedIds.length)
@@ -254,5 +258,30 @@ describe('studio flow', () => {
     // No exposed sentence cites a non-exposed claim.
     for (const s of view.sentences)
       expect(s.claimIds.every((cid) => cid === claims[0]!.id)).toBe(true)
+  })
+
+  it('freelance share preset exposes only selected work samples', async () => {
+    const rig = testRuntime()
+    const { id } = await buildConfirmed(rig)
+    const claims = stateOf(rig, id).claims.filter((c) => c.status === 'confirmed')
+    await runBrief(deps(rig), id, {
+      text: 'Client needs a PostgreSQL performance project',
+      mode: 'freelance',
+      projectClaimIds: [claims[0]!.id],
+    })
+    await runStudioForge(deps(rig), { dossierId: id })
+    const share = createOrUpdateShare(rig.store, id, {
+      exposedClaimIds: [claims[0]!.id],
+      showContact: false,
+      expiryDays: null,
+      preset: 'samples',
+    })
+    const view = getShareView(rig.store, rig.cfg, share.shareId) as {
+      preset: string
+      sentences: Array<{ claimIds: string[] }>
+    }
+    expect(view.preset).toBe('samples')
+    expect(view.sentences.length).toBeGreaterThan(0)
+    expect(view.sentences.every((s) => s.claimIds.every((id) => id === claims[0]!.id))).toBe(true)
   })
 })

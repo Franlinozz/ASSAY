@@ -31,9 +31,12 @@ import {
   writeArtifact,
   renderArtifactHtml,
   parseBackFromBuffer,
+  generateInterviewQuestions,
+  evaluateInterviewAnswer,
+  buildInterviewArtifact,
   type RenderBundle,
 } from '@xyndicate/renderers'
-import { gradeWithRepair, summarize, type TribunalReport } from '@xyndicate/tribunal'
+import { gradeArtifact, gradeWithRepair, summarize, type TribunalReport } from '@xyndicate/tribunal'
 import { buildVerifyBundle, newSalt } from '@xyndicate/receipts'
 import type { Address, Hex } from 'viem'
 import type { ServerConfig } from './config'
@@ -57,7 +60,18 @@ export interface StudioDeps {
   realPdf: boolean
 }
 
-const WRITER_KINDS = new Set(['resume_ats', 'resume_designed', 'cover_letter', 'story_bank'])
+const WRITER_KINDS = new Set([
+  'resume_ats',
+  'resume_designed',
+  'cover_letter',
+  'story_bank',
+  'promotion_narrative',
+  'promotion_memo',
+  'manager_one_pager',
+  'capability_statement',
+  'case_studies',
+  'proposal_letter',
+])
 
 function explorerBase(chainId: number): string {
   return chainId === 196
@@ -265,18 +279,42 @@ export function updateClaim(
 export async function runBrief(
   deps: StudioDeps,
   dossierId: string,
-  jd: string,
+  input:
+    | string
+    | {
+        text: string
+        mode?: 'job' | 'promotion' | 'freelance'
+        dateFrom?: string
+        dateTo?: string
+        projectClaimIds?: string[]
+      },
 ): Promise<{ requirements: unknown[]; coverage: unknown[] }> {
   const { store, router } = deps
   const dossier = store.getDossier(dossierId)
   if (!dossier) throw new Error('dossier not found')
+  const opts = typeof input === 'string' ? { text: input, mode: 'job' as const } : input
+  const mode = opts.mode ?? 'job'
+  const jd = opts.text
   store.recordStudioEvent(dossierId, 'Role Lab', 'decomposing the brief into requirements')
   const { requirements } = await decomposeJd({ jdText: jd, router, dossierId })
   const confirmed = dossier.claims.filter((c) => c.status === 'confirmed')
   const coverage = computeCoverage(requirements, confirmed)
   const next: Dossier = DossierSchema.parse({
     ...dossier,
-    brief: { jdText: jd, decomposed: requirements },
+    variant: mode,
+    claims: dossier.claims.map((c) =>
+      mode === 'freelance' && opts.projectClaimIds?.includes(c.id)
+        ? { ...c, tags: [...new Set([...c.tags, 'project'])] }
+        : c,
+    ),
+    brief: {
+      jdText: jd,
+      decomposed: requirements,
+      mode,
+      projectClaimIds: mode === 'freelance' ? (opts.projectClaimIds ?? []) : [],
+      ...(opts.dateFrom ? { dateFrom: opts.dateFrom } : {}),
+      ...(opts.dateTo ? { dateTo: opts.dateTo } : {}),
+    },
   })
   store.saveDossier(next)
   store.setStage(dossierId, 'brief')
@@ -297,6 +335,83 @@ export async function runBrief(
       claimIds: c.claimIds,
     })),
   }
+}
+
+// ── interview room (question generation + one bounded critic call per answer) ────────────────
+export function prepareInterview(
+  deps: StudioDeps,
+  dossierId: string,
+): { questions: Dossier['interview']['questions'] } {
+  const dossier = deps.store.getDossier(dossierId)
+  if (!dossier) throw new Error('dossier not found')
+  const confirmed = dossier.claims.filter((c) => c.status === 'confirmed')
+  const coverage = dossier.brief ? computeCoverage(dossier.brief.decomposed, confirmed) : []
+  const questions = generateInterviewQuestions(dossier, coverage)
+  const next = DossierSchema.parse({
+    ...dossier,
+    interview: { ...dossier.interview, questions },
+  })
+  deps.store.saveDossier(next)
+  deps.store.recordStudioEvent(
+    dossierId,
+    'Interview Room',
+    `prepared ${questions.length} evidence-grounded questions`,
+  )
+  return { questions }
+}
+
+export async function submitInterviewAnswer(
+  deps: StudioDeps,
+  dossierId: string,
+  questionId: string,
+  answer: string,
+): Promise<Record<string, unknown>> {
+  const dossier = deps.store.getDossier(dossierId)
+  if (!dossier) throw new Error('dossier not found')
+  const question = dossier.interview.questions.find((q) => q.id === questionId)
+  if (!question) throw new Error('interview question not found')
+  const evaluation = await evaluateInterviewAnswer({
+    dossier,
+    question,
+    answer,
+    router: deps.router,
+  })
+  const evaluations = [
+    ...dossier.interview.evaluations.filter((e) => e.questionId !== questionId),
+    evaluation,
+  ]
+  const artifact = buildInterviewArtifact(evaluations)
+  const report = await gradeArtifact(dossier, artifact, {
+    router: deps.router,
+    fetcher: deps.fetcher,
+    fileExists: () => true,
+  })
+  const next = DossierSchema.parse({
+    ...dossier,
+    interview: { ...dossier.interview, evaluations },
+    artifacts: [...dossier.artifacts.filter((a) => a.kind !== 'interview_evaluation'), artifact],
+    tribunalReports: [
+      ...dossier.tribunalReports.filter((r) => r.artifactId !== artifact.id),
+      {
+        artifactId: artifact.id,
+        standardVersion: report.standardVersion,
+        passed: report.pass,
+        hardFindings: report.hard
+          .filter((h) => h.status === 'fail')
+          .flatMap((h) => h.findings.map((f) => ({ code: f.code, detail: f.detail }))),
+        createdAt: report.createdAt,
+      },
+    ],
+  })
+  deps.store.saveDossier(next)
+  deps.store.recordStudioEvent(
+    dossierId,
+    'Interview Critic',
+    evaluation.final
+      ? 'answer passed STAR + ledger checks'
+      : 'answer needs a correction before it is final',
+  )
+  return { evaluation, tribunal: serializeReport(report) }
 }
 
 // ── forge (JOB) ────────────────────────────────────────────────────────────────
@@ -529,6 +644,7 @@ export interface ShareConfig {
   exposedClaimIds: string[]
   showContact: boolean
   expiryDays: 7 | 30 | null
+  preset?: 'recruiter' | 'samples'
 }
 
 export function createOrUpdateShare(
@@ -540,7 +656,11 @@ export function createOrUpdateShare(
     config.expiryDays && config.expiryDays > 0
       ? new Date(Date.now() + config.expiryDays * 86_400_000).toISOString()
       : null
-  const stored = { exposedClaimIds: config.exposedClaimIds, showContact: config.showContact }
+  const stored = {
+    exposedClaimIds: config.exposedClaimIds,
+    showContact: config.showContact,
+    preset: config.preset ?? 'recruiter',
+  }
   let slug = store.latestShareForDossier(dossierId)
   if (slug) {
     store.updateShareConfig(slug, stored, expiresAt)
@@ -579,7 +699,11 @@ export function getShareView(
 
   const dossier = store.getDossier(share.dossierId)
   if (!dossier) return { found: false }
-  const config = share.config as { exposedClaimIds?: string[]; showContact?: boolean }
+  const config = share.config as {
+    exposedClaimIds?: string[]
+    showContact?: boolean
+    preset?: 'recruiter' | 'samples'
+  }
   const exposed = new Set(
     config.exposedClaimIds ??
       dossier.claims.filter((c) => c.status === 'confirmed').map((c) => c.id),
@@ -587,8 +711,10 @@ export function getShareView(
 
   // PII_HYGIENE: only expose sentences whose claims are ALL in the exposed set.
   const forge = latestForgeResult(store, share.dossierId)
-  const resumeArtifact = forge?.artifacts.find(
-    (a) => a.id === 'resume_ats' || a.id === 'resume_designed',
+  const resumeArtifact = forge?.artifacts.find((a) =>
+    config.preset === 'samples'
+      ? a.id === 'case_studies'
+      : a.id === 'resume_ats' || a.id === 'resume_designed',
   )
   const sentences = (resumeArtifact?.sentences ?? []).filter(
     (s) => s.claimIds.length > 0 && s.claimIds.every((cid) => exposed.has(cid)),
@@ -659,6 +785,7 @@ export function getShareView(
         }
       : null,
     expiresAt: share.expiresAt,
+    preset: config.preset ?? 'recruiter',
   }
 }
 
@@ -767,7 +894,9 @@ export function getStudioState(
           })),
         }
       : null,
+    variant: dossier.variant,
     coverage,
+    interview: dossier.interview,
     forge: forge ?? null,
     seal: seal
       ? {

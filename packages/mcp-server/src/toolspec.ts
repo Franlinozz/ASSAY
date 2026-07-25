@@ -92,6 +92,18 @@ export const TOOL_SPECS: ToolSpec[] = [
     inputSchema: writerInput,
   },
   {
+    name: 'asy_interview_prep',
+    title: 'Interview prep',
+    description: `Generate evidence-grounded behavioral and gap-probing interview questions; optionally evaluate one typed answer for STAR structure, relevance, and contradictions against the confirmed ledger. ${priceTag('asy_interview_prep')} Example: {dossierId:"DSR-…", answer:"I led 12 people…"} → questions + ledger contradiction if the dossier says 8. Proof promise: it evaluates; it never impersonates an interviewer.`,
+    inputSchema: {
+      ...writerInput,
+      answer: z
+        .string()
+        .describe('Optional typed answer to evaluate against the first generated question.')
+        .optional(),
+    },
+  },
+  {
     name: 'asy_tailor_resume',
     title: 'Tailor résumé',
     description: `Rewrite résumé achievement bullets against a target JD, evidence-constrained and format-law clean. ${priceTag('asy_tailor_resume')} Example: {claims:[…], jd:"…"} → tailored bullets + tribunal grade. Proof promise: no bullet renders without a confirmed claim behind it.`,
@@ -105,6 +117,12 @@ export const TOOL_SPECS: ToolSpec[] = [
       ...uploadShape,
       jd: z.string().optional(),
       answers: z.string().describe('Answers to clarifying questions.').optional(),
+      variant: z
+        .enum(['job', 'promotion', 'freelance'])
+        .describe('Dossier family. Defaults to job.')
+        .optional(),
+      dateFrom: z.string().describe('Promotion review range start (YYYY-MM).').optional(),
+      dateTo: z.string().describe('Promotion review range end (YYYY-MM).').optional(),
     },
   },
   {

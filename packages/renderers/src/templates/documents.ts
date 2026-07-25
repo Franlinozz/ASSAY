@@ -4,7 +4,10 @@ import { tierOf } from './resume'
 
 function header(dossier: Dossier): string {
   const p = dossier.profile
-  const contact = [p.contact.email, ...p.contact.links].filter((x): x is string => Boolean(x)).map(esc).join('  ·  ')
+  const contact = [p.contact.email, ...p.contact.links]
+    .filter((x): x is string => Boolean(x))
+    .map(esc)
+    .join('  ·  ')
   return [
     `<div class="wordmark">${esc(p.fullName)}</div>`,
     p.headline ? `<div class="headline">${esc(p.headline)}</div>` : '',
@@ -13,22 +16,64 @@ function header(dossier: Dossier): string {
   ].join('\n')
 }
 
-export function renderCoverLetterHtml(dossier: Dossier, body: Sentence[], theme: Theme = 'light'): string {
+export function renderCoverLetterHtml(
+  dossier: Dossier,
+  body: Sentence[],
+  theme: Theme = 'light',
+): string {
   const paras = body.map((s) => `<p>${esc(s.text)}</p>`).join('\n')
-  return htmlDoc({ title: `${dossier.profile.fullName} — Cover Letter`, css: officeCss(theme), body: `${header(dossier)}\n${paras}`, theme })
+  return htmlDoc({
+    title: `${dossier.profile.fullName} — Cover Letter`,
+    css: officeCss(theme),
+    body: `${header(dossier)}\n${paras}`,
+    theme,
+  })
 }
 
-export function renderStoryBankHtml(dossier: Dossier, stories: Sentence[], theme: Theme = 'light'): string {
+export function renderStoryBankHtml(
+  dossier: Dossier,
+  stories: Sentence[],
+  theme: Theme = 'light',
+): string {
   const cards = stories
     .map(
       (s, i) =>
         `<div class="card"><div class="dates">STAR ${i + 1}</div><p>${esc(s.text)}<span class="chip">${esc(tierOf(dossier, s))}</span></p></div>`,
     )
     .join('\n')
-  return htmlDoc({ title: `${dossier.profile.fullName} — Interview Stories`, css: officeCss(theme), body: `${header(dossier)}\n<h2>Interview Story Bank</h2>\n${cards}`, theme })
+  return htmlDoc({
+    title: `${dossier.profile.fullName} — Interview Stories`,
+    css: officeCss(theme),
+    body: `${header(dossier)}\n<h2>Interview Story Bank</h2>\n${cards}`,
+    theme,
+  })
 }
 
-export function renderFitMapHtml(dossier: Dossier, coverage: Coverage[], theme: Theme = 'light'): string {
+export function renderEvidenceDocumentHtml(
+  dossier: Dossier,
+  title: string,
+  sentences: Sentence[],
+  theme: Theme = 'light',
+): string {
+  const cards = sentences
+    .map(
+      (s) =>
+        `<div class="card"><p>${esc(s.text)}<span class="chip">${esc(tierOf(dossier, s))}</span></p></div>`,
+    )
+    .join('\n')
+  return htmlDoc({
+    title: `${dossier.profile.fullName} — ${title}`,
+    css: officeCss(theme),
+    body: `${header(dossier)}\n<h2>${esc(title)}</h2>\n${cards}`,
+    theme,
+  })
+}
+
+export function renderFitMapHtml(
+  dossier: Dossier,
+  coverage: Coverage[],
+  theme: Theme = 'light',
+): string {
   const rows = coverage
     .map((c) => {
       const req = dossier.brief?.decomposed.find((r) => r.id === c.requirementId)
@@ -36,10 +81,19 @@ export function renderFitMapHtml(dossier: Dossier, coverage: Coverage[], theme: 
     })
     .join('')
   const table = `<table class="coverage"><thead><tr><th>Requirement</th><th>Coverage</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table>`
-  return htmlDoc({ title: `${dossier.profile.fullName} — Fit Map`, css: officeCss(theme), body: `${header(dossier)}\n<h2>Requirement Coverage</h2>\n${table}`, theme })
+  return htmlDoc({
+    title: `${dossier.profile.fullName} — Fit Map`,
+    css: officeCss(theme),
+    body: `${header(dossier)}\n<h2>Requirement Coverage</h2>\n${table}`,
+    theme,
+  })
 }
 
-export function renderGapBriefHtml(dossier: Dossier, coverage: Coverage[], theme: Theme = 'light'): string {
+export function renderGapBriefHtml(
+  dossier: Dossier,
+  coverage: Coverage[],
+  theme: Theme = 'light',
+): string {
   const gaps = coverage.filter((c) => c.status === 'missing' || c.status === 'confirm')
   const cards = gaps
     .map((c) => {
@@ -52,6 +106,12 @@ export function renderGapBriefHtml(dossier: Dossier, coverage: Coverage[], theme
       return `<div class="card"><p>${esc(advice)}</p></div>`
     })
     .join('\n')
-  const body = gaps.length > 0 ? cards : '<p>No gaps — every requirement is covered by confirmed evidence.</p>'
-  return htmlDoc({ title: `${dossier.profile.fullName} — Gap & Risk Brief`, css: officeCss(theme), body: `${header(dossier)}\n<h2>Gap &amp; Risk Brief</h2>\n${body}`, theme })
+  const body =
+    gaps.length > 0 ? cards : '<p>No gaps — every requirement is covered by confirmed evidence.</p>'
+  return htmlDoc({
+    title: `${dossier.profile.fullName} — Gap & Risk Brief`,
+    css: officeCss(theme),
+    body: `${header(dossier)}\n<h2>Gap &amp; Risk Brief</h2>\n${body}`,
+    theme,
+  })
 }

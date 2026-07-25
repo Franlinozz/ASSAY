@@ -15,6 +15,7 @@ export const TOOL_PRICES = {
   asy_fit_brief: 0.1,
   asy_cover_letter: 0.15,
   asy_story_bank: 0.2,
+  asy_interview_prep: 0.2,
   asy_tailor_resume: 0.3,
   asy_create_dossier_job: 2.0,
   asy_job_status: 0,

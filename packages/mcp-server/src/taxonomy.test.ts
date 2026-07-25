@@ -9,7 +9,13 @@ import {
   formatInTz,
   type Dossier,
 } from '@xyndicate/assay-core'
-import { EVIDENCE_RESOLVES, PLACEHOLDER_TEXT, DATE_SANITY, summarize, type TribunalReport } from '@xyndicate/tribunal'
+import {
+  EVIDENCE_RESOLVES,
+  PLACEHOLDER_TEXT,
+  DATE_SANITY,
+  summarize,
+  type TribunalReport,
+} from '@xyndicate/tribunal'
 import { sanitizeGap } from '@xyndicate/providers'
 import { priceOf } from './config'
 
@@ -28,10 +34,22 @@ function mkDossier(over: Record<string, unknown> = {}): Dossier {
       experiences: [{ org: 'Acme', title: 'SWE', startYm: '2021-03', endYm: null }],
     },
     evidence: [
-      EvidenceItemSchema.parse({ id: 'EV-1', kind: 'document', label: 'resume', sourceRef: 'resume.txt', contentText: 'Reduced latency 38%' }),
+      EvidenceItemSchema.parse({
+        id: 'EV-1',
+        kind: 'document',
+        label: 'resume',
+        sourceRef: 'resume.txt',
+        contentText: 'Reduced latency 38%',
+      }),
     ],
     claims: [
-      ClaimSchema.parse({ id: 'CLM-1', text: 'Reduced latency by 38%', status: 'confirmed', evidenceIds: ['EV-1'], numericFacts: [{ value: 38, unit: '%', context: 'latency' }] }),
+      ClaimSchema.parse({
+        id: 'CLM-1',
+        text: 'Reduced latency by 38%',
+        status: 'confirmed',
+        evidenceIds: ['EV-1'],
+        numericFacts: [{ value: 38, unit: '%', context: 'latency' }],
+      }),
     ],
     ...over,
   })
@@ -58,7 +76,15 @@ function mkReport(over: Partial<TribunalReport>): TribunalReport {
 describe('taxonomy: asset referenced but missing', () => {
   it('a document evidence with no text AND no file is a hard FAIL, not a silent pass', async () => {
     const d = mkDossier({
-      evidence: [EvidenceItemSchema.parse({ id: 'EV-X', kind: 'document', label: 'cert', sourceRef: 'gone.pdf', contentText: '' })],
+      evidence: [
+        EvidenceItemSchema.parse({
+          id: 'EV-X',
+          kind: 'document',
+          label: 'cert',
+          sourceRef: 'gone.pdf',
+          contentText: '',
+        }),
+      ],
       claims: [],
     })
     const r = await EVIDENCE_RESOLVES.run({
@@ -90,9 +116,17 @@ describe('taxonomy: timezone honored (UTC+9)', () => {
     // 2026-03-01T23:30:00Z is still Feb/Mar 1 in UTC but already Mar 2 in Tokyo (UTC+9).
     const iso = '2026-03-01T23:30:00.000Z'
     expect(ymInTz(iso, 'America/New_York')).toBe('2026-03') // UTC-5 → still Mar 1 evening
-    const tokyoDay = formatInTz(iso, 'Asia/Tokyo', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    const tokyoDay = formatInTz(iso, 'Asia/Tokyo', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
     expect(tokyoDay).toContain('03/02') // Tokyo has ticked to Mar 2
-    const nyDay = formatInTz(iso, 'America/New_York', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    const nyDay = formatInTz(iso, 'America/New_York', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
     expect(nyDay).toContain('03/01')
     expect(tokyoDay).not.toBe(nyDay)
   })
@@ -108,20 +142,24 @@ describe('taxonomy: timezone honored (UTC+9)', () => {
         experiences: [{ org: 'Future Co', title: 'SWE', startYm: '2999-01', endYm: null }],
       },
     })
-    const r = await DATE_SANITY.run({ dossier: d, artifact: ArtifactSchema.parse({ id: 'A1', kind: 'resume_ats' }), deps: {} })
+    const r = await DATE_SANITY.run({
+      dossier: d,
+      artifact: ArtifactSchema.parse({ id: 'A1', kind: 'resume_ats' }),
+      deps: {},
+    })
     expect(r.status).toBe('fail')
   })
 })
 
 // ── 3) placeholder leak (gotcha #13) ──
 describe('taxonomy: placeholder leak', () => {
-  it('a [BRACKET] placeholder in an artifact is a hard FAIL', () => {
+  it('a [BRACKET] placeholder in an artifact is a hard FAIL', async () => {
     const art = ArtifactSchema.parse({
       id: 'A1',
       kind: 'cover_letter',
       sentences: [{ text: 'I would love to work at [COMPANY NAME].', claimIds: ['CLM-1'] }],
     })
-    const r = PLACEHOLDER_TEXT.run({ dossier: mkDossier(), artifact: art, deps: {} })
+    const r = await PLACEHOLDER_TEXT.run({ dossier: mkDossier(), artifact: art, deps: {} })
     expect(r.status).toBe('fail')
     expect(r.findings.map((f) => f.code)).toContain('BRACKET_PLACEHOLDER')
   })

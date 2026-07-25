@@ -23,6 +23,9 @@ import {
   RequirementKindEnum,
   CoverageStatusEnum,
   ArtifactKindEnum,
+  DossierVariantEnum,
+  InterviewQuestionSchema,
+  InterviewEvaluationSchema,
 } from './schemas'
 
 // Types are inferred from the zod schemas so the two can never drift.
@@ -50,3 +53,6 @@ export type ClaimStatus = z.infer<typeof ClaimStatusEnum>
 export type RequirementKind = z.infer<typeof RequirementKindEnum>
 export type CoverageStatus = z.infer<typeof CoverageStatusEnum>
 export type ArtifactKind = z.infer<typeof ArtifactKindEnum>
+export type DossierVariant = z.infer<typeof DossierVariantEnum>
+export type InterviewQuestion = z.infer<typeof InterviewQuestionSchema>
+export type InterviewEvaluation = z.infer<typeof InterviewEvaluationSchema>

@@ -7,6 +7,9 @@
 **Payment:** x402 on X Layer (`eip155:196`), USDT
 **Standard:** AS-1.0.0 · **Registry:** `0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4` (X Layer mainnet)
 
+> Phase 14 refresh note: add `asy_interview_prep` (0.20 USDT) and describe the
+> `job | promotion | freelance` dossier variants. The existing dossier price remains 2.00 USDT.
+
 ## Description
 
 **Assay turns scattered work history into a Career Dossier where every claim traces to proof.** It is a career studio for job seekers — and for other agents, over A2MCP — built on one non-negotiable promise: *Assay will not write a sentence it cannot trace.*

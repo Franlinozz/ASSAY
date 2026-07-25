@@ -5,6 +5,8 @@ import {
   getStudioState,
   updateClaim,
   runBrief,
+  prepareInterview,
+  submitInterviewAnswer,
   sealDossier,
   createOrUpdateShare,
   revokeShare,
@@ -108,11 +110,63 @@ export function buildStudioRouter(deps: StudioDeps): Router {
     json,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const b = (req.body ?? {}) as { jd?: unknown }
-        const jd = typeof b.jd === 'string' ? b.jd.trim() : ''
-        if (!jd) return bad(res, 400, 'paste a job description to map fit')
-        const result = await runBrief(deps, String(req.params['id']), jd)
+        const b = (req.body ?? {}) as Record<string, unknown>
+        const text =
+          typeof b['text'] === 'string'
+            ? b['text'].trim()
+            : typeof b['jd'] === 'string'
+              ? b['jd'].trim()
+              : ''
+        if (!text) return bad(res, 400, 'add a role, promotion goal, or client brief')
+        const mode = b['mode'] === 'promotion' || b['mode'] === 'freelance' ? b['mode'] : 'job'
+        const result = await runBrief(deps, String(req.params['id']), {
+          text,
+          mode,
+          ...(typeof b['dateFrom'] === 'string' ? { dateFrom: b['dateFrom'] } : {}),
+          ...(typeof b['dateTo'] === 'string' ? { dateTo: b['dateTo'] } : {}),
+          ...(Array.isArray(b['projectClaimIds'])
+            ? {
+                projectClaimIds: b['projectClaimIds'].filter(
+                  (x): x is string => typeof x === 'string',
+                ),
+              }
+            : {}),
+        })
         return ok(res, result)
+      } catch (e) {
+        next(e)
+      }
+    },
+  )
+
+  router.post('/d/:id/interview/generate', requireToken, json, (req: Request, res: Response) => {
+    try {
+      return ok(res, prepareInterview(deps, String(req.params['id'])))
+    } catch (e) {
+      return bad(res, 400, e instanceof Error ? e.message : 'could not prepare interview')
+    }
+  })
+
+  router.post(
+    '/d/:id/interview/:questionId',
+    requireToken,
+    json,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const answer =
+          typeof (req.body as { answer?: unknown })?.answer === 'string'
+            ? (req.body as { answer: string }).answer.trim()
+            : ''
+        if (!answer) return bad(res, 400, 'type an answer for the critic')
+        return ok(
+          res,
+          await submitInterviewAnswer(
+            deps,
+            String(req.params['id']),
+            String(req.params['questionId']),
+            answer,
+          ),
+        )
       } catch (e) {
         next(e)
       }
@@ -182,6 +236,7 @@ export function buildStudioRouter(deps: StudioDeps): Router {
       exposedClaimIds?: unknown
       showContact?: unknown
       expiryDays?: unknown
+      preset?: unknown
     }
     const confirmedIds = dossier.claims.filter((c) => c.status === 'confirmed').map((c) => c.id)
     const exposedClaimIds = Array.isArray(b.exposedClaimIds)
@@ -190,7 +245,12 @@ export function buildStudioRouter(deps: StudioDeps): Router {
         )
       : confirmedIds
     const expiryDays = b.expiryDays === 7 || b.expiryDays === 30 ? b.expiryDays : null
-    const config: ShareConfig = { exposedClaimIds, showContact: b.showContact === true, expiryDays }
+    const config: ShareConfig = {
+      exposedClaimIds,
+      showContact: b.showContact === true,
+      expiryDays,
+      preset: b.preset === 'samples' ? 'samples' : 'recruiter',
+    }
     return ok(res, createOrUpdateShare(store, id, config))
   })
 

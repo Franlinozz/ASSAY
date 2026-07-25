@@ -8,6 +8,8 @@ export const StrengthEnum = z.enum(['attested', 'documented', 'linked', 'sealed'
 export const ClaimStatusEnum = z.enum(['extracted', 'needs_confirmation', 'confirmed', 'rejected'])
 export const RequirementKindEnum = z.enum(['must', 'nice'])
 export const CoverageStatusEnum = z.enum(['strong', 'partial', 'missing', 'confirm'])
+export const DossierVariantEnum = z.enum(['job', 'promotion', 'freelance'])
+export const BriefModeEnum = z.enum(['job', 'promotion', 'freelance'])
 export const ArtifactKindEnum = z.enum([
   'resume_ats',
   'resume_designed',
@@ -18,6 +20,13 @@ export const ArtifactKindEnum = z.enum([
   'gap_brief',
   'portfolio_page',
   'manifest_json',
+  'interview_evaluation',
+  'promotion_narrative',
+  'promotion_memo',
+  'manager_one_pager',
+  'capability_statement',
+  'case_studies',
+  'proposal_letter',
 ])
 
 // YYYY-MM
@@ -103,6 +112,10 @@ export const RequirementSchema = z.object({
 export const BriefSchema = z.object({
   jdText: z.string(),
   decomposed: z.array(RequirementSchema).default([]),
+  mode: BriefModeEnum.default('job'),
+  dateFrom: Ym.optional(),
+  dateTo: Ym.optional(),
+  projectClaimIds: z.array(z.string()).default([]),
 })
 
 export const CoverageSchema = z.object({
@@ -115,6 +128,45 @@ export const CoverageSchema = z.object({
 export const SentenceSchema = z.object({
   text: z.string(),
   claimIds: z.array(z.string()).default([]),
+})
+
+export const InterviewQuestionSchema = z.object({
+  id: z.string(),
+  kind: z.enum(['behavioral', 'gap']),
+  prompt: z.string(),
+  claimIds: z.array(z.string()).default([]),
+  requirementId: z.string().optional(),
+})
+
+export const InterviewEvaluationSchema = z.object({
+  questionId: z.string(),
+  answer: z.string(),
+  claimIds: z.array(z.string()).default([]),
+  star: z.object({
+    situation: z.boolean(),
+    task: z.boolean(),
+    action: z.boolean(),
+    result: z.boolean(),
+  }),
+  relevance: z.number().min(0).max(100),
+  feedback: z.array(SentenceSchema).default([]),
+  contradictions: z
+    .array(
+      z.object({
+        answerValue: z.number(),
+        ledgerValue: z.number(),
+        claimId: z.string(),
+        detail: z.string(),
+      }),
+    )
+    .default([]),
+  final: z.boolean().default(false),
+  evaluatedAt: IsoDateTime.default(() => new Date().toISOString()),
+})
+
+export const InterviewRoomSchema = z.object({
+  questions: z.array(InterviewQuestionSchema).default([]),
+  evaluations: z.array(InterviewEvaluationSchema).default([]),
 })
 
 export const ArtifactSchema = z.object({
@@ -160,6 +212,9 @@ export const DossierSchema = z.object({
   claims: z.array(ClaimSchema).default([]),
   artifacts: z.array(ArtifactSchema).default([]),
   tribunalReports: z.array(TribunalReportSchema).default([]),
+  variant: DossierVariantEnum.default('job'),
+  version: z.number().int().positive().default(1),
+  interview: InterviewRoomSchema.default({}),
   seal: SealSchema.optional(),
   createdAt: IsoDateTime.default(() => new Date().toISOString()),
   tz: z.string(),
