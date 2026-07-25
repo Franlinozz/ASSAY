@@ -9,9 +9,20 @@ test.describe('theme', () => {
     // Start from whatever the box defaults to, flip it, and prove the CHOICE survives navigation.
     await page.goto('/')
     const before = await page.locator('html').getAttribute('data-theme')
-    await page.getByTestId('theme-toggle').click()
+    const toggle = page.getByTestId('theme-toggle')
+    await expect(toggle).toHaveAttribute('data-theme-state', before === 'dark' ? 'dark' : 'light')
+    await expect(toggle).toHaveAttribute(
+      'aria-label',
+      before === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
+    )
+    await toggle.click()
     const after = before === 'dark' ? 'light' : 'dark'
     await expect(page.locator('html')).toHaveAttribute('data-theme', after)
+    await expect(toggle).toHaveAttribute('data-theme-state', after)
+    await expect(toggle).toHaveAttribute(
+      'aria-label',
+      after === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
+    )
     const stored = await page.evaluate(() => window.localStorage.getItem('assay-theme'))
     expect(stored).toBe(after)
     // Navigate to other pages — the choice survives (no flash back to the default).
@@ -35,9 +46,27 @@ test.describe('mobile navigation', () => {
     await expect(page).toHaveURL(/\/gallery$/)
     await expect(page.getByTestId('gallery-grid')).toBeVisible()
   })
+
+  test('documentation is directly discoverable from the mobile menu', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: /open menu/i }).click()
+    await expect(page.locator('#mobile-nav').getByRole('link', { name: 'Docs' })).toHaveAttribute(
+      'href',
+      '/docs',
+    )
+  })
 })
 
 test.describe('copy-to-clipboard (/agents)', () => {
+  test('explains eleven API tools versus thirteen marketplace offers', async ({ page }) => {
+    await page.goto('/agents')
+    await expect(
+      page.getByRole('heading', { name: 'Eleven tools. Thirteen offers. One endpoint.' }),
+    ).toBeVisible()
+    await expect(page.getByText('Why 13 on OKX.AI?')).toBeVisible()
+    await expect(page.getByText('asy_create_dossier_job', { exact: true }).first()).toBeVisible()
+  })
+
   test('the copy button copies the MCP config and confirms', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
     await page.goto('/agents')
@@ -69,6 +98,13 @@ test.describe('copy-to-clipboard (/agents)', () => {
 })
 
 test.describe('in-product links resolve', () => {
+  test('gallery explains that Studio dossiers remain private', async ({ page }) => {
+    await page.goto('/gallery')
+    await expect(page.getByTestId('gallery-grid')).toBeVisible()
+    await expect(page.getByText('Public showcase · private Studio')).toBeVisible()
+    await expect(page.getByText(/will not appear here automatically/i)).toBeVisible()
+  })
+
   test('the persona fixture pages are live and labeled fictional (LINK_LIVENESS honesty)', async ({
     page,
   }) => {

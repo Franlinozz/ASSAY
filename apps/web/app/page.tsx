@@ -4,6 +4,7 @@ import { EvidenceThreads } from '../components/EvidenceThreads'
 import { SealedStrip } from '../components/SealedStrip'
 import { LoopDiagram } from '../components/LoopDiagram'
 import { GuillocheBand } from '../components/Guilloche'
+import { Reveal } from '../components/Reveal'
 import { SITE } from '../lib/site'
 import demo from '../lib/demo-run.generated.json'
 
@@ -89,7 +90,7 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section className="hero">
         <div className="container hero-grid">
-          <div className="hero-copy">
+          <Reveal className="hero-copy">
             <p className="hero-kicker overline">Evidence-backed career studio</p>
             <h1 className="display">Proof before polish.</h1>
             <p className="lede">
@@ -109,15 +110,15 @@ export default function LandingPage() {
                 Verify a dossier
               </Link>
             </div>
-          </div>
-          <div>
+          </Reveal>
+          <Reveal className="hero-proof">
             <EvidenceThreads
               heading="Résumé — C. Eze"
               subheading="fictional persona · live interaction"
               bullets={heroBullets}
               evidence={heroEvidence}
             />
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -137,7 +138,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <GuillocheBand height={24} opacity={0.45} />
+      <GuillocheBand height={24} opacity={0.45} className="motion-band" />
 
       {/* ── FOUR MOATS ── */}
       <section className="section-tight">
@@ -145,7 +146,7 @@ export default function LandingPage() {
           <p className="overline">Four moats, visible in sixty seconds</p>
 
           {/* 01 — claim gate */}
-          <div className="moat">
+          <Reveal className="moat">
             <div className="moat-copy">
               <p className="moat-num">{MOATS[0].num}</p>
               <h3>{MOATS[0].title}</h3>
@@ -178,10 +179,10 @@ export default function LandingPage() {
                 Assay never writes a sentence it can&rsquo;t trace.&rdquo;
               </div>
             </div>
-          </div>
+          </Reveal>
 
           {/* 02 — standard + parse-back */}
-          <div className="moat moat-flip">
+          <Reveal className="moat moat-flip">
             <div className="moat-copy">
               <p className="moat-num">{MOATS[1].num}</p>
               <h3>{MOATS[1].title}</h3>
@@ -217,10 +218,10 @@ export default function LandingPage() {
                 {pb?.label}
               </p>
             </div>
-          </div>
+          </Reveal>
 
           {/* 03 — seal */}
-          <div className="moat">
+          <Reveal className="moat">
             <div className="moat-copy">
               <p className="moat-num">{MOATS[2].num}</p>
               <h3>{MOATS[2].title}</h3>
@@ -261,10 +262,10 @@ export default function LandingPage() {
                 <span className="mono">none — salted commitments only</span>
               </div>
             </div>
-          </div>
+          </Reveal>
 
           {/* 04 — recruiter portal */}
-          <div className="moat moat-flip">
+          <Reveal className="moat moat-flip">
             <div className="moat-copy">
               <p className="moat-num">{MOATS[3].num}</p>
               <h3>{MOATS[3].title}</h3>
@@ -302,13 +303,13 @@ export default function LandingPage() {
                 </span>
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ── HONESTY LINE ── */}
       <section className="section">
-        <div className="container honesty">
+        <Reveal className="container honesty">
           <p className="overline" style={{ marginBottom: '1.2rem' }}>
             The integrity-vs-truth line — our honesty guarantee
           </p>
@@ -319,14 +320,14 @@ export default function LandingPage() {
             </strong>{' '}
             We say exactly which tier each claim earned, and we never imply more than that.&rdquo;
           </blockquote>
-        </div>
+        </Reveal>
       </section>
 
-      <GuillocheBand height={24} opacity={0.45} />
+      <GuillocheBand height={24} opacity={0.45} className="motion-band" />
 
       {/* ── CTA ── */}
       <section className="cta-band">
-        <div className="container">
+        <Reveal className="container">
           <h2>Begin a dossier.</h2>
           <p className="lede" style={{ maxWidth: '34rem', marginInline: 'auto' }}>
             Bring whatever you have — an old résumé, project docs, links, or just your answers.
@@ -340,7 +341,7 @@ export default function LandingPage() {
               For Agents
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
     </>
   )

@@ -57,7 +57,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
 
   const cfg: ServerConfig = {
     service: 'assay-mcp',
-    version: env['ASY_VERSION'] ?? '1.0.0',
+    version: env['ASY_VERSION'] ?? '1.1.0',
     standardVersion: STANDARD_VERSION,
     baseUrl: (env['ASY_BASE_URL'] ?? 'https://api.assayed.xyz').replace(/\/+$/, ''),
     paymentMode,

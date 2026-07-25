@@ -74,8 +74,8 @@ try {
   const packageJson = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
   const toolDocs = tools.toolDocs()
 
-  if (packageJson.version !== '1.0.0')
-    fail(`package.json version is ${packageJson.version}; expected the v1.0.0 release`)
+  if (packageJson.version !== '1.1.0')
+    fail(`package.json version is ${packageJson.version}; expected the v1.1.0 release`)
 
   for (const heading of [
     '## The problem',
@@ -155,7 +155,7 @@ try {
     )
   requireText(readme, `${total} tests`, 'README.md')
   requireText(readme, `tests-${total}_passing`, 'README.md badge')
-  requireText(readme, 'v1.0.0', 'README.md')
+  requireText(readme, 'v1.1.0', 'README.md')
 
   for (const phrase of [
     'SSRF',

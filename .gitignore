@@ -56,3 +56,6 @@ packages/contracts/solidity/out/
 
 # operator-only persona seal salts (guardrail #3 — never public)
 apps/web/.persona-salts.json
+
+# private submission-day capture bucket (screenshots, receipts, operator notes)
+/evidence/

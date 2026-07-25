@@ -119,9 +119,12 @@ unchanged while all ten additions landed:
   service history.
 - Ten additions were written successfully in tx
   `0xcf0a3f61e15e142d63e9931be3e27c8a48f32bf1e95af93588ee8f3c66e9e423`.
-- Public screenshot proof remains gated on marketplace approval/listing. The public agent URL
-  returned HTTP 404 on 2026-07-25; the capture script failed closed and will not create a misleading
-  artifact until all 13 services and prices are visible on `okx.ai`.
+- **Public listing is live.** Agent #8599 is eligible for task recommendations, shows the registered
+  endpoint, and reports 13 service offers across two paginated screens.
+- The 13 offers are a marketplace projection of **11 canonical MCP tools**, not 13 API methods:
+  `asy_create_dossier_job` is deliberately presented as Career Dossier, Promotion Dossier, and
+  Freelancer Proof Pack so each repeat-use case is discoverable while retaining one schema and one
+  fixed 2.00 USDT price.
 
 ## A2A decision — skip for Phase 14
 
@@ -135,11 +138,13 @@ and delivery acceptance suite exist.
 
 ## Screenshot proof
 
-After approval/listing, run:
+Run:
 
 ```bash
 node scripts/capture-marketplace.mjs
 ```
 
-The script refuses to create proof unless the public page shows all 13 listing services at their
-current prices.
+The script traverses both public service pages and refuses to create proof unless all 13 service
+names and current prices are present. The verified captures are committed at
+`assets/marketplace/assay-8599-prices-page-1.png` and
+`assets/marketplace/assay-8599-prices-page-2.png`.

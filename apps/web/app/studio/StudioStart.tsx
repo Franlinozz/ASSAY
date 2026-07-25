@@ -132,12 +132,19 @@ export function StudioStart() {
           <li>
             <span className="start-step-n mono">03</span>
             <span>
+              <strong>Interview.</strong> Generate likely questions, type your answer, and catch
+              STAR gaps or facts that contradict the confirmed ledger.
+            </span>
+          </li>
+          <li>
+            <span className="start-step-n mono">04</span>
+            <span>
               <strong>Forge.</strong> Generate the dossier. Every sentence carries a claim; click
               any line to see its proof light up.
             </span>
           </li>
           <li>
-            <span className="start-step-n mono">04</span>
+            <span className="start-step-n mono">05</span>
             <span>
               <strong>Report &amp; Seal.</strong> Read the Tribunal&rsquo;s grade, then seal on X
               Layer and share a recruiter link with evidence threads.

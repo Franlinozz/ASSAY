@@ -1,23 +1,26 @@
 # HANDOFF — Assay (for Codex / the next session)
 
-_Last updated: 2026-07-25, after the Phase 15 v1.0.0 production release._
+_Last updated: 2026-07-25, at the Phase 17 v1.1.0 release candidate._
 
 Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is the operational map so you don't get stuck.
 
 ## Where things stand
 
-- **Release commit:** `659e98a1d732e54f975925fb6431e74e91827233`, pushed to `main` and
-  published as annotated tag **`v1.0.0`**.
-- **Release matrix:** 262 Vitest + 4 Foundry + 48 Playwright e2e. Judged-artifact,
-  generated-doc, marketplace-consistency, route, and dead-link gates are green.
-- **Hosted CI:** [run 30164658057](https://github.com/Franlinozz/ASSAY/actions/runs/30164658057)
-  passed every release gate from a clean GitHub runner.
+- **Release:** every workspace and the production health default are **v1.1.0**; the published
+  grader remains **AS-1.1.0**. Resolve the final tagged commit with `git rev-list -n1 v1.1.0`.
+- **Release matrix:** 282 Vitest + 4 Foundry + 51 Playwright e2e = **337 tests**. Production builds,
+  full typecheck, judged-artifact, generated-doc, marketplace-consistency, npm audit, secret scan,
+  and dead-link gates are green.
+- **Hosted CI:** use the `v1.1.0` tag / latest `main` run as the clean-runner record. Do not rely on
+  the older Phase-15 run after the release tag exists.
 - **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs ·
-  https://api.assayed.xyz/mcp are deployed from `659e98a`; all three systemd services are active.
-  Health reports v1.0.0 / AS-1.1.0 / OKX payment mode. ASP **#8599** is owned by
-  `archonaudit@gmail.com`; `x402-check` remains `valid:true`.
-- **Phases done:** P0–P15. The separate release-record commit after the tag changes only
-  `AGENTS.md` and this handoff; production code remains exactly the v1.0.0 tagged tree.
+  https://api.assayed.xyz/mcp deploy from `main`; all three systemd services must be active.
+  Health must report v1.1.0 / AS-1.1.0 / OKX payment mode. ASP **#8599** is listed with 13 offers
+  (11 canonical tools; the dossier job has three marketplace entry points), is owned by
+  `archonaudit@gmail.com`, and `x402-check` must remain `valid:true`.
+- **Phases done:** P0–P17. After v1.1.0 this branch is fixes-only. Operator-only work that cannot be
+  fabricated by code remains: record/upload the real video, publish the X thread, paste its URL
+  into `SUBMISSION.md`, and submit the organizer form.
 
 ## Two machines, don't confuse them
 
@@ -71,8 +74,8 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 | `npm run seal:personas`                 | Anchor persona leaves on X Layer mainnet (needs `ASY_SEALER_KEY`).                                                                                      |
 | `npm run regrade:personas`              | Re-grade the sealed persona artifact sets against the current Standard using Chromium screenshot sampling.                                              |
 | `npm run sweep` (repo root)             | Route sweep: hits every route + validates a real PDF download + forged-token 403.                                                                       |
-| `npm test` (repo root)                  | 260 vitest.                                                                                                                                             |
-| `npm run test:e2e` (repo root)          | 48 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400).                                                                                 |
+| `npm test` (repo root)                  | 282 Vitest.                                                                                                                                             |
+| `npm run test:e2e` (repo root)          | 51 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400).                                                                                 |
 | `npm run check:marketplace` (repo root) | Regenerates and proves machine manifest = docs = pricing for all 11 tools.                                                                              |
 | `npm run check:judge` (repo root)       | Regenerates public facts, verifies README/test counts, and checks local + public links.                                                                 |
 | `npm run dossier` (repo root)           | Runs a deterministic dossier through real Chromium render + parse-back; no provider key required.                                                       |
@@ -87,7 +90,11 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 - **P12 apex:** `packages/renderers/src/interview.ts`, variant writers in `forge.ts`, Studio Interview tab + Brief modes, and `asy_interview_prep`.
 - **P13 trust:** additive SQLite tables `dossier_versions`, `evidence_redactions`, `share_views`; owner controls in Studio Ledger/Report/Share; version-aware `asy_verify`; AS profile router in `packages/tribunal/src/hard/index.ts`; gallery re-grade script/data.
 - **ASP #8599 remediation:** `/mcp` challenges unpaid GET, bare POST, `initialize`, and `tools/list` before MCP content negotiation. Generic discovery is 0.05 USD₮0; paid tools keep their table prices; `asy_verify`, `asy_job_status`, and `asy_job_result` remain free. Re-run `onchainos agent x402-check --endpoint https://api.assayed.xyz/mcp` after every payment-layer deploy.
-- **P14 listing refresh:** ten services added successfully in tx `0xcf0a3f61e15e142d63e9931be3e27c8a48f32bf1e95af93588ee8f3c66e9e423`. The three original services remain unchanged because the platform blocks full-record changes once a service is in use. The public agent URL still returned HTTP 404 on 2026-07-25, so screenshot proof is intentionally pending approval; `node scripts/capture-marketplace.mjs` fails closed until all names/prices are public.
+- **P14 listing refresh:** ten services added successfully in tx `0xcf0a3f61e15e142d63e9931be3e27c8a48f32bf1e95af93588ee8f3c66e9e423`. The three original services remain unchanged because the platform blocks full-record changes once a service is in use. The two-page public capture proved all 13 names/prices before the later avatar refresh; `node scripts/capture-marketplace.mjs` fails closed unless that public state is available.
+- **P17 avatar refresh:** the approved 768×768 derivative is live on Agent #8599’s identity in tx
+  `0x46b94488ce8b5e7435229d22a0cab33559f8833dc92c571714ef6a065e30b4b8`. The identity API
+  returned `SUCCESS`, then the public listing temporarily returned 404 while re-indexing. Do not
+  mutate the identity again; rerun the fail-closed marketplace capture once OKX republishes it.
 - **P14 A2A decision:** skipped. Current docs expect a trained, multi-round negotiation/delivery agent and 10–20 scenario simulations; Assay proves A2MCP/background jobs today but not that negotiation suite.
 
 ## Gotchas that bit this session
@@ -104,7 +111,8 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 
 ## Suggested next work
 
-- Finish the P15 release validation listed under “Where things stand”; do not tag from source work
-  alone.
+- Submission morning: execute all twelve checks in `SUBMISSION.md`, record the real video from
+  `docs/DEMO-KIT.md`, publish `docs/X-POST.md`, paste the post URL, and submit the form.
 - The optional live-LLM persona re-run above (real spend).
-- Marketplace-mediated self-test + public-price check remain gated on OKX listing approval (P7 note).
+- Recheck the public #8599 URL after the avatar-triggered re-index; once it returns, rerun the
+  fail-closed two-page marketplace capture to refresh the visual proof.

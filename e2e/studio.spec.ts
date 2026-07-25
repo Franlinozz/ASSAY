@@ -25,10 +25,12 @@ const FIXTURE_JD = [
 
 async function createDossier(page: Page): Promise<void> {
   await page.goto('/studio')
+  await expect(page.getByText('Interview.')).toBeVisible()
   await page.getByTestId('start-name').fill('Chidinma Eze')
   await page.getByTestId('start-email').fill('chidinma.eze@example.com')
   await page.getByTestId('start-submit').click()
   await page.waitForURL(/\/d\/DSR-[A-Z0-9]+\?t=/, { timeout: 20_000 })
+  await expect(page.getByText('stage 1 / 5')).toBeVisible()
 }
 
 test.describe('token security', () => {
@@ -114,6 +116,7 @@ test.describe('the full dossier flow', () => {
       timeout: 20_000,
     })
     await page.getByRole('button', { name: 'Continue to the Forge' }).click()
+    await expect(page.getByText('Stage 4 · the Forge')).toBeVisible()
 
     // ── FORGE ──
     await page.getByTestId('run-forge').click()
@@ -131,6 +134,10 @@ test.describe('the full dossier flow', () => {
     // ── REPORT: a first-draft fail must be present (the repair demo) ──
     await page.getByTestId('to-report').click()
     await page.waitForSelector('[data-testid=report-rollup]', { timeout: 15_000 })
+    await expect(page.getByText('Stage 5 · the Report')).toBeVisible()
+    await expect(page.getByTestId('gallery-privacy-note')).toContainText(
+      'never appears in the public Gallery automatically',
+    )
     await expect(page.locator('.verdict-fail').first()).toBeVisible()
     await expect(page.locator('.repair-brief').first()).toBeVisible()
 

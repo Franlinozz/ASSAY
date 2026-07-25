@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   fetchState,
   fetchEvents,
@@ -78,6 +79,9 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
   const [fatal, setFatal] = useState<'token' | 'missing' | null>(null)
   const cursor = useRef(0)
   const didInitStage = useRef(false)
+  const reduced = useReducedMotion()
+  const stageOrder: Stage[] = ['ledger', 'brief', 'interview', 'forge', 'report']
+  const stageIndex = stageOrder.indexOf(active)
 
   const refresh = useCallback(async (): Promise<StudioState | null> => {
     try {
@@ -290,16 +294,25 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
 
   return (
     <div className="studio">
-      <div className="studio-topbar">
+      <div className={`studio-topbar${busy ? ' studio-is-busy' : ''}`} aria-busy={busy}>
         <div className="container studio-topbar-row">
           <div>
             <span className="overline">Career dossier</span>
             <p className="studio-title">
               {state ? state.profile.fullName : 'Loading…'}
               <span className="mono studio-id">{id}</span>
+              <span className="studio-stage-count mono">
+                stage {stageIndex + 1} / {stageOrder.length}
+              </span>
             </p>
           </div>
           <StageRail state={state} active={active} onNavigate={setActive} />
+        </div>
+        <div className="studio-progress-track" aria-hidden="true">
+          <span
+            className="studio-progress-value"
+            style={{ width: `${((stageIndex + 1) / stageOrder.length) * 100}%` }}
+          />
         </div>
       </div>
 
@@ -312,16 +325,28 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
           ) : null}
           {!state ? (
             <p className="caption">Opening your dossier…</p>
-          ) : active === 'ledger' ? (
-            <LedgerStage state={state} actions={actions} />
-          ) : active === 'brief' ? (
-            <BriefStage state={state} actions={actions} />
-          ) : active === 'interview' ? (
-            <InterviewStage state={state} actions={actions} />
-          ) : active === 'forge' ? (
-            <ForgeStage state={state} actions={actions} />
           ) : (
-            <ReportStage id={id} token={token} state={state} actions={actions} />
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={active}
+                initial={reduced ? false : { opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={reduced ? { opacity: 1 } : { opacity: 0, x: -12 }}
+                transition={reduced ? { duration: 0 } : { duration: 0.24, ease: 'easeOut' }}
+              >
+                {active === 'ledger' ? (
+                  <LedgerStage state={state} actions={actions} />
+                ) : active === 'brief' ? (
+                  <BriefStage state={state} actions={actions} />
+                ) : active === 'interview' ? (
+                  <InterviewStage state={state} actions={actions} />
+                ) : active === 'forge' ? (
+                  <ForgeStage state={state} actions={actions} />
+                ) : (
+                  <ReportStage id={id} token={token} state={state} actions={actions} />
+                )}
+              </motion.div>
+            </AnimatePresence>
           )}
         </div>
         <aside className="studio-side">

@@ -73,7 +73,7 @@ function StampMark() {
           fill: 'var(--vermilion)',
         }}
       >
-        AS v1.0.0
+        AS v1.1.0
       </text>
     </svg>
   )

@@ -29,6 +29,12 @@ export default function PricingPage() {
           the same tools over A2MCP and pay per call in USDT. No subscription, no seat license — and
           checking a seal costs nothing, forever.
         </p>
+        <p className="marketplace-count-note">
+          <strong>11 callable tools · 13 OKX.AI service cards.</strong> Career Dossier, Promotion
+          Dossier, and Freelancer Proof Pack are three buyer-facing modes of the same 2.00 USDT{' '}
+          <span className="mono">asy_create_dossier_job</span> tool—not duplicate charges or hidden
+          endpoints.
+        </p>
       </div>
 
       <section className="section-tight">

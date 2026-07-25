@@ -121,7 +121,7 @@ export function ReportStage({
       <div className="stage">
         <header className="stage-header">
           <div>
-            <p className="overline">Stage 4 · the Report</p>
+            <p className="overline">Stage 5 · the Report</p>
             <h2>Forge first.</h2>
             <p className="stage-lede">
               The Tribunal grades what the Forge produces — run the Forge to see reports here.
@@ -150,7 +150,7 @@ export function ReportStage({
     <div className="stage">
       <header className="stage-header">
         <div>
-          <p className="overline">Stage 4 · the Report</p>
+          <p className="overline">Stage 5 · the Report</p>
           <h2>The Tribunal&rsquo;s verdict.</h2>
           <p className="stage-lede">
             Every artifact graded against the published Standard — draft by draft, findings and all.
@@ -303,6 +303,15 @@ export function ReportStage({
       ) : (
         <p className="caption">Seal the dossier to issue a recruiter link.</p>
       )}
+
+      <div className="gallery-privacy-note" data-testid="gallery-privacy-note">
+        <p className="overline">Private by default</p>
+        <p className="caption">
+          This dossier never appears in the public Gallery automatically. A recruiter link exposes
+          only the fields and evidence you choose, and it remains revocable. The Gallery contains
+          curated, clearly labeled demonstration dossiers—not private Studio work.
+        </p>
+      </div>
 
       <div className="stage-footer">
         <button type="button" className="btn btn-ghost" onClick={() => actions.goTo('forge')}>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { TierChip } from '../../components/TierChip'
+import { Reveal } from '../../components/Reveal'
 import { featuredPersona, otherPersonas, personaTiers, type Persona } from '../../lib/personas'
 
 export const metadata: Metadata = {
@@ -80,7 +81,7 @@ export default function GalleryPage() {
 
   return (
     <>
-      <div className="container page-head">
+      <Reveal className="container page-head">
         <p className="overline">Gallery · fictional personas · real pipeline output</p>
         <h1>Dossiers on display.</h1>
         <p className="lede">
@@ -88,14 +89,26 @@ export default function GalleryPage() {
           graded, and sealed on X Layer. The personas are fictional and say so on the tin; the
           grades, the gaps, and the seals are real.
         </p>
-      </div>
+      </Reveal>
 
       <section className="section-tight">
         <div className="container">
+          <Reveal className="gallery-privacy-note gallery-privacy-note-wide">
+            <p className="overline">Public showcase · private Studio</p>
+            <p className="caption">
+              A dossier you create in the Studio is private and will not appear here automatically.
+              Sharing issues a controlled, revocable portal; this Gallery is a curated set of
+              clearly labeled demonstration dossiers.
+            </p>
+          </Reveal>
           <div className="gallery-grid" data-testid="gallery-grid">
-            <PersonaCard persona={featured} featured />
+            <Reveal className="gallery-reveal">
+              <PersonaCard persona={featured} featured />
+            </Reveal>
             {others.map((p) => (
-              <PersonaCard key={p.slug} persona={p} />
+              <Reveal key={p.slug} className="gallery-reveal">
+                <PersonaCard persona={p} />
+              </Reveal>
             ))}
           </div>
           <p className="caption" style={{ marginTop: '1.2rem' }}>

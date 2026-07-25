@@ -39,7 +39,8 @@ for (const [name, path] of ROUTES) {
       const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 })
       await ctx.addInitScript((t) => window.localStorage.setItem('assay-theme', t), theme)
       const page = await ctx.newPage()
-      await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' })
+      await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' })
+      await page.locator('body').waitFor({ state: 'visible' })
       await page.waitForTimeout(400) // fonts + thread measurement settle
       const file = resolve(outDir, `${name}-${vpName}-${theme}.png`)
       await page.screenshot({ path: file, fullPage: true })

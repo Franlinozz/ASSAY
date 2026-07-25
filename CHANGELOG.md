@@ -4,6 +4,49 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-07-25
+
+### Added — Submission lockdown (Phase 17)
+
+- Added an exact 90-second operator storyboard covering the real sealed Adaeze run from messy
+  evidence through ledger, honest gap, blocked claim, first-draft failure, repair, parse-back,
+  recruiter proof portal, X Layer verification, and the proven x402 settlement.
+- Added an honest six-post launch thread, pinned submission fields and deadline, twelve-item
+  verify-day runbook, and a fixes-only post-release freeze.
+- Added a thumbnail-safe 768×768 OKX marketplace avatar derived from the operator’s committed
+  Assay mark; the original high-resolution artwork remains intact. The derivative was uploaded
+  through OKX and applied to Agent #8599 in identity tx `0x46b94488…b4b8`.
+- Captured the now-public Agent #8599 listing across both service pages and fail-closed verified all
+  13 buyer-facing service names and prices.
+
+### Changed
+
+- Added restrained Assay Office motion across the landing page, gallery, and Studio: entrance and
+  flow cues, state transitions, progress feedback, and tactile card interactions. Reduced-motion
+  users receive effectively static transitions, and the landing route gains no animation bundle.
+- Reframed Studio as the actual five-stage process—Ledger, Brief, Interview, Forge, Report &
+  Seal—with corrected stage numbering, an animated progress rail, and clearer busy state.
+- Added Docs to primary and mobile navigation and made the private-by-default gallery boundary
+  explicit: Studio dossiers do not silently publish to the curated fictional demonstration gallery.
+- Replaced the generic half-disc theme control with an Assay Office moon/sun pair: viridian
+  night-switching in light mode, brass daylight-switching in dark mode, with clear labels, focus
+  treatment, restrained state animation, and mobile parity.
+- Explained the marketplace projection on the site and README: Assay has 11 canonical MCP tools
+  and 13 buyer-facing offers because the one dossier-job tool has job, promotion, and freelancer
+  entry points.
+- Moved the README architecture below the product, proofs, quickstart, and repository guide so a
+  cold reader reaches the problem and runnable path first.
+- Promoted all workspace versions and production defaults to v1.1.0 while preserving AS-1.1.0 as
+  the published grading standard.
+
+### Fixed
+
+- Corrected stale Studio labels that still called Forge “Stage 3” and Report “Stage 4” after
+  Interview Room became a first-class stage.
+- Corrected the Studio seal moment’s stale AS-1.0.0 label.
+- Fixed marketplace screenshot validation to traverse both OKX service pages instead of assuming
+  all 13 offers render on the first page.
+
 ### Added — Hardening drills (Phase 16)
 
 - Added an executed failure-drill suite covering writer/critic loss, deleted artifacts, a two-hour
@@ -19,8 +62,8 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
   scanner, HMAC/ID entropy regressions, and Caddy CSP/HSTS/anti-framing headers.
 - Patched the dependency graph to **0 npm advisories** and recorded every drill plus honest limits
   in `docs/HARDENING-DRILLS.md`.
-- Performance budgets passed on the production build: `/health` 15 ms p95, fake-provider
-  `asy_ats_scan` 38 ms p95, and mobile Fast-3G LCP 1,712 ms.
+- Performance budgets passed again after the interaction pass: `/health` 6 ms p95, fake-provider
+  `asy_ats_scan` 74 ms p95, and mobile Fast-3G LCP 932 ms.
 
 ## [1.0.0] — 2026-07-25
 

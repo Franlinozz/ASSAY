@@ -61,7 +61,7 @@ export function ForgeStage({ state, actions }: { state: StudioState; actions: St
     <div className="stage">
       <header className="stage-header">
         <div>
-          <p className="overline">Stage 3 · the Forge</p>
+          <p className="overline">Stage 4 · the Forge</p>
           <h2>Write the dossier.</h2>
           <p className="stage-lede">
             Every sentence is generated against a confirmed claim and checked before it renders.

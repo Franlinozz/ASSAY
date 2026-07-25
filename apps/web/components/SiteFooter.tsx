@@ -35,6 +35,9 @@ export function SiteFooter() {
             <li>
               <Link href="/gallery">Gallery</Link>
             </li>
+            <li>
+              <Link href="/docs">Documentation</Link>
+            </li>
           </ul>
         </nav>
 
@@ -76,7 +79,7 @@ export function SiteFooter() {
         <span className="caption">
           © {new Date().getFullYear()} {SITE.studio} · OKX.AI Genesis · Lifestyle Companion
         </span>
-        <span className="caption mono">AS v1.0.0</span>
+        <span className="caption mono">AS v1.1.0</span>
       </div>
     </footer>
   )

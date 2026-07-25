@@ -29,14 +29,15 @@ Measured by `npm run hardening:drills` against the production build on this VPS.
 complete local HTTP/MCP path and deterministic fake adapters; browser LCP uses Chromium mobile
 390×844 with 150 ms latency, 1.6 Mbps down, and 750 Kbps up.
 
-| Budget                                       |           Samples |        p95 / observed |      Target | Result |
-| -------------------------------------------- | ----------------: | --------------------: | ----------: | ------ |
-| `/health`                                    |                80 | 15 ms p95 (48 ms max) | <100 ms p95 | PASS   |
-| `asy_ats_scan`                               |                12 |             38 ms p95 |   <15 s p95 | PASS   |
-| Studio/landing mobile LCP, Fast-3G emulation | 1 cold navigation |              1,712 ms |      <2.5 s | PASS   |
+| Budget                                       |           Samples | p95 / observed |      Target | Result |
+| -------------------------------------------- | ----------------: | -------------: | ----------: | ------ |
+| `/health`                                    |                80 |       6 ms p95 | <100 ms p95 | PASS   |
+| `asy_ats_scan`                               |                12 |      74 ms p95 |   <15 s p95 | PASS   |
+| Studio/landing mobile LCP, Fast-3G emulation | 1 cold navigation |         932 ms |      <2.5 s | PASS   |
 
 The fake-provider ATS timing isolates Assay’s own parsing, policy, payment, and response overhead. It
-does not claim that an external provider’s latency is 38 ms.
+does not claim that an external provider’s latency is 74 ms. These are the final rerun values after
+the Phase-17 interaction and motion pass.
 
 ## Security sweep
 

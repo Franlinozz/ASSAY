@@ -131,8 +131,8 @@ test.describe('verify', () => {
 test.describe('accessibility (axe)', () => {
   for (const path of PAGES) {
     test(`${path} has no serious violations`, async ({ page }) => {
-      await page.goto(path)
-      await page.waitForLoadState('networkidle')
+      await page.goto(path, { waitUntil: 'domcontentloaded' })
+      await page.locator('body').waitFor({ state: 'visible' })
       const results = await new AxeBuilder({ page }).analyze()
       const serious = results.violations.filter(
         (v) => v.impact === 'serious' || v.impact === 'critical',
@@ -159,8 +159,8 @@ test.describe('no raw gap or error strings (guardrail #9)', () => {
   const PLACEHOLDER_PATTERNS = [/\blorem\b/i, /\bTBD\b/, /YOUR [A-Z]+ HERE/]
   for (const path of PAGES) {
     test(`${path} HTML is clean`, async ({ page }) => {
-      await page.goto(path)
-      await page.waitForLoadState('networkidle')
+      await page.goto(path, { waitUntil: 'domcontentloaded' })
+      await page.locator('body').waitFor({ state: 'visible' })
       const html = await page.content()
       for (const pattern of RAW_PATTERNS) {
         expect(html).not.toMatch(pattern)

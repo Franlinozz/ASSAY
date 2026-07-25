@@ -6,7 +6,7 @@ privacy are therefore product behavior, not a disclaimer.
 ## Supported versions
 
 Security fixes land on `main` and the latest tagged release. The first supported release is
-`v1.0.0`; older development snapshots receive no separate backports.
+`v1.1.0`; older development snapshots receive no separate backports.
 
 ## Report a vulnerability
 

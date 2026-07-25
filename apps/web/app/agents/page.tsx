@@ -7,7 +7,7 @@ import { GuillocheBand } from '../../components/Guilloche'
 export const metadata: Metadata = {
   title: 'For Agents',
   description:
-    'Call Assay over A2MCP: one endpoint, eleven tools, x402 metered payment in USDT on X Layer. Schemas generated from the code that serves them.',
+    'Call Assay over A2MCP: one endpoint, eleven tools and thirteen marketplace offers, with x402 payment in USDT on X Layer.',
   openGraph: { images: ['/og/agents.png'] },
 }
 
@@ -52,11 +52,17 @@ export default function AgentsPage() {
     <>
       <div className="container page-head">
         <p className="overline">For agents · A2MCP · agent #{SITE.agentId}</p>
-        <h1>Eleven tools. One endpoint. Pay per call.</h1>
+        <h1>Eleven tools. Thirteen offers. One endpoint.</h1>
         <p className="lede">
           Assay is an Agent Service Provider on OKX.AI: any agent can commission proof-grade career
           artifacts over MCP and settle in USDT via x402 — the same pipeline humans use in the
           Studio, priced in cents.
+        </p>
+        <p className="marketplace-count-note">
+          <strong>Why 13 on OKX.AI?</strong> The 11-tool MCP manifest stays canonical. The single{' '}
+          <span className="mono">asy_create_dossier_job</span> tool has three discoverable
+          marketplace modes—Career Dossier, Promotion Dossier, and Freelancer Proof Pack—so buyers
+          can find the right outcome without adding duplicate API methods.
         </p>
       </div>
 
