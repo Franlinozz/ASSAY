@@ -9,6 +9,7 @@
     "prebuild": "npm run gen",
     "build": "next build",
     "start": "next start -p 3101",
+    "pretypecheck": "npm run gen && fumadocs-mdx",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next .source"
   },

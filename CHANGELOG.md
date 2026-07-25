@@ -34,6 +34,7 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - The gallery persona seal receipt now uses a one-column proof layout with wrapping hashes and an explicit fictional-demonstration label; this was found while capturing the outreach proof.
 - The new scrollable consumer script is keyboard-focusable; the first Playwright run found the accessibility issue and the complete 48-case rerun passed.
 - The route sweep still expected the pre-remediation `GET /mcp` 405. It now requires the corrected 402 and validates the generic x402-v2 challenge network and amount.
+- Docs typechecking now generates Fumadocs source types first, so the new CI gate also works from a clean checkout rather than relying on a developer’s existing `.source` cache.
 
 ### Decision
 
