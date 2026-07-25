@@ -10,6 +10,7 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - Paid MCP discovery replays no longer fail the SDK's dual-`Accept` transport check: the server normalizes that internal transport requirement while preserving a plain JSON response. GET discovery is idempotent and returns its settlement proof.
 - The payment resource URL is sourced from `ASY_BASE_URL`, so reverse-proxied challenges advertise `https://api.assayed.xyz/mcp` rather than an internal `http://` URL.
 - DevGate now mirrors the current v2 challenge shape and the official X Layer USD₮0 asset address. Four focused regressions bring the repository total to **260 vitest**.
+- Deployed the remediation and verified GET, bare POST, `initialize`, and `tools/list` against the public endpoint; OKX's `x402-check` now reports `valid:true`.
 
 ## [0.13.0] — 2026-07-24
 

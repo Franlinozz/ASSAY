@@ -8,7 +8,7 @@ Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is t
 
 - **Branch `main`**, pushed to `Franlinozz/ASSAY`. Working tree clean.
 - **Tests green:** 260 vitest + 4 foundry + 47 Playwright e2e. Route sweep green.
-- **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs · https://api.assayed.xyz/mcp. OKX.AI ASP **#8599** is owned by `archonaudit@gmail.com`; its first review was rejected because generic probes reached MCP transport errors before x402.
+- **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs · https://api.assayed.xyz/mcp. OKX.AI ASP **#8599** is owned by `archonaudit@gmail.com`; its first review was rejected because generic probes reached MCP transport errors before x402. Remediation is deployed: the official `x402-check` reports `valid:true`; marketplace resubmission is the remaining external step.
 - **Phases done:** P0–P13. P12 = Interview Room + promotion/freelance dossier variants. P13 = redaction, version lineage, privacy-shaped access logs, credential import, and AS-1.1.0.
 
 ## Two machines, don't confuse them
