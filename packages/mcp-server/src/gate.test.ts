@@ -13,12 +13,16 @@ describe('DevGate (documented x402 shape, no facilitator)', () => {
     const header = decision.headers['PAYMENT-REQUIRED']
     expect(header).toBeTruthy()
     const challenge = JSON.parse(Buffer.from(header!, 'base64').toString()) as {
-      accepts: Array<{ network: string; asset: string; scheme: string; price: string }>
+      x402Version: number
+      resource: { url: string }
+      accepts: Array<{ network: string; asset: string; scheme: string; amount: string }>
     }
+    expect(challenge.x402Version).toBe(2)
+    expect(challenge.resource.url).toBe('http://localhost/mcp')
     expect(challenge.accepts[0]!.network).toBe('eip155:196')
-    expect(challenge.accepts[0]!.asset).toBe('USDT')
+    expect(challenge.accepts[0]!.asset).toBe('0x779ded0c9e1022225f8e0630b35a9b54be713736')
     expect(challenge.accepts[0]!.scheme).toBe('exact')
-    expect(challenge.accepts[0]!.price).toBe('$0.05')
+    expect(challenge.accepts[0]!.amount).toBe('50000')
   })
 
   it('settles a signed replay and returns a PAYMENT-RESPONSE proof', async () => {

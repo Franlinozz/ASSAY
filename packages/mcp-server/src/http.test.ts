@@ -35,6 +35,16 @@ function mcpPost(
 }
 
 const toolsList = { jsonrpc: '2.0', id: 1, method: 'tools/list' }
+const initialize = {
+  jsonrpc: '2.0',
+  id: 1,
+  method: 'initialize',
+  params: {
+    protocolVersion: '2025-03-26',
+    capabilities: {},
+    clientInfo: { name: 'listing-probe', version: '1' },
+  },
+}
 const atsCall = {
   jsonrpc: '2.0',
   id: 2,
@@ -81,17 +91,59 @@ describe('HTTP surface', () => {
     expect(m.prices['asy_ats_scan']).toBe(0.05)
   })
 
-  it('GET and DELETE /mcp are 405', async () => {
+  it('GET /mcp advertises the generic 0.05 USD₮0 challenge; DELETE stays 405', async () => {
     const { base } = startApp()
-    expect((await fetch(`${base}/mcp`)).status).toBe(405)
+    const get = await fetch(`${base}/mcp`)
+    expect(get.status).toBe(402)
+    const encoded = get.headers.get('PAYMENT-REQUIRED')
+    expect(encoded).toBeTruthy()
+    const challenge = JSON.parse(Buffer.from(encoded!, 'base64').toString()) as {
+      x402Version: number
+      resource: { url: string }
+      accepts: Array<{ amount: string; asset: string; network: string; payTo: string }>
+    }
+    expect(challenge.x402Version).toBe(2)
+    expect(challenge.resource.url).toBe('http://localhost/mcp')
+    expect(challenge.accepts[0]).toMatchObject({
+      amount: '50000',
+      asset: '0x779ded0c9e1022225f8e0630b35a9b54be713736',
+      network: 'eip155:196',
+      payTo: '0x1111111111111111111111111111111111111111',
+    })
     expect((await fetch(`${base}/mcp`, { method: 'DELETE' })).status).toBe(405)
   })
 
-  it('rejects a non-JSON content type with 415', async () => {
+  it('a paid GET replay settles once and returns discovery JSON', async () => {
+    const { rig, base } = startApp()
+    const headers = {
+      'PAYMENT-SIG': 'signed-get-discovery',
+      'Idempotency-Key': 'get-discovery',
+    }
+    const first = await fetch(`${base}/mcp`, { headers })
+    const second = await fetch(`${base}/mcp`, { headers })
+    expect(first.status).toBe(200)
+    expect(second.status).toBe(200)
+    expect(first.headers.get('PAYMENT-RESPONSE')).toBeTruthy()
+    expect(await first.json()).toMatchObject({ ok: true, service: 'Assay' })
+    expect(rig.store.getOrderByIdempotencyKey('get-discovery')).toBeTruthy()
+  })
+
+  it('challenges an unpaid bare POST before content negotiation', async () => {
     const { base } = startApp()
     const res = await fetch(`${base}/mcp`, {
       method: 'POST',
       headers: { 'content-type': 'text/plain' },
+      body: 'hi',
+    })
+    expect(res.status).toBe(402)
+    expect(res.headers.get('PAYMENT-REQUIRED')).toBeTruthy()
+  })
+
+  it('rejects a paid replay with a non-JSON content type', async () => {
+    const { base } = startApp()
+    const res = await fetch(`${base}/mcp`, {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain', 'PAYMENT-SIG': 'signed-proof-abc123' },
       body: 'hi',
     })
     expect(res.status).toBe(415)
@@ -107,12 +159,44 @@ describe('HTTP surface', () => {
     expect(res.status).toBe(400)
   })
 
-  it('serves free tools ungated, even in payment mode', async () => {
+  it('challenges tools/list without requiring an SSE Accept header', async () => {
     const { base } = startApp()
-    const res = await mcpPost(base, toolsList)
+    const res = await fetch(`${base}/mcp`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(toolsList),
+    })
+    expect(res.status).toBe(402)
+    expect(res.headers.get('PAYMENT-REQUIRED')).toBeTruthy()
+  })
+
+  it('a signed initialize replay succeeds as JSON without an SSE Accept header', async () => {
+    const { base } = startApp()
+    const res = await fetch(`${base}/mcp`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'PAYMENT-SIG': 'signed-discovery-proof',
+        'Idempotency-Key': 'discovery-init',
+      },
+      body: JSON.stringify(initialize),
+    })
     expect(res.status).toBe(200)
-    const body = (await res.json()) as { result: { tools: unknown[] } }
-    expect(body.result.tools).toHaveLength(TOOL_NAMES.length)
+    expect(res.headers.get('PAYMENT-RESPONSE')).toBeTruthy()
+    const body = (await res.json()) as { result: { serverInfo: { name: string } } }
+    expect(body.result.serverInfo.name).toBe('assay')
+  })
+
+  it('serves the explicitly free job-status tool without a payment', async () => {
+    const { base } = startApp()
+    const res = await mcpPost(base, {
+      jsonrpc: '2.0',
+      id: 5,
+      method: 'tools/call',
+      params: { name: 'asy_job_status', arguments: { jobId: 'missing-job' } },
+    })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('PAYMENT-REQUIRED')).toBeNull()
   })
 
   it('challenges an unpaid paid-tool call with a 402 advertising eip155:196', async () => {
@@ -122,9 +206,10 @@ describe('HTTP surface', () => {
     const header = res.headers.get('PAYMENT-REQUIRED')
     expect(header).toBeTruthy()
     const challenge = JSON.parse(Buffer.from(header!, 'base64').toString()) as {
-      accepts: Array<{ network: string }>
+      accepts: Array<{ network: string; amount: string }>
     }
     expect(challenge.accepts[0]!.network).toBe('eip155:196')
+    expect(challenge.accepts[0]!.amount).toBe('50000')
   })
 
   it('runs a paid tool on a signed replay (dev-gate 200 + PAYMENT-RESPONSE)', async () => {

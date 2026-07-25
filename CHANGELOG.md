@@ -4,6 +4,13 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+### Fixed
+
+- **OKX.AI ASP #8599 x402 discovery compatibility:** `GET /mcp`, bare unpaid POSTs, and MCP `initialize` / `tools/list` probes now receive an x402-v2 `402 PAYMENT-REQUIRED` challenge before content-type or SSE negotiation can reject them. The generic discovery price is **0.05 USD₮0** (`50000` atomic units) on `eip155:196`, paid to the configured treasury.
+- Paid MCP discovery replays no longer fail the SDK's dual-`Accept` transport check: the server normalizes that internal transport requirement while preserving a plain JSON response. GET discovery is idempotent and returns its settlement proof.
+- The payment resource URL is sourced from `ASY_BASE_URL`, so reverse-proxied challenges advertise `https://api.assayed.xyz/mcp` rather than an internal `http://` URL.
+- DevGate now mirrors the current v2 challenge shape and the official X Layer USD₮0 asset address. Four focused regressions bring the repository total to **260 vitest**.
+
 ## [0.13.0] — 2026-07-24
 
 ### Added — Trust-layer depth and AS 1.1 (Phase 13)

@@ -33,6 +33,7 @@ export interface PaymentGate {
 }
 
 const PAYMENT_SIG_HEADER = 'payment-sig'
+const XLAYER_USDT0 = '0x779ded0c9e1022225f8e0630b35a9b54be713736'
 
 function readPaymentSig(req: Request): string | undefined {
   return (
@@ -50,9 +51,10 @@ function buildAccepts(cfg: ServerConfig, priceUsdt: number) {
       scheme: 'exact',
       network: cfg.network,
       payTo: cfg.payTo,
-      asset: cfg.asset,
-      price: priceString(priceUsdt),
+      asset: cfg.asset === 'USDT' ? XLAYER_USDT0 : cfg.asset,
+      amount: String(Math.round(priceUsdt * 1_000_000)),
       maxTimeoutSeconds: 300,
+      extra: { name: 'USD₮0', version: '1' },
     },
   ]
 }
@@ -69,8 +71,13 @@ export class DevGate implements PaymentGate {
 
     if (!sig) {
       const challenge = {
-        x402Version: 1,
-        error: 'payment required: retry with a PAYMENT-SIG header',
+        x402Version: 2,
+        error: 'Payment required',
+        resource: {
+          url: `${this.cfg.baseUrl}/mcp`,
+          description: 'Assay evidence-backed career intelligence',
+          mimeType: 'application/json',
+        },
         accepts,
       }
       return Promise.resolve({
@@ -133,15 +140,23 @@ export class OkxGate implements PaymentGate {
     registerExactEvmScheme(resourceServer, { networks: [cfg.network] })
 
     // Per-tool dynamic price: read the MCP tool name off the request body, map to the fixed table.
-    const routes: RoutesConfig = {
-      'POST /mcp': {
-        accepts: {
-          scheme: 'exact',
-          network: cfg.network,
-          payTo: cfg.payTo,
-          price: (context: HTTPRequestContext) => priceString(priceOf(toolFromContext(context))),
+    const route = {
+      accepts: {
+        scheme: 'exact',
+        network: cfg.network,
+        payTo: cfg.payTo,
+        price: (context: HTTPRequestContext) => {
+          const toolPrice = priceOf(toolFromContext(context))
+          return priceString(toolPrice > 0 ? toolPrice : priceOf('asy_ats_scan'))
         },
       },
+      resource: `${cfg.baseUrl}/mcp`,
+      description: 'Assay evidence-backed career intelligence',
+      mimeType: 'application/json',
+    }
+    const routes: RoutesConfig = {
+      'GET /mcp': route,
+      'POST /mcp': route,
     }
     this.httpServer = new x402HTTPResourceServer(resourceServer, routes)
   }
@@ -156,7 +171,7 @@ export class OkxGate implements PaymentGate {
     const context: HTTPRequestContext = {
       adapter: new ExpressAdapter(req),
       path: '/mcp',
-      method: 'POST',
+      method: req.method,
     }
     const result = await this.httpServer.processHTTPRequest(context)
 

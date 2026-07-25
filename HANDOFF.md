@@ -7,8 +7,8 @@ Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is t
 ## Where things stand
 
 - **Branch `main`**, pushed to `Franlinozz/ASSAY`. Working tree clean.
-- **Tests green:** 256 vitest + 4 foundry + 47 Playwright e2e. Route sweep green.
-- **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs · https://api.assayed.xyz/mcp. Listed on OKX.AI as ASP **#8599** (approvalStatus 2, under `archonaudit@gmail.com`).
+- **Tests green:** 260 vitest + 4 foundry + 47 Playwright e2e. Route sweep green.
+- **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs · https://api.assayed.xyz/mcp. OKX.AI ASP **#8599** is owned by `archonaudit@gmail.com`; its first review was rejected because generic probes reached MCP transport errors before x402.
 - **Phases done:** P0–P13. P12 = Interview Room + promotion/freelance dossier variants. P13 = redaction, version lineage, privacy-shaped access logs, credential import, and AS-1.1.0.
 
 ## Two machines, don't confuse them
@@ -63,7 +63,7 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 | `npm run seal:personas` | Anchor persona leaves on X Layer mainnet (needs `ASY_SEALER_KEY`). |
 | `npm run regrade:personas` | Re-grade the sealed persona artifact sets against the current Standard using Chromium screenshot sampling. |
 | `npm run sweep` (repo root) | Route sweep: hits every route + validates a real PDF download + forged-token 403. |
-| `npm test` (repo root) | 256 vitest. |
+| `npm test` (repo root) | 260 vitest. |
 | `npm run test:e2e` (repo root) | 47 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400). |
 
 ## Architecture quick-map
@@ -74,6 +74,7 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 - **Surfacing audit:** findings table in `FEATURES.md`; `/docs/api` documents machine endpoints; `scripts/route-sweep.mjs` guards against invisible capabilities; bug-taxonomy defenses in `packages/mcp-server/src/taxonomy.test.ts`.
 - **P12 apex:** `packages/renderers/src/interview.ts`, variant writers in `forge.ts`, Studio Interview tab + Brief modes, and `asy_interview_prep`.
 - **P13 trust:** additive SQLite tables `dossier_versions`, `evidence_redactions`, `share_views`; owner controls in Studio Ledger/Report/Share; version-aware `asy_verify`; AS profile router in `packages/tribunal/src/hard/index.ts`; gallery re-grade script/data.
+- **ASP #8599 remediation:** `/mcp` challenges unpaid GET, bare POST, `initialize`, and `tools/list` before MCP content negotiation. Generic discovery is 0.05 USD₮0; paid tools keep their table prices; `asy_verify`, `asy_job_status`, and `asy_job_result` remain free. Re-run `onchainos agent x402-check --endpoint https://api.assayed.xyz/mcp` after every payment-layer deploy.
 
 ## Gotchas that bit this session
 

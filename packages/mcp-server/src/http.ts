@@ -173,11 +173,51 @@ export function buildApp(rt: AppRuntime): Express {
   })
 
   // ── /mcp — the stateless paywall + MCP endpoint. ──
-  app.get(
-    '/mcp',
-    (_req: Request, res: Response) =>
-      void res.status(405).json({ error: 'method not allowed; POST JSON-RPC to /mcp' }),
-  )
+  app.get('/mcp', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const opts = { tool: 'mcp_discovery', priceUsdt: priceOf('asy_ats_scan') }
+      const paymentSig = readPaymentSig(req)
+      if (paymentSig) {
+        const idemKey = (req.header('Idempotency-Key') ?? sha256Hex(paymentSig)).slice(0, 80)
+        const existing = store.getOrderByIdempotencyKey(idemKey)
+        if (existing) {
+          if (existing.settlement)
+            for (const [key, value] of Object.entries(
+              JSON.parse(existing.settlement) as Record<string, string>,
+            ))
+              res.setHeader(key, value)
+          return void res.json(existing.result ? JSON.parse(existing.result) : discoveryResult(cfg))
+        }
+        const paid = await gate.check(req, opts)
+        if (paid.kind === 'error' || paid.kind === 'challenge') {
+          for (const [key, value] of Object.entries(paid.headers)) res.setHeader(key, value)
+          return void res.status(paid.kind === 'challenge' ? 402 : paid.status).json(paid.body)
+        }
+        const result = discoveryResult(cfg)
+        store.createOrder({
+          tool: opts.tool,
+          priceUsdt: opts.priceUsdt,
+          idempotencyKey: idemKey,
+          status: 'settled',
+          settlement: JSON.stringify(paid.settlement),
+          ...(paid.payerRef ? { payerRef: paid.payerRef } : {}),
+        })
+        store.attachOrderResult(idemKey, JSON.stringify(result))
+        for (const [key, value] of Object.entries(paid.settlement)) res.setHeader(key, value)
+        return void res.json(result)
+      }
+      const decision = await gate.check(req, opts)
+      if (decision.kind === 'challenge' || decision.kind === 'error') {
+        for (const [key, value] of Object.entries(decision.headers)) res.setHeader(key, value)
+        return void res
+          .status(decision.kind === 'challenge' ? 402 : decision.status)
+          .json(decision.body)
+      }
+      return void res.status(402).json({ error: 'payment required' })
+    } catch (error) {
+      next(error)
+    }
+  })
   app.delete(
     '/mcp',
     (_req: Request, res: Response) => void res.status(405).json({ error: 'method not allowed' }),
@@ -190,10 +230,23 @@ export function buildApp(rt: AppRuntime): Express {
       try {
         if (!bucket.take(clientIp(req)))
           return void res.status(429).json({ error: 'rate limit exceeded (60/min)' })
-        if (!req.is('application/json'))
+        if (!req.is('application/json')) {
+          if (!readPaymentSig(req)) {
+            const decision = await gate.check(req, {
+              tool: 'mcp_discovery',
+              priceUsdt: priceOf('asy_ats_scan'),
+            })
+            if (decision.kind === 'challenge' || decision.kind === 'error') {
+              for (const [key, value] of Object.entries(decision.headers)) res.setHeader(key, value)
+              return void res
+                .status(decision.kind === 'challenge' ? 402 : decision.status)
+                .json(decision.body)
+            }
+          }
           return void res
             .status(415)
             .json({ error: 'unsupported media type; send application/json' })
+        }
         const body = req.body as JsonRpcBody
         if (!body || typeof body !== 'object' || Array.isArray(body))
           return void res.status(400).json({ error: 'malformed JSON-RPC body' })
@@ -201,9 +254,9 @@ export function buildApp(rt: AppRuntime): Express {
         const isToolCall = body.method === 'tools/call'
         const tool = isToolCall ? (body.params?.name ?? '') : ''
 
-        // Only paid tool calls hit the paywall. Everything else — initialize, tools/list, free tools —
-        // flows straight to MCP (free forever per the price table).
-        if (isToolCall && isPaid(tool)) {
+        // Discovery/transport requests carry the 0.05 endpoint challenge expected by OKX.AI.
+        // Paid tools keep their own prices; the three explicitly free tools remain free forever.
+        if (!isToolCall || isPaid(tool)) {
           // PolicyGate BEFORE any payment semantics (guardrail #6): refuse politely, never charge.
           const policy = policyGate({ text: argsText(body.params?.arguments) })
           if (!policy.allowed) {
@@ -215,11 +268,12 @@ export function buildApp(rt: AppRuntime): Express {
             )
           }
 
-          const price = priceOf(tool)
+          const billableTool = isToolCall ? tool : `mcp_${body.method ?? 'request'}`
+          const price = isToolCall ? priceOf(tool) : priceOf('asy_ats_scan')
           const paymentSig = readPaymentSig(req)
 
           if (!paymentSig) {
-            const decision = await gate.check(req, { tool, priceUsdt: price })
+            const decision = await gate.check(req, { tool: billableTool, priceUsdt: price })
             if (decision.kind === 'challenge') {
               for (const [k, v] of Object.entries(decision.headers)) res.setHeader(k, v)
               return void res.status(402).json(decision.body)
@@ -245,7 +299,7 @@ export function buildApp(rt: AppRuntime): Express {
             ))
           }
 
-          const decision = await gate.check(req, { tool, priceUsdt: price })
+          const decision = await gate.check(req, { tool: billableTool, priceUsdt: price })
           if (decision.kind === 'challenge') {
             for (const [k, v] of Object.entries(decision.headers)) res.setHeader(k, v)
             return void res.status(402).json(decision.body)
@@ -256,7 +310,7 @@ export function buildApp(rt: AppRuntime): Express {
           }
           // settled → record the order, attach settlement proof, run the tool, cache the result.
           store.createOrder({
-            tool,
+            tool: billableTool,
             priceUsdt: price,
             idempotencyKey: idemKey,
             status: 'settled',
@@ -301,6 +355,18 @@ async function handleMcp(
   body: unknown,
   capture?: (mcpResult: unknown) => void,
 ): Promise<void> {
+  // The SDK's transport accepts JSON responses but still validates the dual Accept header. Assay
+  // always uses plain JSON, so normalize marketplace probes that correctly omit the SSE media type.
+  const accept = 'application/json, text/event-stream'
+  req.headers.accept = accept
+  let foundAccept = false
+  for (let index = 0; index < req.rawHeaders.length; index += 2) {
+    if (req.rawHeaders[index]?.toLowerCase() === 'accept') {
+      req.rawHeaders[index + 1] = accept
+      foundAccept = true
+    }
+  }
+  if (!foundAccept) req.rawHeaders.push('Accept', accept)
   const server = buildServer({
     pipe: { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg: rt.cfg },
     ...(capture ? { capture } : {}),
@@ -315,4 +381,14 @@ async function handleMcp(
   // Transport interface (onclose is a present-but-undefinable property on the class).
   await server.connect(transport as unknown as Transport)
   await transport.handleRequest(req, res, body)
+}
+
+function discoveryResult(cfg: ServerConfig): Record<string, unknown> {
+  return {
+    ok: true,
+    service: 'Assay',
+    endpoint: `${cfg.baseUrl}/mcp`,
+    transport: 'streamable-http',
+    next: 'POST MCP JSON-RPC to this endpoint',
+  }
 }
