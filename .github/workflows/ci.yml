@@ -14,6 +14,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Manifest, docs, and pricing consistency
@@ -22,3 +25,4 @@ jobs:
           git diff --exit-code -- apps/web/lib/standard.generated.ts apps/docs/content/docs/tools.mdx apps/docs/content/docs/standard.mdx
       - run: npm run typecheck
       - run: npm test
+      - run: forge test --root packages/contracts
