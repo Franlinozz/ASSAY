@@ -260,6 +260,9 @@ export interface ForgeArtifact {
   kind: string
   sentences: Array<{ text: string; claimIds: string[] }>
   fileUrl: string | null
+  fileId?: string | null
+  deliveryStatus?: 'delivered' | 'not_delivered'
+  coverageNote?: string | null
 }
 
 export interface Report {
@@ -270,6 +273,7 @@ export interface Report {
   hardPass: boolean
   craftPass: boolean
   craftWeightedMean: number
+  gradeStatus: 'graded' | 'ungraded' | 'not_delivered'
   craft: Array<{ axis: string; score: number }>
   hard: Array<{
     id: string
@@ -284,13 +288,23 @@ export interface Report {
 export interface ForgeResult {
   artifacts: ForgeArtifact[]
   reports: Report[]
-  rollup: { firstDraftPassed: number; finalPassed: number; artifacts: number; reports: number }
+  rollup: {
+    firstDraftPassed: number
+    finalPassed: number
+    artifacts: number
+    gradedArtifacts: number
+    ungraded: number
+    notDelivered: number
+    reports: number
+    postRepairPassRate: number
+  }
   parseBack: {
     fidelityPct: number
     fieldDiffs: Array<{ field: string; expected: string; got: string }>
     fieldsChecked: number
   } | null
   questions: string[]
+  gaps?: Array<{ code: string; message: string }>
   fileUrls: Record<string, string>
 }
 

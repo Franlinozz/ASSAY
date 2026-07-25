@@ -6,6 +6,7 @@ import { createGate } from './gate'
 import { JobRunner, devPdf } from './jobs'
 import { AnchorWorker } from './anchor'
 import { buildApp } from './http'
+import { freeDiskBytes } from './util'
 
 // Env-driven assembly. Fakes are the default (zero spend); only ASY_PROVIDER_MODE=live wires real
 // providers + headless-chromium PDF rendering. Boots the HTTP server, the job worker and the anchor
@@ -30,7 +31,16 @@ export function main(): void {
   const anchor = new AnchorWorker(store, cfg)
   anchor.start()
 
-  const app = buildApp({ store, router, fetcher, cfg, gate, toPdf, realPdf })
+  const app = buildApp({
+    store,
+    router,
+    fetcher,
+    cfg,
+    gate,
+    toPdf,
+    realPdf,
+    diskFreeBytes: () => freeDiskBytes(cfg.filesDir),
+  })
   const server = app.listen(port, () => {
     const signer = cfg.sealerKey ? 'set' : 'none (seals stay pending)'
     console.log(`[assay-mcp] listening on :${port}`)

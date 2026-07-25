@@ -19,6 +19,10 @@ jobs:
           version: stable
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Dependency and history security gates
+        run: |
+          npm audit --audit-level=moderate
+          npm run security:secrets
       - name: Judged-artifact consistency and dead links
         run: |
           npm run check:judge

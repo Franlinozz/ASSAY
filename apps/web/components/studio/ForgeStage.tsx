@@ -124,6 +124,29 @@ export function ForgeStage({ state, actions }: { state: StudioState; actions: St
 
           {forge ? (
             <div className="forge-result" data-testid="forge-result">
+              {forge.gaps && forge.gaps.length > 0 ? (
+                <div className="forge-questions" data-testid="forge-coverage-notes">
+                  <p className="overline">Coverage notes — degraded with dignity</p>
+                  {forge.gaps.map((gap, i) => (
+                    <p className="forge-question caption" key={`${gap.code}-${i}`}>
+                      <span className="mono">{gap.code}</span> · {gap.message}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
+              {forge.artifacts
+                .filter((a) => a.deliveryStatus === 'not_delivered')
+                .map((a) => (
+                  <div className="forge-gate" data-testid="artifact-not-delivered" key={a.id}>
+                    <p>
+                      <strong>{a.kind.replace(/_/g, ' ')}</strong> — not delivered.
+                    </p>
+                    <p className="caption">
+                      {a.coverageNote ??
+                        'The artifact file is unavailable. It is excluded from pass-rate math.'}
+                    </p>
+                  </div>
+                ))}
               {proseArtifacts.length > 0 ? (
                 <>
                   <div className="preview-tabs">

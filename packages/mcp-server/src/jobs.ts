@@ -57,7 +57,14 @@ function toCoreReport(r: TribunalReport): CoreTribunalReport {
     passed: r.pass,
     hardFindings: r.hard
       .filter((h) => h.status === 'fail')
-      .flatMap((h) => h.findings.map((f) => ({ code: f.code, detail: f.detail }))),
+      .flatMap((h) => h.findings.map((f) => ({ code: f.code, detail: f.detail })))
+      .concat(
+        r.gradeStatus === 'ungraded'
+          ? [{ code: 'CRITIC_UNAVAILABLE', detail: 'Artifact shipped UNGRADED.' }]
+          : r.gradeStatus === 'not_delivered'
+            ? [{ code: 'NOT_DELIVERED', detail: 'Artifact was not delivered.' }]
+            : [],
+      ),
     craftScores: Object.fromEntries(r.craft.map((c) => [c.axis, c.score])),
     createdAt: r.createdAt,
   }
@@ -66,7 +73,18 @@ function toCoreReport(r: TribunalReport): CoreTribunalReport {
 // Drop heavy render output (meta.html) from the artifacts we persist + seal, keeping the dossier
 // JSON lean. We seal exactly what we store, so the manifest hash stays reproducible at verify time.
 function lean(a: Artifact): Artifact {
-  const out: Artifact = { id: a.id, kind: a.kind, meta: {} }
+  const out: Artifact = {
+    id: a.id,
+    kind: a.kind,
+    meta:
+      a.meta['deliveryStatus'] === 'not_delivered'
+        ? {
+            deliveryStatus: 'not_delivered',
+            gap: a.meta['gap'],
+            coverageNote: a.meta['coverageNote'],
+          }
+        : {},
+  }
   if (a.fileRef) out.fileRef = a.fileRef
   if (a.sentences) out.sentences = a.sentences
   return out
@@ -178,9 +196,13 @@ export async function runDossierPipeline(
   store.enqueueSeal(dossier.id, bundle.leaf)
   store.recordEvent('dossier_sealed_pending', { leaf: bundle.leaf }, dossier.id)
 
-  const artifacts = forge.artifacts
-    .filter((a) => fileIdByArtifact.has(a.id))
-    .map((a) => ({ id: a.id, kind: a.kind, fileId: fileIdByArtifact.get(a.id)! }))
+  const artifacts = forge.artifacts.map((a) => ({
+    id: a.id,
+    kind: a.kind,
+    deliveryStatus: a.meta['deliveryStatus'] === 'not_delivered' ? 'not_delivered' : 'delivered',
+    ...(fileIdByArtifact.has(a.id) ? { fileId: fileIdByArtifact.get(a.id)! } : {}),
+    ...(a.meta['coverageNote'] ? { coverageNote: a.meta['coverageNote'] } : {}),
+  }))
 
   // Public portfolio share page (served sanitized at /p/:slug).
   const portfolioFileId = fileIdByArtifact.get('portfolio_page')
@@ -192,10 +214,14 @@ export async function runDossierPipeline(
       dossierId: dossier.id,
       artifacts,
       questions: forge.questions,
+      coverageNotes: forge.gaps,
       portfolio: shareSlug ? `/p/${shareSlug}` : null,
       tribunal: {
         pass: tribunalSummary.finalPassed,
-        of: tribunalSummary.artifacts,
+        of: tribunalSummary.gradedArtifacts,
+        total: tribunalSummary.artifacts,
+        ungraded: tribunalSummary.ungraded,
+        notDelivered: tribunalSummary.notDelivered,
         firstDraftPassed: tribunalSummary.firstDraftPassed,
         byArtifact: tribunalSummary.byArtifact,
       },
@@ -220,6 +246,7 @@ export class JobRunner {
 
   start(): void {
     if (this.timer) return
+    this.deps.store.recoverInterruptedJobs()
     this.timer = setInterval(() => void this.tick(), this.pollMs)
     if (typeof this.timer.unref === 'function') this.timer.unref()
   }

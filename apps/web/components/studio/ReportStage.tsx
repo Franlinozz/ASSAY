@@ -26,15 +26,22 @@ const FILE_LABEL: Record<string, string> = {
 function VerdictCard({ report }: { report: Report }) {
   const failed = report.hard.filter((h) => h.status === 'fail')
   const hasCraft = report.craft.length > 0
+  const ungraded = report.gradeStatus === 'ungraded'
+  const notDelivered = report.gradeStatus === 'not_delivered'
+  const verdict = ungraded
+    ? 'UNGRADED'
+    : notDelivered
+      ? 'NOT DELIVERED'
+      : report.pass
+        ? 'PASS'
+        : 'FAIL'
   return (
     <div
       className={`verdict ${report.pass ? 'verdict-pass' : 'verdict-fail'}`}
       data-testid="verdict-card"
     >
       <div className="verdict-head">
-        <span className={`chip ${report.pass ? 'chip-ok' : 'chip-fail'}`}>
-          {report.pass ? 'PASS' : 'FAIL'}
-        </span>
+        <span className={`chip ${report.pass ? 'chip-ok' : 'chip-fail'}`}>{verdict}</span>
         <span className="mono" style={{ fontWeight: 600 }}>
           {report.artifactId}
         </span>
@@ -155,9 +162,9 @@ export function ReportStage({
       <div className="pass-rule" data-testid="report-rollup">
         <div>
           <span className="mono">
-            {rollup.finalPassed}/{rollup.artifacts}
+            {rollup.finalPassed}/{rollup.gradedArtifacts}
           </span>
-          <span className="caption">passed on the final draft.</span>
+          <span className="caption">passed of artifacts actually graded.</span>
         </div>
         <div>
           <span className="mono">
@@ -169,6 +176,14 @@ export function ReportStage({
           <span className="mono">{forge.reports.length}</span>
           <span className="caption">reports shipped — failures kept.</span>
         </div>
+        {rollup.ungraded > 0 || rollup.notDelivered > 0 ? (
+          <div data-testid="honest-exclusions">
+            <span className="mono">
+              {rollup.ungraded} ungraded · {rollup.notDelivered} not delivered
+            </span>
+            <span className="caption">excluded from pass-rate math; never inferred as PASS.</span>
+          </div>
+        ) : null}
       </div>
 
       {state.versions.length > 0 ? (

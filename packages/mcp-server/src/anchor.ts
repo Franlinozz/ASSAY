@@ -27,6 +27,7 @@ export class AnchorWorker {
   constructor(
     private readonly store: Store,
     private readonly cfg: ServerConfig,
+    private readonly sealBatch?: (leaves: Hex[]) => Promise<string>,
   ) {}
 
   start(): void {
@@ -60,7 +61,7 @@ export class AnchorWorker {
       })
       const leaves = [...new Set(batch.map((p) => p.leaf))] as Hex[]
       try {
-        const tx = await client.sealBatch(leaves)
+        const tx = this.sealBatch ? await this.sealBatch(leaves) : await client.sealBatch(leaves)
         for (const p of batch) {
           this.store.setSealStatus(p.dossierId, 'sealed')
           this.store.removeSeal(p.dossierId)

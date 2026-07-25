@@ -28,8 +28,10 @@ public issue for an exploitable finding.
   unsupported numbers become confirmation questions.
 - The claim gate runs again at render time: every artifact sentence must resolve to confirmed claim
   IDs and existing evidence IDs.
-- Upload type and size limits are enforced before extraction. Public errors contain stable,
-  sanitized gap codes; raw provider errors stay in server logs.
+- Upload type and size limits are enforced before extraction. PDF page/object expansion, DOCX ZIP
+  expansion, embedded macro markers, extracted-text growth, and parser time are bounded. Suspicious
+  containers return `INGEST_HOSTILE`.
+- Public errors contain stable, sanitized gap codes; raw provider errors stay in server logs.
 
 These controls make document-borne prompt injection unable to create a renderable career claim.
 They do not make arbitrary third-party document formats safe outside Assay’s supported parsers.
@@ -72,6 +74,9 @@ Artifact downloads use HMAC-signed URLs with a 24-hour default lifetime. Missing
 expired file tokens are rejected. Runtime SQLite databases, uploads, generated files, environment
 files, and persona salts are excluded from version control.
 
+Tokens use HMAC-SHA256, constant-time comparison, and resource binding. The hardening suite covers
+mutation, expiry, cross-resource replay, operational ID entropy, and deleted-file reconciliation.
+
 ### Chain and seals
 
 Only `keccak256(manifestHash || salt)` commitment leaves and timestamps reach
@@ -92,6 +97,23 @@ Tribunal report.
   `EnvironmentFile`; no secret belongs in the repository.
 - Logs and public error bodies must never contain private keys, payment signatures, uploaded
   documents, or raw provider responses.
+- CI/phase release checks run the repository/history secret scanner without printing matched
+  values. The Phase 16 dependency sweep records a zero-advisory lockfile.
+
+### Availability and failure semantics
+
+- Writer failure completes the dossier with sanitized coverage notes and explicit not-delivered
+  artifacts; it does not leave broken download links.
+- Critic failure produces `UNGRADED`, never an inferred PASS. Ungraded and unavailable artifacts
+  are excluded from pass-rate math and counted separately.
+- Running jobs are requeued after process restart. SQLite uses WAL plus a bounded busy timeout;
+  lock exhaustion maps to a sanitized retryable response.
+- `/health` reports pending-seal age and low-disk upload readiness. New upload-bearing calls are
+  refused before payment when the configured disk reserve is breached.
+- HSTS, CSP, frame-ancestor, MIME-sniffing, referrer, and permissions headers are applied at Caddy.
+
+The full executed drill table and performance measurements are in
+[`docs/HARDENING-DRILLS.md`](docs/HARDENING-DRILLS.md).
 
 ## Honest scope
 

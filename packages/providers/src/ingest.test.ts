@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { ingestDocument } from './ingest'
 
-const fx = (name: string) => readFileSync(fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url)))
+const fx = (name: string) =>
+  readFileSync(fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url)))
 
 describe('ingestDocument', () => {
   it('ingests txt and strips control characters (keeping newlines)', async () => {
@@ -52,7 +53,9 @@ describe('ingestDocument', () => {
   }, 30000)
 
   it('dispatches to an injected pdf parser (DI)', async () => {
-    const r = await ingestDocument('x.pdf', new Uint8Array([1]), { parsePdf: async () => 'injected pdf text' })
+    const r = await ingestDocument('x.pdf', new TextEncoder().encode('%PDF-1.4'), {
+      parsePdf: async () => 'injected pdf text',
+    })
     expect(r.ok).toBe(true)
     expect(r.contentText).toBe('injected pdf text')
   })

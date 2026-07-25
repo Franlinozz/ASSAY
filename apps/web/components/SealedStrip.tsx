@@ -32,7 +32,7 @@ export function SealedStrip() {
   return (
     <div className="sealed-strip" data-testid="sealed-strip" aria-label="Recently sealed dossiers">
       <span className="overline sealed-strip-label">Ledger · recent seals</span>
-      <div className="sealed-strip-track">
+      <div className="sealed-strip-track" tabIndex={0} aria-label="Scrollable recent seal entries">
         {items === null ? (
           <span className="caption">reading the registry…</span>
         ) : items.length === 0 ? (

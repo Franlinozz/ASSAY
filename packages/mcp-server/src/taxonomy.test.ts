@@ -63,6 +63,7 @@ function mkReport(over: Partial<TribunalReport>): TribunalReport {
     hard: [],
     craft: [],
     craftWeightedMean: 100,
+    gradeStatus: 'graded',
     pass: true,
     hardPass: true,
     craftPass: true,

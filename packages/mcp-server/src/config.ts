@@ -31,6 +31,7 @@ export interface ServerConfig {
   registry: string
   sealerKey?: string
   anchorIntervalMs: number
+  anchorAlertMs: number
   // storage
   dataDir: string
   dbPath: string
@@ -41,6 +42,7 @@ export interface ServerConfig {
   rateLimitPerMin: number
   maxBodyBytes: number
   modelTimeoutMs: number
+  minFreeDiskBytes: number
 }
 
 const num = (v: string | undefined, d: number): number => {
@@ -65,6 +67,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     asset: env['ASY_ASSET'] ?? 'USDT',
     registry: env['ASY_REGISTRY'] ?? '0x0000000000000000000000000000000000000000',
     anchorIntervalMs: num(env['ASY_ANCHOR_INTERVAL_MIN'], 30) * 60_000,
+    anchorAlertMs: num(env['ASY_ANCHOR_ALERT_HOURS'], 2) * 3_600_000,
     dataDir,
     dbPath: env['ASY_DB_PATH'] ?? resolve(dataDir, 'assay.db'),
     filesDir: env['ASY_FILES_DIR'] ?? resolve(dataDir, 'files'),
@@ -73,6 +76,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     rateLimitPerMin: num(env['ASY_RATE_LIMIT'], 60),
     maxBodyBytes: num(env['ASY_MAX_BODY_BYTES'], 2 * 1024 * 1024),
     modelTimeoutMs: num(env['ASY_MODEL_TIMEOUT_MS'], 28_000),
+    minFreeDiskBytes: num(env['ASY_MIN_FREE_DISK_MB'], 256) * 1024 * 1024,
   }
 
   if (env['ASY_AGENT_ID']) cfg.agentId = env['ASY_AGENT_ID']

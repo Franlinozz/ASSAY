@@ -14,6 +14,7 @@ export type GapCode =
   | 'INGEST_TOO_LARGE'
   | 'INGEST_UNSUPPORTED'
   | 'INGEST_EMPTY'
+  | 'INGEST_HOSTILE'
 
 const GAP_MESSAGES: Record<GapCode, string> = {
   PROVIDER_TIMEOUT: 'A model took too long — delivered with a coverage note.',
@@ -28,6 +29,7 @@ const GAP_MESSAGES: Record<GapCode, string> = {
   INGEST_TOO_LARGE: 'A file exceeded the size limit and was skipped.',
   INGEST_UNSUPPORTED: 'A file type is not supported and was skipped.',
   INGEST_EMPTY: 'A file had no readable text and was skipped.',
+  INGEST_HOSTILE: 'A file failed safe document checks and was skipped.',
 }
 
 export interface Gap {
@@ -49,6 +51,6 @@ export function setRawSink(fn: (line: string) => void): void {
 }
 
 export function logRaw(code: GapCode, rawError: unknown): void {
-  const detail = rawError instanceof Error ? rawError.stack ?? rawError.message : String(rawError)
+  const detail = rawError instanceof Error ? (rawError.stack ?? rawError.message) : String(rawError)
   sink(`[gap:${code}] ${detail}`)
 }

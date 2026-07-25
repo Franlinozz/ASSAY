@@ -59,6 +59,7 @@ export interface StudioDeps {
   // parse-back can only re-parse a real PDF; against the dev stub it stays honestly 'pending'.
   realPdf: boolean
   sampleContrast?: (html: string) => Promise<number>
+  diskFreeBytes?: () => number
 }
 
 const WRITER_KINDS = new Set([
@@ -444,6 +445,8 @@ export async function runStudioForge(
     coverage,
     deps: { toPdf, ...(deps.sampleContrast ? { sampleContrast: deps.sampleContrast } : {}) },
   })
+  for (const gap of forge.gaps)
+    store.recordStudioEvent(id, 'Forge', `${gap.code.toLowerCase()} — ${gap.message}`)
 
   const selected = new Set(
     input.selected && input.selected.length ? input.selected : forge.artifacts.map((a) => a.id),
@@ -474,6 +477,7 @@ export async function runStudioForge(
     async (artifact: Artifact, repairBrief: string): Promise<Artifact> => {
       store.recordStudioEvent(id, 'Forge', `tightening ${label(kind)} to the tribunal's brief`)
       const rewritten = await writeArtifact({ kind, dossier: forgeDossierObj, router, coverage })
+      if (rewritten.gaps.length > 0 || rewritten.sentences.length === 0) return artifact
       const rb: RenderBundle = { dossier: forgeDossierObj, sentences: rewritten.sentences }
       const html = renderArtifactHtml(kind, rb)
       const next: Artifact = {
@@ -523,7 +527,18 @@ export async function runStudioForge(
   }
 
   const lean = finalArtifacts.map((a): Artifact => {
-    const out: Artifact = { id: a.id, kind: a.kind, meta: {} }
+    const out: Artifact = {
+      id: a.id,
+      kind: a.kind,
+      meta:
+        a.meta['deliveryStatus'] === 'not_delivered'
+          ? {
+              deliveryStatus: 'not_delivered',
+              gap: a.meta['gap'],
+              coverageNote: a.meta['coverageNote'],
+            }
+          : {},
+    }
     if (a.fileRef) out.fileRef = a.fileRef
     if (a.sentences) out.sentences = a.sentences
     return out
@@ -539,7 +554,14 @@ export async function runStudioForge(
       passed: r.pass,
       hardFindings: r.hard
         .filter((h) => h.status === 'fail')
-        .flatMap((h) => h.findings.map((f) => ({ code: f.code, detail: f.detail }))),
+        .flatMap((h) => h.findings.map((f) => ({ code: f.code, detail: f.detail })))
+        .concat(
+          r.gradeStatus === 'ungraded'
+            ? [{ code: 'CRITIC_UNAVAILABLE', detail: 'Artifact shipped UNGRADED.' }]
+            : r.gradeStatus === 'not_delivered'
+              ? [{ code: 'NOT_DELIVERED', detail: 'Artifact was not delivered.' }]
+              : [],
+        ),
       craftScores: Object.fromEntries(r.craft.map((c) => [c.axis, c.score])),
       createdAt: r.createdAt,
     })),
@@ -562,11 +584,16 @@ export async function runStudioForge(
         kind: a.kind,
         sentences: (a.sentences ?? []).map((s) => ({ text: s.text, claimIds: s.claimIds })),
         fileUrl: fileUrls[a.id] ?? null,
+        fileId: fileIdByArtifact.get(a.id) ?? null,
+        deliveryStatus:
+          a.meta['deliveryStatus'] === 'not_delivered' ? 'not_delivered' : 'delivered',
+        coverageNote: typeof a.meta['coverageNote'] === 'string' ? a.meta['coverageNote'] : null,
       })),
       reports: reports.map(serializeReport),
       rollup: summarize(reports),
       parseBack: parseBack ?? null,
       questions: forge.questions,
+      gaps: forge.gaps,
       fileUrls,
     },
     id,
@@ -574,7 +601,7 @@ export async function runStudioForge(
   store.recordStudioEvent(
     id,
     'Forge',
-    `${finalArtifacts.length} artifact${finalArtifacts.length === 1 ? '' : 's'} forged and graded`,
+    `${finalArtifacts.length} artifact${finalArtifacts.length === 1 ? '' : 's'} processed · ${forge.gaps.length ? `${forge.gaps.length} coverage note(s)` : 'tribunal complete'}`,
   )
 }
 
@@ -587,6 +614,7 @@ function serializeReport(r: TribunalReport): Record<string, unknown> {
     hardPass: r.hardPass,
     craftPass: r.craftPass,
     craftWeightedMean: r.craftWeightedMean,
+    gradeStatus: r.gradeStatus,
     craft: r.craft,
     hard: r.hard.map((h) => ({ id: h.id, title: h.title, status: h.status, findings: h.findings })),
     ...(r.repairBrief ? { repairBrief: r.repairBrief } : {}),
@@ -947,11 +975,20 @@ export function compareVersions(
 
 // ── full studio state (for the owner UI) ─────────────────────────────────────
 interface ForgeResult {
-  artifacts: Array<{ id: string; kind: string; sentences: Sentence[]; fileUrl: string | null }>
+  artifacts: Array<{
+    id: string
+    kind: string
+    sentences: Sentence[]
+    fileUrl: string | null
+    fileId?: string | null
+    deliveryStatus?: 'delivered' | 'not_delivered'
+    coverageNote?: string | null
+  }>
   reports: Array<Record<string, unknown>>
-  rollup: unknown
+  rollup: Record<string, unknown>
   parseBack: unknown
   questions: string[]
+  gaps?: Array<{ code: string; message: string }>
   fileUrls: Record<string, string>
 }
 
@@ -988,7 +1025,8 @@ export function getStudioState(
     else if (c.status === 'rejected') counts.rejected += 1
   }
 
-  const forge = latestForgeResult(store, id)
+  const storedForge = latestForgeResult(store, id)
+  const forge = storedForge ? reconcileForgeResult(store, cfg, storedForge) : undefined
   const share = store.latestShareForDossier(id)
   const shareFull = share ? store.getShareFull(share) : undefined
   const seal = dossier.seal
@@ -1087,6 +1125,81 @@ export function getStudioState(
             store.latestDossierVersion(id),
           )
         : null,
+  }
+}
+
+function reconcileForgeResult(store: Store, cfg: ServerConfig, forge: ForgeResult): ForgeResult {
+  const artifacts = forge.artifacts.map((artifact) => {
+    const legacyId =
+      artifact.fileUrl?.match(/\/f\/([^?]+)/)?.[1] ??
+      forge.fileUrls[artifact.id]?.match(/\/f\/([^?]+)/)?.[1] ??
+      null
+    const fileId = artifact.fileId ?? legacyId
+    const originallyNotDelivered = artifact.deliveryStatus === 'not_delivered'
+    const missing = !originallyNotDelivered && !!fileId && !store.fileAvailable(fileId)
+    const deliveryStatus =
+      originallyNotDelivered || missing ? ('not_delivered' as const) : ('delivered' as const)
+    return {
+      ...artifact,
+      fileId,
+      deliveryStatus,
+      fileUrl: deliveryStatus === 'delivered' && fileId ? signedLink(cfg, fileId) : null,
+      coverageNote:
+        artifact.coverageNote ??
+        (missing
+          ? 'Artifact file is unavailable — not delivered and excluded from pass-rate math.'
+          : null),
+    }
+  })
+  const statusById = new Map(artifacts.map((a) => [a.id, a.deliveryStatus]))
+  const reports: Array<Record<string, unknown>> = forge.reports.map((report) => {
+    const artifactId = String(report['artifactId'] ?? '')
+    if (statusById.get(artifactId) !== 'not_delivered')
+      return { ...report, gradeStatus: report['gradeStatus'] ?? 'graded' }
+    return {
+      ...report,
+      gradeStatus: 'not_delivered',
+      pass: false,
+      repairBrief: 'Artifact file is unavailable — not delivered and excluded from pass-rate math.',
+    }
+  })
+  const finals = new Map<string, Record<string, unknown>>()
+  for (const report of reports) {
+    const id = String(report['artifactId'] ?? '')
+    const prev = finals.get(id)
+    if (!prev || Number(report['draftIndex'] ?? 0) >= Number(prev['draftIndex'] ?? 0))
+      finals.set(id, report)
+  }
+  let gradedArtifacts = 0
+  let finalPassed = 0
+  let ungraded = 0
+  let notDelivered = 0
+  for (const report of finals.values()) {
+    const status = String(report['gradeStatus'] ?? 'graded')
+    if (status === 'graded') {
+      gradedArtifacts += 1
+      if (report['pass'] === true) finalPassed += 1
+    } else if (status === 'ungraded') ungraded += 1
+    else notDelivered += 1
+  }
+  const fileUrls = Object.fromEntries(
+    artifacts.filter((a) => a.fileUrl).map((a) => [a.id, a.fileUrl as string]),
+  )
+  return {
+    ...forge,
+    artifacts,
+    reports,
+    rollup: {
+      ...forge.rollup,
+      artifacts: finals.size,
+      gradedArtifacts,
+      finalPassed,
+      ungraded,
+      notDelivered,
+      postRepairPassRate:
+        gradedArtifacts === 0 ? 0 : Math.round((finalPassed / gradedArtifacts) * 100),
+    },
+    fileUrls,
   }
 }
 

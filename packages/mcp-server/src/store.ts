@@ -79,6 +79,7 @@ export class Store {
     }
     mkdirSync(this.filesDir, { recursive: true })
     this.db = new Database(dbPath)
+    this.db.pragma('busy_timeout = 2000')
     this.db.pragma('journal_mode = WAL')
     this.db.pragma('foreign_keys = ON')
     this.migrate()
@@ -324,6 +325,11 @@ export class Store {
     return readFileSync(meta.path)
   }
 
+  fileAvailable(id: string): boolean {
+    const meta = this.getFileMeta(id)
+    return !!meta && existsSync(meta.path)
+  }
+
   // ── orders (payments + idempotency) ──
   getOrderByIdempotencyKey(key: string): OrderRow | undefined {
     const r = this.db.prepare(`SELECT * FROM orders WHERE idempotency_key = ?`).get(key) as
@@ -351,6 +357,10 @@ export class Store {
       settlement: r.settlement,
       createdAt: r.created_at,
     }
+  }
+
+  orderCount(): number {
+    return (this.db.prepare(`SELECT COUNT(*) AS n FROM orders`).get() as { n: number }).n
   }
 
   createOrder(input: {
@@ -472,14 +482,27 @@ export class Store {
       })
   }
 
+  recoverInterruptedJobs(): number {
+    const result = this.db
+      .prepare(
+        `UPDATE jobs
+         SET status = 'queued',
+             error = 'interrupted:requeued',
+             updated_at = ?
+         WHERE status = 'running'`,
+      )
+      .run(nowIso())
+    return result.changes
+  }
+
   // ── seals_pending (drained by the anchor worker) ──
-  enqueueSeal(dossierId: string, leaf: string): void {
+  enqueueSeal(dossierId: string, leaf: string, enqueuedAt = nowIso()): void {
     this.db
       .prepare(
         `INSERT INTO seals_pending (dossier_id, leaf, attempts, enqueued_at)
                 VALUES (?, ?, 0, ?) ON CONFLICT(dossier_id) DO UPDATE SET leaf=excluded.leaf`,
       )
-      .run(dossierId, leaf, nowIso())
+      .run(dossierId, leaf, enqueuedAt)
     this.setSealStatus(dossierId, 'pending')
   }
 

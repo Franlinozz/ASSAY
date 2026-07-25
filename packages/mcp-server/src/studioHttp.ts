@@ -39,6 +39,8 @@ export function buildStudioRouter(deps: StudioDeps): Router {
   const ok = (res: Response, body: unknown): void => void res.json(body)
   const bad = (res: Response, code: number, error: string): void =>
     void res.status(code).json({ error })
+  const diskReady = (): boolean =>
+    (deps.diskFreeBytes?.() ?? Number.MAX_SAFE_INTEGER) >= cfg.minFreeDiskBytes
 
   // ── create (no token — this mints one) ──
   router.post('/studio/dossier', json, (req: Request, res: Response) => {
@@ -68,6 +70,12 @@ export function buildStudioRouter(deps: StudioDeps): Router {
 
   // ── ingest → studio_extract job ──
   router.post('/d/:id/ingest', requireToken, json, (req: Request, res: Response) => {
+    if (!diskReady())
+      return bad(
+        res,
+        507,
+        'storage capacity is low — new uploads are paused; existing work is safe',
+      )
     const id = String(req.params['id'])
     const b = (req.body ?? {}) as Record<string, unknown>
     const kind = b['kind']
@@ -150,6 +158,12 @@ export function buildStudioRouter(deps: StudioDeps): Router {
     json,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
+        if (!diskReady())
+          return bad(
+            res,
+            507,
+            'storage capacity is low — new uploads are paused; existing work is safe',
+          )
         const b = (req.body ?? {}) as Record<string, unknown>
         const filename = typeof b['filename'] === 'string' ? b['filename'] : 'certificate.txt'
         return ok(

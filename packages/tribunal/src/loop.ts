@@ -30,6 +30,23 @@ export async function gradeArtifact(
   deps: GradeDeps,
   draftIndex = 0,
 ): Promise<TribunalReport> {
+  if (artifact.meta['deliveryStatus'] === 'not_delivered') {
+    return {
+      artifactId: artifact.id,
+      artifactKind: artifact.kind,
+      draftIndex,
+      hard: [],
+      craft: [],
+      craftWeightedMean: 0,
+      gradeStatus: 'not_delivered',
+      pass: false,
+      hardPass: false,
+      craftPass: false,
+      repairBrief: 'Artifact was not delivered; it is excluded from pass-rate math.',
+      standardVersion: STANDARD_VERSION,
+      createdAt: nowIso(),
+    }
+  }
   const hard: HardCheckReport[] = []
   for (const check of checksForArtifact(artifact.kind)) {
     const r = await check.run({ dossier, artifact, deps })
@@ -50,6 +67,7 @@ export async function gradeArtifact(
     ? await gradeCraft(artifact, dossier, deps.router)
     : { axes: {}, findings: [], repairBrief: '', degraded: false }
   const verdict = passRule(hard, craft.axes, { craftApplicable: proseBearing })
+  const gradeStatus = craft.degraded ? 'ungraded' : 'graded'
 
   const report: TribunalReport = {
     artifactId: artifact.id,
@@ -60,13 +78,19 @@ export async function gradeArtifact(
       ? CRAFT_AXES.map((a) => ({ axis: a.id, score: craft.axes[a.id] ?? 0 }))
       : [],
     craftWeightedMean: verdict.weightedMean,
-    pass: verdict.pass,
+    gradeStatus,
+    pass: gradeStatus === 'graded' && verdict.pass,
     hardPass: verdict.hardPass,
-    craftPass: verdict.craftPass,
+    craftPass: gradeStatus === 'graded' && verdict.craftPass,
     standardVersion: STANDARD_VERSION,
     createdAt: nowIso(),
   }
-  if (!verdict.pass) report.repairBrief = buildRepairBrief(hard, craft)
+  if (gradeStatus === 'ungraded') {
+    report.repairBrief =
+      'Critic unavailable — artifact shipped UNGRADED. No PASS was inferred or fabricated.'
+  } else if (!verdict.pass) {
+    report.repairBrief = buildRepairBrief(hard, craft)
+  }
   return report
 }
 
@@ -85,7 +109,7 @@ export async function gradeWithRepair(
   for (let draft = 0; draft <= REPAIR_LIMIT; draft++) {
     const report = await gradeArtifact(dossier, current, deps, draft)
     reports.push(report)
-    if (report.pass || draft === REPAIR_LIMIT) break
+    if (report.pass || report.gradeStatus !== 'graded' || draft === REPAIR_LIMIT) break
     current = await repair(current, report.repairBrief ?? '')
   }
   return { reports, artifact: current }

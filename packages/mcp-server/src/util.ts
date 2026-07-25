@@ -1,4 +1,5 @@
 import { createHmac, createHash, timingSafeEqual } from 'node:crypto'
+import { statfsSync } from 'node:fs'
 
 // JSON.stringify with a bigint replacer (gotcha #2) — payment/settlement objects and on-chain
 // timestamps carry bigints that would otherwise throw.
@@ -99,4 +100,10 @@ export class TokenBucket {
     this.hits.set(key, list)
     return true
   }
+}
+
+export function freeDiskBytes(path: string): number {
+  const stats = statfsSync(path, { bigint: true })
+  const free = stats.bavail * stats.bsize
+  return free > BigInt(Number.MAX_SAFE_INTEGER) ? Number.MAX_SAFE_INTEGER : Number(free)
 }

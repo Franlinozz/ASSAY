@@ -4,6 +4,24 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+### Added — Hardening drills (Phase 16)
+
+- Added an executed failure-drill suite covering writer/critic loss, deleted artifacts, a two-hour
+  anchor outage and recovery, hostile uploads, a 120-request burst, restart recovery, SQLite lock
+  contention, disk exhaustion, five payment replays, and share-expiry boundary skew.
+- Writer outages now complete with sanitized coverage notes and explicit not-delivered artifacts.
+  Critic outages ship `UNGRADED`; no provider-loss path can manufacture PASS.
+- Artifact availability is reconciled against disk on every owner-state read. Missing files lose
+  their download and are excluded from pass-rate math with a visible not-delivered reason.
+- Added restart recovery for interrupted jobs, a 2 s SQLite busy timeout, a 256 MB default disk
+  reserve, 507 pre-payment upload refusal, and detailed storage/seal state in `/health`.
+- Added PDF/DOCX expansion and macro guards, parse/extracted-text bounds, a Git-history secret
+  scanner, HMAC/ID entropy regressions, and Caddy CSP/HSTS/anti-framing headers.
+- Patched the dependency graph to **0 npm advisories** and recorded every drill plus honest limits
+  in `docs/HARDENING-DRILLS.md`.
+- Performance budgets passed on the production build: `/health` 15 ms p95, fake-provider
+  `asy_ats_scan` 38 ms p95, and mobile Fast-3G LCP 1,712 ms.
+
 ## [1.0.0] — 2026-07-25
 
 ### Added — Judged-artifact repository (Phase 15)

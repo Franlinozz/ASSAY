@@ -1,5 +1,6 @@
 import type { Artifact, ArtifactKind, Coverage, Dossier, Sentence } from '@xyndicate/assay-core'
 import type { ModelRouter } from '@xyndicate/providers'
+import type { Gap } from '@xyndicate/providers'
 import { writeArtifact } from './writer'
 import { renderArtifactHtml, type RenderBundle } from './templates/index'
 import type { Theme } from './templates/theme'
@@ -32,6 +33,7 @@ export interface ForgeOutput {
   artifacts: Artifact[]
   files: Map<string, ForgeFile>
   questions: string[]
+  gaps: Gap[]
 }
 
 const enc = (s: string): Uint8Array => new TextEncoder().encode(s)
@@ -51,12 +53,14 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
   const artifacts: Artifact[] = []
   const files = new Map<string, ForgeFile>()
   const questions: string[] = []
+  const gaps: Gap[] = []
 
   // Evidence-gated prose.
   const bullets = await writeArtifact({ kind: 'resume_ats', dossier, router, coverage })
   const letter = await writeArtifact({ kind: 'cover_letter', dossier, router, coverage })
   const stories = await writeArtifact({ kind: 'story_bank', dossier, router, coverage })
   questions.push(...bullets.questions, ...letter.questions, ...stories.questions)
+  gaps.push(...bullets.gaps, ...letter.gaps, ...stories.gaps)
 
   const addHtmlPdf = async (
     kind: ArtifactKind,
@@ -66,8 +70,22 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
       coverage?: Coverage[]
       withTheme?: boolean
       extraMeta?: Record<string, unknown>
+      gap?: Gap
     },
   ): Promise<void> => {
+    if (opts.gap && (opts.sentences?.length ?? 0) === 0) {
+      artifacts.push({
+        id,
+        kind,
+        meta: {
+          deliveryStatus: 'not_delivered',
+          gap: opts.gap,
+          coverageNote: opts.gap.message,
+          ...(opts.extraMeta ?? {}),
+        },
+      })
+      return
+    }
     const rb: RenderBundle = { dossier }
     if (opts.sentences) rb.sentences = opts.sentences
     if (opts.coverage) rb.coverage = opts.coverage
@@ -81,38 +99,79 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
     artifacts.push(art)
   }
 
-  await addHtmlPdf('resume_ats', 'resume_ats', { sentences: bullets.sentences })
+  await addHtmlPdf('resume_ats', 'resume_ats', {
+    sentences: bullets.sentences,
+    gap: bullets.gaps[0],
+  })
   await addHtmlPdf('resume_designed', 'resume_designed', {
     sentences: bullets.sentences,
     withTheme: true,
+    gap: bullets.gaps[0],
   })
-  await addHtmlPdf('cover_letter', 'cover_letter', { sentences: letter.sentences, withTheme: true })
-  await addHtmlPdf('story_bank', 'story_bank', { sentences: stories.sentences, withTheme: true })
+  await addHtmlPdf('cover_letter', 'cover_letter', {
+    sentences: letter.sentences,
+    withTheme: true,
+    gap: letter.gaps[0],
+  })
+  await addHtmlPdf('story_bank', 'story_bank', {
+    sentences: stories.sentences,
+    withTheme: true,
+    gap: stories.gaps[0],
+  })
   await addHtmlPdf('fit_map', 'fit_map', { coverage, withTheme: true })
   await addHtmlPdf('gap_brief', 'gap_brief', { coverage, withTheme: true })
 
   // .docx (mirrors ATS headings)
-  const docx = await toDocx(dossier, bullets.sentences)
-  files.set('resume_docx', { ext: 'docx', bytes: docx })
-  artifacts.push({ id: 'resume_docx', kind: 'resume_docx', fileRef: 'resume_docx.docx', meta: {} })
+  if (bullets.gaps[0] && bullets.sentences.length === 0) {
+    artifacts.push({
+      id: 'resume_docx',
+      kind: 'resume_docx',
+      meta: {
+        deliveryStatus: 'not_delivered',
+        gap: bullets.gaps[0],
+        coverageNote: bullets.gaps[0].message,
+      },
+    })
+  } else {
+    const docx = await toDocx(dossier, bullets.sentences)
+    files.set('resume_docx', { ext: 'docx', bytes: docx })
+    artifacts.push({
+      id: 'resume_docx',
+      kind: 'resume_docx',
+      fileRef: 'resume_docx.docx',
+      meta: {},
+    })
+  }
 
   // Portfolio share page (static HTML, share view)
-  const portfolioRb: RenderBundle = { dossier, sentences: bullets.sentences, theme }
-  const portfolioHtml = renderArtifactHtml('portfolio_page', portfolioRb)
-  const renderedContrastRatio = await sampleContrast(portfolioHtml)
-  files.set('portfolio_page', { ext: 'html', bytes: enc(portfolioHtml) })
-  artifacts.push({
-    id: 'portfolio_page',
-    kind: 'portfolio_page',
-    fileRef: 'portfolio_page.html',
-    sentences: bullets.sentences,
-    meta: {
-      html: portfolioHtml,
-      shareView: true,
-      approvedFields: ['email', 'links'],
-      renderedContrastRatio,
-    },
-  })
+  if (bullets.gaps[0] && bullets.sentences.length === 0) {
+    artifacts.push({
+      id: 'portfolio_page',
+      kind: 'portfolio_page',
+      meta: {
+        deliveryStatus: 'not_delivered',
+        gap: bullets.gaps[0],
+        coverageNote: bullets.gaps[0].message,
+      },
+    })
+  } else {
+    const portfolioRb: RenderBundle = { dossier, sentences: bullets.sentences, theme }
+    const portfolioHtml = renderArtifactHtml('portfolio_page', portfolioRb)
+    const renderedContrastRatio = await sampleContrast(portfolioHtml)
+    files.set('portfolio_page', { ext: 'html', bytes: enc(portfolioHtml) })
+    artifacts.push({
+      id: 'portfolio_page',
+      kind: 'portfolio_page',
+      fileRef: 'portfolio_page.html',
+      sentences: bullets.sentences,
+      meta: {
+        html: portfolioHtml,
+        shareView: true,
+        approvedFields: ['email', 'links'],
+        renderedContrastRatio,
+      },
+    })
+  }
 
   // Typographic cover (SVG, no image model)
   files.set('cover', { ext: 'svg', bytes: enc(renderCoverSvg(dossier)) })
@@ -127,7 +186,7 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
     meta: { agent: agentManifest },
   })
 
-  return { artifacts, files, questions }
+  return { artifacts, files, questions, gaps }
 }
 
 function scopedVariantDossier(dossier: Dossier): Dossier {
@@ -164,6 +223,7 @@ async function forgeVariant(
   const artifacts: Artifact[] = []
   const files = new Map<string, ForgeFile>()
   const questions: string[] = []
+  const gaps: Gap[] = []
   for (const kind of kinds) {
     const written = await writeArtifact({
       kind,
@@ -172,6 +232,20 @@ async function forgeVariant(
       coverage: input.coverage,
     })
     questions.push(...written.questions)
+    gaps.push(...written.gaps)
+    if (written.gaps[0] && written.sentences.length === 0) {
+      artifacts.push({
+        id: kind,
+        kind,
+        meta: {
+          deliveryStatus: 'not_delivered',
+          gap: written.gaps[0],
+          coverageNote: written.gaps[0].message,
+          variant: dossier.variant,
+        },
+      })
+      continue
+    }
     const html = renderArtifactHtml(kind, {
       dossier,
       sentences: written.sentences,
@@ -201,5 +275,5 @@ async function forgeVariant(
     meta: { agent: agentManifest, variant: dossier.variant },
   })
   files.set('cover', { ext: 'svg', bytes: enc(renderCoverSvg(dossier)) })
-  return { artifacts, files, questions }
+  return { artifacts, files, questions, gaps }
 }

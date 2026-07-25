@@ -4,8 +4,11 @@
 assayed.xyz, www.assayed.xyz {
 	encode gzip
 	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.assayed.xyz https://rpc.xlayer.tech; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
 		Referrer-Policy strict-origin-when-cross-origin
 		X-Content-Type-Options nosniff
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 	}
 	# Docs (Fumadocs, basePath /docs) on :3101 — matched first, prefix preserved.
 	handle /docs* {
@@ -18,6 +21,13 @@ assayed.xyz, www.assayed.xyz {
 }
 
 api.assayed.xyz {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+		Referrer-Policy no-referrer
+		X-Content-Type-Options nosniff
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
 	# Assay MCP runs on 8422 (8402 was already taken on this box).
 	reverse_proxy 127.0.0.1:8422
 	encode gzip

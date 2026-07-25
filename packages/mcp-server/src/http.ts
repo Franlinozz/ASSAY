@@ -12,7 +12,7 @@ import { readPaymentSig } from './gate'
 import { buildServer } from './server'
 import { buildStudioRouter } from './studioHttp'
 import { devPdf } from './jobs'
-import { TokenBucket, verifyFileToken, sha256Hex, toJson } from './util'
+import { TokenBucket, verifyFileToken, sha256Hex, toJson, freeDiskBytes } from './util'
 
 export interface AppRuntime {
   store: Store
@@ -24,6 +24,7 @@ export interface AppRuntime {
   // headless-chromium renderer in prod, the dev stub in fake/CI. Optional so tests can omit it.
   toPdf?: (html: string) => Promise<Uint8Array>
   realPdf?: boolean
+  diskFreeBytes?: () => number
 }
 
 interface JsonRpcBody {
@@ -71,13 +72,15 @@ export function buildApp(rt: AppRuntime): Express {
       cfg,
       toPdf: rt.toPdf ?? devPdf,
       realPdf: rt.realPdf ?? false,
+      diskFreeBytes: rt.diskFreeBytes ?? (() => freeDiskBytes(cfg.filesDir)),
     }),
   )
 
   // ── GET /health — zero model calls, <100ms. Surfaces the anchor-queue age as an alert. ──
   app.get('/health', (_req: Request, res: Response) => {
     const oldest = store.oldestSealAgeMs()
-    const alert = oldest > 2 * cfg.anchorIntervalMs
+    const alert = oldest >= cfg.anchorAlertMs
+    const freeBytes = (rt.diskFreeBytes ?? (() => freeDiskBytes(cfg.filesDir)))()
     res.json({
       ok: true,
       service: cfg.service,
@@ -85,6 +88,11 @@ export function buildApp(rt: AppRuntime): Express {
       standardVersion: cfg.standardVersion,
       paymentMode: cfg.paymentMode,
       seals: { pending: store.pendingSealCount(), oldestAgeMs: oldest, alert },
+      storage: {
+        acceptingUploads: freeBytes >= cfg.minFreeDiskBytes,
+        freeBytes,
+        minimumFreeBytes: cfg.minFreeDiskBytes,
+      },
     })
   })
 
@@ -253,6 +261,28 @@ export function buildApp(rt: AppRuntime): Express {
 
         const isToolCall = body.method === 'tools/call'
         const tool = isToolCall ? (body.params?.name ?? '') : ''
+        const args = body.params?.arguments
+        const carriesUpload =
+          !!args &&
+          ['resumeB64', 'resumeText', 'contentB64', 'textB64'].some(
+            (key) => typeof args[key] === 'string' && args[key].length > 0,
+          )
+        if (
+          carriesUpload &&
+          (rt.diskFreeBytes ?? (() => freeDiskBytes(cfg.filesDir)))() < cfg.minFreeDiskBytes
+        ) {
+          return void res.status(507).json(
+            jsonRpcResult(body.id, {
+              content: [
+                {
+                  type: 'text',
+                  text: 'Storage capacity is low — new uploads are paused; existing work is safe.',
+                },
+              ],
+              isError: true,
+            }),
+          )
+        }
 
         // Discovery/transport requests carry the 0.05 endpoint challenge expected by OKX.AI.
         // Paid tools keep their own prices; the three explicitly free tools remain free forever.
@@ -339,6 +369,10 @@ export function buildApp(rt: AppRuntime): Express {
       return void res.status(413).json({ error: 'payload too large' })
     if (e?.type === 'entity.parse.failed' || e?.status === 400 || err instanceof SyntaxError)
       return void res.status(400).json({ error: 'malformed JSON' })
+    if ((e as { code?: string }).code === 'SQLITE_BUSY') {
+      res.setHeader('Retry-After', '2')
+      return void res.status(503).json({ error: 'storage busy — retry shortly' })
+    }
     // Sanitized gap only (guardrail #9) — raw error to server logs.
     console.error('[assay] unhandled:', e?.message ?? err)
     res.status(502).json({ error: 'provider:unavailable — request could not be completed' })
