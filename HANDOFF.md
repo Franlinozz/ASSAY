@@ -1,18 +1,23 @@
 # HANDOFF — Assay (for Codex / the next session)
 
-_Last updated: 2026-07-25, after Phase 15 source and fresh-clone validation._
+_Last updated: 2026-07-25, after the Phase 15 v1.0.0 production release._
 
 Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is the operational map so you don't get stuck.
 
 ## Where things stand
 
-- **Branch `main`**, Phase 15 release commit prepared locally; push/tag/deploy status must be
-  checked before the next mutation.
+- **Release commit:** `659e98a1d732e54f975925fb6431e74e91827233`, pushed to `main` and
+  published as annotated tag **`v1.0.0`**.
 - **Release matrix:** 262 Vitest + 4 Foundry + 48 Playwright e2e. Judged-artifact,
   generated-doc, marketplace-consistency, route, and dead-link gates are green.
-- **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs · https://api.assayed.xyz/mcp. OKX.AI ASP **#8599** is owned by `archonaudit@gmail.com`; its first review was rejected because generic probes reached MCP transport errors before x402. Remediation is deployed: the official `x402-check` reports `valid:true`; marketplace approval/publication is the remaining external gate.
-- **Phases done:** P0–P15 source and operator validation. P15 tag/deploy status is recorded below
-  once the final amended commit has passed CI.
+- **Hosted CI:** [run 30164658057](https://github.com/Franlinozz/ASSAY/actions/runs/30164658057)
+  passed every release gate from a clean GitHub runner.
+- **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs ·
+  https://api.assayed.xyz/mcp are deployed from `659e98a`; all three systemd services are active.
+  Health reports v1.0.0 / AS-1.1.0 / OKX payment mode. ASP **#8599** is owned by
+  `archonaudit@gmail.com`; `x402-check` remains `valid:true`.
+- **Phases done:** P0–P15. The separate release-record commit after the tag changes only
+  `AGENTS.md` and this handoff; production code remains exactly the v1.0.0 tagged tree.
 
 ## Two machines, don't confuse them
 
