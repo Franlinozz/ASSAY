@@ -11,6 +11,9 @@ import {
   createOrUpdateShare,
   revokeShare,
   getShareView,
+  setRedactions,
+  importCredential,
+  compareVersions,
   type ShareConfig,
 } from './studio'
 import { verifyCapabilityToken } from './util'
@@ -101,6 +104,75 @@ export function buildStudioRouter(deps: StudioDeps): Router {
       patch,
     )
     return r.ok ? ok(res, { ok: true, claim: r.claim }) : bad(res, 404, 'no such claim')
+  })
+
+  router.post('/d/:id/evidence/:evidenceId/redact', requireToken, json, (req, res) => {
+    const b = (req.body ?? {}) as Record<string, unknown>
+    const fields = Array.isArray(b['fields'])
+      ? b['fields'].filter((x): x is 'email' | 'phone' => x === 'email' || x === 'phone')
+      : []
+    const textRanges = Array.isArray(b['textRanges'])
+      ? b['textRanges'].flatMap((x) => {
+          const r = x as { start?: unknown; end?: unknown }
+          return typeof r.start === 'number' && typeof r.end === 'number' && r.end > r.start
+            ? [{ start: r.start, end: r.end }]
+            : []
+        })
+      : []
+    const regions = Array.isArray(b['regions'])
+      ? b['regions'].flatMap((x) => {
+          const r = x as Record<string, unknown>
+          return ['page', 'x', 'y', 'width', 'height'].every((k) => typeof r[k] === 'number')
+            ? [
+                {
+                  page: r['page'] as number,
+                  x: r['x'] as number,
+                  y: r['y'] as number,
+                  width: r['width'] as number,
+                  height: r['height'] as number,
+                },
+              ]
+            : []
+        })
+      : []
+    const result = setRedactions(
+      store,
+      String(req.params['id']),
+      String(req.params['evidenceId']),
+      { fields, textRanges, regions },
+    )
+    return result.ok ? ok(res, result) : bad(res, 404, 'no such evidence')
+  })
+
+  router.post(
+    '/d/:id/credential',
+    requireToken,
+    json,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const b = (req.body ?? {}) as Record<string, unknown>
+        const filename = typeof b['filename'] === 'string' ? b['filename'] : 'certificate.txt'
+        return ok(
+          res,
+          await importCredential(deps, String(req.params['id']), {
+            filename,
+            ...(typeof b['contentB64'] === 'string' ? { contentB64: b['contentB64'] } : {}),
+            ...(typeof b['text'] === 'string' ? { text: b['text'] } : {}),
+          }),
+        )
+      } catch (e) {
+        next(e)
+      }
+    },
+  )
+
+  router.get('/d/:id/compare', requireToken, (req, res) => {
+    const from = Number(req.query['from'])
+    const to = Number(req.query['to'])
+    if (!Number.isInteger(from) || !Number.isInteger(to))
+      return bad(res, 400, 'from and to versions are required')
+    const result = compareVersions(store, String(req.params['id']), from, to)
+    return result ? ok(res, result) : bad(res, 404, 'version not found')
   })
 
   // ── brief (inline) ──
@@ -237,6 +309,7 @@ export function buildStudioRouter(deps: StudioDeps): Router {
       showContact?: unknown
       expiryDays?: unknown
       preset?: unknown
+      logViews?: unknown
     }
     const confirmedIds = dossier.claims.filter((c) => c.status === 'confirmed').map((c) => c.id)
     const exposedClaimIds = Array.isArray(b.exposedClaimIds)
@@ -250,6 +323,7 @@ export function buildStudioRouter(deps: StudioDeps): Router {
       showContact: b.showContact === true,
       expiryDays,
       preset: b.preset === 'samples' ? 'samples' : 'recruiter',
+      logViews: b.logViews === true,
     }
     return ok(res, createOrUpdateShare(store, id, config))
   })
@@ -261,7 +335,7 @@ export function buildStudioRouter(deps: StudioDeps): Router {
 
   // ── recruiter portal (public, PII-enforced) ──
   router.get('/s-api/:shareId', (req: Request, res: Response) => {
-    return ok(res, getShareView(store, cfg, String(req.params['shareId'])))
+    return ok(res, getShareView(store, cfg, String(req.params['shareId']), Date.now(), true))
   })
 
   return router

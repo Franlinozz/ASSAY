@@ -23,7 +23,7 @@ function tierCounts(p: Persona) {
 
 function PersonaCard({ persona, featured }: { persona: Persona; featured?: boolean }) {
   const tiers = personaTiers(persona)
-  const rollup = persona.tribunal.rollup
+  const rollup = persona.as11Regrade.rollup
   const { confirmed, questions, linked } = tierCounts(persona)
   const missing = persona.coverage.filter((c) => c.status === 'missing').length
   return (
@@ -43,10 +43,14 @@ function PersonaCard({ persona, featured }: { persona: Persona; featured?: boole
           {persona.headline} · <span className="fictional-tag-inline">fictional persona</span>
         </p>
       </div>
-      {featured && <p className="caption" style={{ color: 'var(--ink-soft)' }}>{persona.blurb}</p>}
+      {featured && (
+        <p className="caption" style={{ color: 'var(--ink-soft)' }}>
+          {persona.blurb}
+        </p>
+      )}
       <div className="dossier-meta">
         <span className="chip chip-ok">
-          Tribunal {rollup.finalPassed}/{rollup.artifacts} PASS
+          AS 1.1 re-grade {rollup.finalPassed}/{rollup.artifacts} PASS
         </span>
         <span className={`chip ${persona.seal.status === 'sealed' ? 'chip-sealed' : ''}`}>
           {persona.seal.status === 'sealed' ? 'Sealed on X Layer' : 'Seal pending'}
@@ -59,7 +63,8 @@ function PersonaCard({ persona, featured }: { persona: Persona; featured?: boole
       </div>
       <p className="caption mono">
         {confirmed} claims confirmed
-        {questions > 0 ? ` · ${questions} question${questions > 1 ? 's' : ''}` : ''} · {linked} linked
+        {questions > 0 ? ` · ${questions} question${questions > 1 ? 's' : ''}` : ''} · {linked}{' '}
+        linked
         {missing > 0 ? ` · ${missing} gap${missing > 1 ? 's' : ''} named` : ''}
       </p>
       <span className="btn btn-ghost btn-sm" style={{ marginTop: 'auto', alignSelf: 'flex-start' }}>
@@ -80,8 +85,8 @@ export default function GalleryPage() {
         <h1>Dossiers on display.</h1>
         <p className="lede">
           Every dossier here was produced by the same pipeline you&rsquo;d run — extracted, gated,
-          graded, and sealed on X Layer. The personas are fictional and say so on the tin; the grades,
-          the gaps, and the seals are real.
+          graded, and sealed on X Layer. The personas are fictional and say so on the tin; the
+          grades, the gaps, and the seals are real.
         </p>
       </div>
 

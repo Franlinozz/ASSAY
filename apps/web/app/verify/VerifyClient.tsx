@@ -15,6 +15,12 @@ interface VerifyResult {
   explorerLink?: string
   refused?: boolean
   error?: string
+  lineage?: Array<{
+    version: number
+    sealStatus: string | null
+    leaf: string | null
+    createdAt: string
+  }>
 }
 
 type State = { phase: 'idle' } | { phase: 'checking' } | { phase: 'done'; result: VerifyResult }
@@ -147,6 +153,16 @@ export function VerifyClient({ prefill, auto }: { prefill?: string; auto?: boole
                   {r.registry ?? SITE.registry}
                 </a>
               </div>
+              {r.lineage && r.lineage.length > 0 ? (
+                <div className="receipt-line" data-testid="verify-lineage">
+                  <span className="caption">Version lineage</span>
+                  <span className="mono">
+                    {r.lineage
+                      .map((version) => `v${version.version} ${version.sealStatus ?? 'unsealed'}`)
+                      .join(' · ')}
+                  </span>
+                </div>
+              ) : null}
               <div className="receipt-line">
                 <span className="caption">Network</span>
                 <span className="mono">X Layer · eip155:{r.chainId ?? SITE.chainId}</span>

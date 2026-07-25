@@ -72,7 +72,7 @@ test.describe('landing', () => {
   test('live seal strip shows the seeded dossier', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByTestId('sealed-strip')).toContainText('DSR-', { timeout: 15_000 })
-    await expect(page.getByTestId('sealed-strip')).toContainText('AS-1.0.0')
+    await expect(page.getByTestId('sealed-strip')).toContainText('AS-1.1.0')
   })
 })
 

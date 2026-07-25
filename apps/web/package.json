@@ -7,6 +7,7 @@
     "gen:personas": "node scripts/gen-personas.mjs",
     "gen:fixtures": "node scripts/gen-fixtures.mjs",
     "seal:personas": "node scripts/seal-personas.mjs",
+    "regrade:personas": "node scripts/regrade-personas.mjs",
     "predev": "npm run gen",
     "dev": "next dev -p 3100",
     "prebuild": "npm run gen",

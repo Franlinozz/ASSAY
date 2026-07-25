@@ -4,6 +4,18 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-07-24
+
+### Added — Trust-layer depth and AS 1.1 (Phase 13)
+
+- **Pre-share redaction:** each evidence item has an owner-only editor for profile fields, exact text ranges, and drawn document regions. Public share responses receive cleaned text only; source fragments, range offsets, and region coordinates never leave the server.
+- **Version lineage:** every re-forge creates `vN+1`, keeps its own salt, seal, leaf, reports, and artifact snapshot, and exposes an artifact/Tribunal comparison against the preceding version. `asy_verify` accepts `DSR-…@vN` and returns the available lineage.
+- **Privacy-shaped access logs:** creators can opt in per share link. The log contains only a count and UTC timestamps rounded to the hour; no IP field is stored or displayed.
+- **Credential import:** certificates become Documented evidence with extracted credential name, issuer, and issue month. The product explicitly states that independent issuer confirmation is outside v1.
+- **AS-1.1.0, published and shipped together:** deterministic checks now route through per-artifact profiles; prose artifacts no longer inherit PDF-only `FORMAT_LAW` clauses, story banks gain `STAR_COMPLETENESS`, and portfolio pages gain Chromium screenshot-sampled `PORTFOLIO_CONTRAST`.
+- **Honest gallery re-grade:** all three sealed AS-1.0 artifact sets now show a separate AS-1.1 result of **7/8 PASS**. Each old story bank fails the new STAR profile; each rendered portfolio measures **15.42:1** and passes. Original seals and reports remain unchanged.
+- Added 16 focused trust-layer tests plus AS 1.1 routing, PII leak, STAR, contrast, and generated-standard snapshot coverage.
+
 ## [0.12.0] — 2026-07-24
 
 ### Added — Interview Room and dossier variants (Phase 12)

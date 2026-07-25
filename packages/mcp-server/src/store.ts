@@ -145,8 +145,31 @@ export class Store {
         detail TEXT,
         at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS dossier_versions (
+        dossier_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        json TEXT NOT NULL,
+        salt TEXT,
+        seal_status TEXT NOT NULL DEFAULT 'unsealed',
+        leaf TEXT,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (dossier_id, version)
+      );
+      CREATE TABLE IF NOT EXISTS evidence_redactions (
+        dossier_id TEXT NOT NULL,
+        evidence_id TEXT NOT NULL,
+        json TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (dossier_id, evidence_id)
+      );
+      CREATE TABLE IF NOT EXISTS share_views (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        share_slug TEXT NOT NULL,
+        viewed_at TEXT NOT NULL
+      );
       CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
       CREATE INDEX IF NOT EXISTS idx_events_dossier ON events(dossier_id);
+      CREATE INDEX IF NOT EXISTS idx_share_views_slug ON share_views(share_slug);
     `)
     // P9 Studio columns — added idempotently so the live prod DB (existing dossiers/shares) is
     // never dropped. SQLite has no ADD COLUMN IF NOT EXISTS, so we check table_info first.
@@ -192,16 +215,42 @@ export class Store {
   }
 
   getSalt(id: string): string | undefined {
+    const ref = parseVersionRef(id)
+    if (ref) {
+      const row = this.db
+        .prepare(`SELECT salt FROM dossier_versions WHERE dossier_id = ? AND version = ?`)
+        .get(ref.dossierId, ref.version) as { salt: string | null } | undefined
+      return row?.salt ?? undefined
+    }
     const row = this.db.prepare(`SELECT salt FROM dossiers WHERE id = ?`).get(id) as
       { salt: string | null } | undefined
     return row?.salt ?? undefined
   }
 
   setSealStatus(id: string, status: SealStatus): void {
+    const ref = parseVersionRef(id)
+    if (ref) {
+      this.db
+        .prepare(`UPDATE dossier_versions SET seal_status = ? WHERE dossier_id = ? AND version = ?`)
+        .run(status, ref.dossierId, ref.version)
+      const current = this.getDossier(ref.dossierId)
+      if (current?.version === ref.version)
+        this.db
+          .prepare(`UPDATE dossiers SET seal_status = ? WHERE id = ?`)
+          .run(status, ref.dossierId)
+      return
+    }
     this.db.prepare(`UPDATE dossiers SET seal_status = ? WHERE id = ?`).run(status, id)
   }
 
   getSealStatus(id: string): SealStatus | undefined {
+    const ref = parseVersionRef(id)
+    if (ref) {
+      const row = this.db
+        .prepare(`SELECT seal_status FROM dossier_versions WHERE dossier_id = ? AND version = ?`)
+        .get(ref.dossierId, ref.version) as { seal_status: SealStatus } | undefined
+      return row?.seal_status
+    }
     const row = this.db.prepare(`SELECT seal_status FROM dossiers WHERE id = ?`).get(id) as
       { seal_status: SealStatus } | undefined
     return row?.seal_status
@@ -535,15 +584,13 @@ export class Store {
 
   getStage(id: string): string | undefined {
     const r = this.db.prepare(`SELECT stage FROM dossiers WHERE id = ?`).get(id) as
-      | { stage: string | null }
-      | undefined
+      { stage: string | null } | undefined
     return r?.stage ?? undefined
   }
 
   getEmail(id: string): string | undefined {
     const r = this.db.prepare(`SELECT email FROM dossiers WHERE id = ?`).get(id) as
-      | { email: string | null }
-      | undefined
+      { email: string | null } | undefined
     return r?.email ?? undefined
   }
 
@@ -553,6 +600,91 @@ export class Store {
 
   setSalt(id: string, salt: string): void {
     this.db.prepare(`UPDATE dossiers SET salt = ? WHERE id = ?`).run(salt, id)
+  }
+
+  // ── P13 version lineage ──────────────────────────────────────────────────
+  saveDossierVersion(
+    dossier: Dossier,
+    opts: { salt?: string; leaf?: string; sealStatus?: SealStatus } = {},
+  ): void {
+    this.db
+      .prepare(
+        `INSERT INTO dossier_versions
+          (dossier_id, version, json, salt, seal_status, leaf, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(dossier_id, version) DO UPDATE SET
+           json=excluded.json,
+           salt=COALESCE(excluded.salt, dossier_versions.salt),
+           seal_status=excluded.seal_status,
+           leaf=COALESCE(excluded.leaf, dossier_versions.leaf)`,
+      )
+      .run(
+        dossier.id,
+        dossier.version,
+        JSON.stringify(dossier),
+        opts.salt ?? null,
+        opts.sealStatus ?? (dossier.seal ? 'pending' : 'unsealed'),
+        opts.leaf ?? dossier.seal?.commitment ?? null,
+        nowIso(),
+      )
+  }
+
+  getDossierVersion(dossierId: string, version: number): Dossier | undefined {
+    const row = this.db
+      .prepare(`SELECT json FROM dossier_versions WHERE dossier_id = ? AND version = ?`)
+      .get(dossierId, version) as { json: string } | undefined
+    return row ? (JSON.parse(row.json) as Dossier) : undefined
+  }
+
+  listDossierVersions(dossierId: string): Array<{
+    version: number
+    sealStatus: SealStatus
+    leaf: string | null
+    createdAt: string
+  }> {
+    const rows = this.db
+      .prepare(
+        `SELECT version, seal_status, leaf, created_at
+         FROM dossier_versions WHERE dossier_id = ? ORDER BY version ASC`,
+      )
+      .all(dossierId) as Array<{
+      version: number
+      seal_status: SealStatus
+      leaf: string | null
+      created_at: string
+    }>
+    return rows.map((r) => ({
+      version: r.version,
+      sealStatus: r.seal_status,
+      leaf: r.leaf,
+      createdAt: r.created_at,
+    }))
+  }
+
+  latestDossierVersion(dossierId: string): number {
+    const row = this.db
+      .prepare(`SELECT MAX(version) AS version FROM dossier_versions WHERE dossier_id = ?`)
+      .get(dossierId) as { version: number | null }
+    return row.version ?? 0
+  }
+
+  // ── P13 redactions ───────────────────────────────────────────────────────
+  setEvidenceRedactions(dossierId: string, evidenceId: string, redactions: unknown): void {
+    this.db
+      .prepare(
+        `INSERT INTO evidence_redactions (dossier_id, evidence_id, json, updated_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(dossier_id, evidence_id) DO UPDATE SET
+           json=excluded.json, updated_at=excluded.updated_at`,
+      )
+      .run(dossierId, evidenceId, JSON.stringify(redactions), nowIso())
+  }
+
+  getEvidenceRedactions(dossierId: string): Record<string, unknown> {
+    const rows = this.db
+      .prepare(`SELECT evidence_id, json FROM evidence_redactions WHERE dossier_id = ?`)
+      .all(dossierId) as Array<{ evidence_id: string; json: string }>
+    return Object.fromEntries(rows.map((r) => [r.evidence_id, JSON.parse(r.json)]))
   }
 
   // A structured live-feed event ("role · action"), stored under kind 'studio' with a JSON detail.
@@ -665,4 +797,36 @@ export class Store {
       .prepare(`UPDATE shares SET config = ?, expires_at = ? WHERE slug = ?`)
       .run(JSON.stringify(config ?? {}), expiresAt ?? null, slug)
   }
+
+  recordShareView(slug: string, at = Date.now()): void {
+    const coarse = new Date(at)
+    coarse.setUTCMinutes(0, 0, 0)
+    this.db
+      .prepare(`INSERT INTO share_views (share_slug, viewed_at) VALUES (?, ?)`)
+      .run(slug, coarse.toISOString())
+  }
+
+  shareViewLog(slug: string): { count: number; recent: string[] } {
+    const count = (
+      this.db.prepare(`SELECT COUNT(*) AS n FROM share_views WHERE share_slug = ?`).get(slug) as {
+        n: number
+      }
+    ).n
+    const rows = this.db
+      .prepare(
+        `SELECT viewed_at FROM share_views WHERE share_slug = ?
+         ORDER BY id DESC LIMIT 10`,
+      )
+      .all(slug) as Array<{ viewed_at: string }>
+    return { count, recent: rows.map((r) => r.viewed_at) }
+  }
+}
+
+export function versionRef(dossierId: string, version: number): string {
+  return `${dossierId}@v${version}`
+}
+
+export function parseVersionRef(ref: string): { dossierId: string; version: number } | undefined {
+  const match = ref.match(/^(.*)@v([1-9]\d*)$/)
+  return match ? { dossierId: match[1]!, version: Number(match[2]) } : undefined
 }

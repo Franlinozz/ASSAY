@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { DossierSchema, ClaimSchema, EvidenceItemSchema, ArtifactSchema } from '@xyndicate/assay-core'
+import {
+  DossierSchema,
+  ClaimSchema,
+  EvidenceItemSchema,
+  ArtifactSchema,
+} from '@xyndicate/assay-core'
 import type { Coverage, Dossier } from '@xyndicate/assay-core'
 import { createRouter } from '@xyndicate/providers'
 import { ATS_PARSE_BACK } from '@xyndicate/tribunal'
@@ -18,11 +23,30 @@ function dossier(): Dossier {
       headline: 'Senior Backend Engineer',
       timezone: 'UTC',
       contact: { email: 'chidinma@example.com', links: ['https://gh.example/chidinma'] },
-      experiences: [{ org: 'Paystack', title: 'Senior Backend Engineer', startYm: '2021-03', endYm: null }],
+      experiences: [
+        { org: 'Paystack', title: 'Senior Backend Engineer', startYm: '2021-03', endYm: null },
+      ],
       skills: ['TypeScript', 'PostgreSQL', 'Kubernetes'],
     },
-    evidence: [EvidenceItemSchema.parse({ id: 'EV-1', kind: 'document', label: 'r', sourceRef: 'r', contentText: 'Reduced latency by 38%' })],
-    claims: [ClaimSchema.parse({ id: 'CLM-1', text: 'Reduced latency by 38%', status: 'confirmed', strength: 'documented', evidenceIds: ['EV-1'], numericFacts: [{ value: 38, unit: '%', context: 'x' }] })],
+    evidence: [
+      EvidenceItemSchema.parse({
+        id: 'EV-1',
+        kind: 'document',
+        label: 'r',
+        sourceRef: 'r',
+        contentText: 'Reduced latency by 38%',
+      }),
+    ],
+    claims: [
+      ClaimSchema.parse({
+        id: 'CLM-1',
+        text: 'Reduced latency by 38%',
+        status: 'confirmed',
+        strength: 'documented',
+        evidenceIds: ['EV-1'],
+        numericFacts: [{ value: 38, unit: '%', context: 'x' }],
+      }),
+    ],
   })
 }
 const coverage: Coverage[] = [
@@ -37,10 +61,23 @@ describe('forgeDossier (fake providers, injected PDF)', () => {
       dossier: dossier(),
       router: createRouter(),
       coverage,
-      deps: { toPdf: async () => new Uint8Array([37, 80, 68, 70]) },
+      deps: {
+        toPdf: async () => new Uint8Array([37, 80, 68, 70]),
+        sampleContrast: async () => 12.4,
+      },
     })
     const kinds = out.artifacts.map((a) => a.kind)
-    for (const k of ['resume_ats', 'resume_designed', 'cover_letter', 'story_bank', 'fit_map', 'gap_brief', 'resume_docx', 'portfolio_page', 'manifest_json']) {
+    for (const k of [
+      'resume_ats',
+      'resume_designed',
+      'cover_letter',
+      'story_bank',
+      'fit_map',
+      'gap_brief',
+      'resume_docx',
+      'portfolio_page',
+      'manifest_json',
+    ]) {
       expect(kinds).toContain(k)
     }
     const ats = out.artifacts.find((a) => a.id === 'resume_ats')
@@ -50,6 +87,7 @@ describe('forgeDossier (fake providers, injected PDF)', () => {
     expect(out.files.has('cover')).toBe(true)
     const portfolio = out.artifacts.find((a) => a.id === 'portfolio_page')
     expect(portfolio?.meta['shareView']).toBe(true)
+    expect(portfolio?.meta['renderedContrastRatio']).toBe(12.4)
   })
 })
 

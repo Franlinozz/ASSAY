@@ -33,6 +33,7 @@ function deps(rig: TestRig): StudioDeps {
     cfg: rig.cfg,
     toPdf: devPdf,
     realPdf: false,
+    sampleContrast: async () => 12.4,
   }
 }
 
@@ -153,6 +154,27 @@ describe('studio flow', () => {
     const prose = state.forge!.artifacts.filter((a) => a.sentences.length > 0)
     expect(prose.length).toBeGreaterThan(0)
     for (const a of prose) for (const s of a.sentences) expect(s.claimIds.length).toBeGreaterThan(0)
+  })
+
+  it('re-forges as vN+1 and keeps each version seal independently', async () => {
+    const rig = testRuntime()
+    const { id } = await buildConfirmed(rig)
+    await runBrief(deps(rig), id, '- Backend engineering with PostgreSQL')
+    await runStudioForge(deps(rig), { dossierId: id, selected: ['manifest_json'] })
+    const first = await sealDossier(deps(rig), id)
+    const salt1 = rig.store.getSalt(`${id}@v1`)
+
+    await runStudioForge(deps(rig), { dossierId: id, selected: ['manifest_json'] })
+    const second = await sealDossier(deps(rig), id)
+    const salt2 = rig.store.getSalt(`${id}@v2`)
+
+    expect(rig.store.listDossierVersions(id).map((version) => version.version)).toEqual([1, 2])
+    expect(salt1).toBeTruthy()
+    expect(salt2).toBeTruthy()
+    expect(salt2).not.toBe(salt1)
+    expect(first.leaf).not.toBe(second.leaf)
+    expect(rig.store.listDossierVersions(id)[0]!.leaf).toBe(first.leaf)
+    expect(rig.store.listDossierVersions(id)[1]!.leaf).toBe(second.leaf)
   })
 
   it('seals, shares with PII enforcement, and revokes to a withdrawn view', async () => {

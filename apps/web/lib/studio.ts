@@ -167,6 +167,7 @@ export async function createShare(
     showContact: boolean
     expiryDays: 7 | 30 | null
     preset?: 'recruiter' | 'samples'
+    logViews?: boolean
   },
 ): Promise<{ shareId: string; url: string; expiresAt: string | null }> {
   const res = await fetch(`${base}/d/${id}/share?t=${encodeURIComponent(token)}`, {
@@ -182,6 +183,42 @@ export async function revokeShare(id: string, token: string): Promise<unknown> {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: '{}',
+  })
+  return jsonOrThrow(res)
+}
+
+export interface RedactionRecord {
+  fields: Array<'email' | 'phone'>
+  textRanges: Array<{ start: number; end: number }>
+  regions: Array<{ page: number; x: number; y: number; width: number; height: number }>
+}
+
+export async function saveRedactions(
+  id: string,
+  token: string,
+  evidenceId: string,
+  record: RedactionRecord,
+): Promise<unknown> {
+  const res = await fetch(
+    `${base}/d/${id}/evidence/${evidenceId}/redact?t=${encodeURIComponent(token)}`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(record),
+    },
+  )
+  return jsonOrThrow(res)
+}
+
+export async function importCredential(
+  id: string,
+  token: string,
+  input: { filename: string; contentB64?: string; text?: string },
+): Promise<unknown> {
+  const res = await fetch(`${base}/d/${id}/credential?t=${encodeURIComponent(token)}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
   })
   return jsonOrThrow(res)
 }
@@ -207,6 +244,7 @@ export interface StudioEvidence {
   kind: string
   label: string
   fetchedOk?: boolean
+  contentPreview?: string
 }
 
 export interface CoverageRow {
@@ -328,6 +366,27 @@ export interface StudioState {
       exposedClaimIds?: string[]
       showContact?: boolean
       preset?: 'recruiter' | 'samples'
+      logViews?: boolean
     }
+    views: { count: number; recent: string[] }
+  } | null
+  redactions: Record<string, RedactionRecord>
+  versions: Array<{
+    version: number
+    sealStatus: string | null
+    leaf: string | null
+    createdAt: string
+  }>
+  compare: {
+    from: number
+    to: number
+    artifacts: Array<{
+      id: string
+      added: string[]
+      removed: string[]
+      scoreFrom: number
+      scoreTo: number
+      scoreDelta: number
+    }>
   } | null
 }

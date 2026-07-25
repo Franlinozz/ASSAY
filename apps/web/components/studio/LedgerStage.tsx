@@ -4,9 +4,10 @@ import { useRef, useState } from 'react'
 import type { StudioState, StudioClaim } from '../../lib/studio'
 import type { StudioActions } from './StudioWorkspace'
 import { TierChip } from '../TierChip'
+import { RedactionEditor } from './RedactionEditor'
 
 const MAX_BYTES = 8 * 1024 * 1024
-type Intake = 'upload' | 'text' | 'links' | 'answers'
+type Intake = 'upload' | 'credential' | 'text' | 'links' | 'answers'
 
 function readAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -166,6 +167,7 @@ export function LedgerStage({ state, actions }: { state: StudioState; actions: S
   const [dragOver, setDragOver] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const credentialRef = useRef<HTMLInputElement>(null)
 
   const active = state.claims.filter((c) => c.status !== 'rejected')
   const denom = active.length || 1
@@ -185,6 +187,18 @@ export function LedgerStage({ state, actions }: { state: StudioState; actions: S
     }
   }
 
+  const onCredential = async (files: FileList | null) => {
+    setLocalError(null)
+    const file = files?.[0]
+    if (!file) return
+    if (file.size > MAX_BYTES) return setLocalError('that file is over 8MB — please trim it')
+    try {
+      await actions.credential({ filename: file.name, contentB64: await readAsBase64(file) })
+    } catch {
+      setLocalError('could not read that certificate')
+    }
+  }
+
   return (
     <div className="stage">
       <header className="stage-header">
@@ -201,7 +215,7 @@ export function LedgerStage({ state, actions }: { state: StudioState; actions: S
       {/* intake */}
       <div className="intake">
         <div className="intake-tabs" role="tablist" aria-label="Add evidence">
-          {(['upload', 'text', 'links', 'answers'] as Intake[]).map((t) => (
+          {(['upload', 'credential', 'text', 'links', 'answers'] as Intake[]).map((t) => (
             <button
               key={t}
               type="button"
@@ -212,11 +226,13 @@ export function LedgerStage({ state, actions }: { state: StudioState; actions: S
             >
               {t === 'upload'
                 ? 'Upload'
-                : t === 'text'
-                  ? 'Paste text'
-                  : t === 'links'
-                    ? 'Add links'
-                    : 'Guided answers'}
+                : t === 'credential'
+                  ? 'Credential'
+                  : t === 'text'
+                    ? 'Paste text'
+                    : t === 'links'
+                      ? 'Add links'
+                      : 'Guided answers'}
             </button>
           ))}
         </div>
@@ -250,6 +266,20 @@ export function LedgerStage({ state, actions }: { state: StudioState; actions: S
             />
             <p className="dropzone-title">Drop a résumé or document here</p>
             <p className="caption">PDF, DOCX, TXT or Markdown · up to 8MB</p>
+          </div>
+        ) : intake === 'credential' ? (
+          <div className="intake-body">
+            <input
+              ref={credentialRef}
+              type="file"
+              accept=".pdf,.txt,.md"
+              data-testid="credential-input"
+              onChange={(event) => void onCredential(event.target.files)}
+            />
+            <p className="caption">
+              A certificate becomes Documented evidence. We extract its issuer and date; independent
+              issuer confirmation is outside v1, so the evidence tier stays truthful.
+            </p>
           </div>
         ) : intake === 'text' ? (
           <div className="intake-body">
@@ -325,6 +355,25 @@ export function LedgerStage({ state, actions }: { state: StudioState; actions: S
         )}
         {localError ? <p className="field-error">{localError}</p> : null}
       </div>
+
+      {state.evidence.length > 0 ? (
+        <section className="stack" aria-label="Evidence privacy">
+          <div>
+            <p className="overline">Pre-share redaction</p>
+            <p className="caption">
+              Redaction changes public share copies, never the confirmed private ledger.
+            </p>
+          </div>
+          {state.evidence.map((evidence) => (
+            <RedactionEditor
+              key={evidence.id}
+              evidence={evidence}
+              initial={state.redactions[evidence.id]}
+              actions={actions}
+            />
+          ))}
+        </section>
+      ) : null}
 
       {/* progress */}
       {state.claims.length > 0 ? (

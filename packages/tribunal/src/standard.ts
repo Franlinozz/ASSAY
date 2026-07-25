@@ -1,5 +1,5 @@
 import { STANDARD_VERSION } from '@xyndicate/assay-core'
-import { HARD_CHECKS } from './hard/index'
+import { HARD_CHECKS, checksForArtifact } from './hard/index'
 import type { CheckStatus } from './hard/types'
 
 export { STANDARD_VERSION }
@@ -16,12 +16,42 @@ export interface CraftAxis {
 
 // Claude-critic craft axes. Weights emphasize honesty and tailoring — the axes hardest to fake.
 export const CRAFT_AXES: CraftAxis[] = [
-  { id: 'voice', title: 'Voice', weight: 1, description: 'Confident, human, and specific — not generic AI prose.' },
-  { id: 'specificity', title: 'Specificity', weight: 1.5, description: 'Concrete actions, tools, and outcomes rather than vague responsibilities.' },
-  { id: 'quantification', title: 'Quantification', weight: 1.5, description: 'Impact is measured where evidence supports it — never invented.' },
-  { id: 'positioning', title: 'Positioning', weight: 1, description: 'The strongest, most relevant evidence leads.' },
-  { id: 'tailoring', title: 'Tailoring', weight: 1.5, description: 'The artifact answers this specific brief, not a generic role.' },
-  { id: 'evidence_honesty', title: 'Evidence honesty', weight: 2, description: 'Every claim is framed at the strength its evidence earns — no overreach.' },
+  {
+    id: 'voice',
+    title: 'Voice',
+    weight: 1,
+    description: 'Confident, human, and specific — not generic AI prose.',
+  },
+  {
+    id: 'specificity',
+    title: 'Specificity',
+    weight: 1.5,
+    description: 'Concrete actions, tools, and outcomes rather than vague responsibilities.',
+  },
+  {
+    id: 'quantification',
+    title: 'Quantification',
+    weight: 1.5,
+    description: 'Impact is measured where evidence supports it — never invented.',
+  },
+  {
+    id: 'positioning',
+    title: 'Positioning',
+    weight: 1,
+    description: 'The strongest, most relevant evidence leads.',
+  },
+  {
+    id: 'tailoring',
+    title: 'Tailoring',
+    weight: 1.5,
+    description: 'The artifact answers this specific brief, not a generic role.',
+  },
+  {
+    id: 'evidence_honesty',
+    title: 'Evidence honesty',
+    weight: 2,
+    description: 'Every claim is framed at the strength its evidence earns — no overreach.',
+  },
 ]
 export const CRAFT_AXIS_IDS: string[] = CRAFT_AXES.map((a) => a.id)
 
@@ -53,7 +83,12 @@ export function passRule(
   const mean = weightedMean(craftScores)
   const floorOk = CRAFT_AXES.every((a) => (craftScores[a.id] ?? 0) >= CRAFT_AXIS_FLOOR)
   const craftPass = mean >= CRAFT_PASS_MEAN && floorOk
-  return { pass: hardPass && craftPass, hardPass, craftPass, weightedMean: Math.round(mean * 10) / 10 }
+  return {
+    pass: hardPass && craftPass,
+    hardPass,
+    craftPass,
+    weightedMean: Math.round(mean * 10) / 10,
+  }
 }
 
 export interface AssayStandard {
@@ -63,7 +98,27 @@ export interface AssayStandard {
   repairLimit: number
   hardChecks: Array<{ id: string; title: string; description: string }>
   craftAxes: CraftAxis[]
+  artifactProfiles: Array<{ kind: string; checks: string[] }>
 }
+
+const PROFILE_KINDS = [
+  'resume_ats',
+  'resume_designed',
+  'resume_docx',
+  'cover_letter',
+  'story_bank',
+  'fit_map',
+  'gap_brief',
+  'portfolio_page',
+  'manifest_json',
+  'interview_evaluation',
+  'promotion_narrative',
+  'promotion_memo',
+  'manager_one_pager',
+  'capability_statement',
+  'case_studies',
+  'proposal_letter',
+]
 
 export const ASSAY_STANDARD: AssayStandard = {
   version: STANDARD_VERSION,
@@ -72,6 +127,10 @@ export const ASSAY_STANDARD: AssayStandard = {
   repairLimit: REPAIR_LIMIT,
   hardChecks: HARD_CHECKS.map((c) => ({ id: c.id, title: c.title, description: c.description })),
   craftAxes: CRAFT_AXES,
+  artifactProfiles: PROFILE_KINDS.map((kind) => ({
+    kind,
+    checks: checksForArtifact(kind).map((check) => check.id),
+  })),
 }
 
 // Guardrail #2: the public /standard page and the docs rubric are generated from THIS, the same
@@ -90,6 +149,14 @@ export function renderStandardMarkdown(standard: AssayStandard = ASSAY_STANDARD)
   lines.push('')
   for (const c of standard.hardChecks) {
     lines.push(`- **${c.title}** (\`${c.id}\`) — ${c.description}`)
+  }
+  lines.push('')
+  lines.push('## Per-artifact profiles')
+  lines.push('')
+  lines.push('| Artifact kind | Deterministic checks routed to it |')
+  lines.push('|---|---|')
+  for (const profile of standard.artifactProfiles) {
+    lines.push(`| \`${profile.kind}\` | ${profile.checks.map((id) => `\`${id}\``).join(', ')} |`)
   }
   lines.push('')
   lines.push('## Craft axes (Claude critic, scored 0–100)')

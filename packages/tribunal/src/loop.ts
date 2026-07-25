@@ -1,7 +1,7 @@
 import type { Artifact, Dossier } from '@xyndicate/assay-core'
 import { nowIso } from '@xyndicate/assay-core'
 import type { ModelRouter } from '@xyndicate/providers'
-import { HARD_CHECKS } from './hard/index'
+import { checksForArtifact } from './hard/index'
 import type { CheckDeps } from './hard/types'
 import { CRAFT_AXES, REPAIR_LIMIT, STANDARD_VERSION, passRule } from './standard'
 import { gradeCraft, type CraftGrade } from './critic'
@@ -31,9 +31,14 @@ export async function gradeArtifact(
   draftIndex = 0,
 ): Promise<TribunalReport> {
   const hard: HardCheckReport[] = []
-  for (const check of HARD_CHECKS) {
+  for (const check of checksForArtifact(artifact.kind)) {
     const r = await check.run({ dossier, artifact, deps })
-    const hr: HardCheckReport = { id: check.id, title: check.title, status: r.status, findings: r.findings }
+    const hr: HardCheckReport = {
+      id: check.id,
+      title: check.title,
+      status: r.status,
+      findings: r.findings,
+    }
     if (r.evidence !== undefined) hr.evidence = r.evidence
     hard.push(hr)
   }
@@ -51,7 +56,9 @@ export async function gradeArtifact(
     artifactKind: artifact.kind,
     draftIndex,
     hard,
-    craft: proseBearing ? CRAFT_AXES.map((a) => ({ axis: a.id, score: craft.axes[a.id] ?? 0 })) : [],
+    craft: proseBearing
+      ? CRAFT_AXES.map((a) => ({ axis: a.id, score: craft.axes[a.id] ?? 0 }))
+      : [],
     craftWeightedMean: verdict.weightedMean,
     pass: verdict.pass,
     hardPass: verdict.hardPass,

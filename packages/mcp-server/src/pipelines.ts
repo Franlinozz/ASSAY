@@ -36,6 +36,7 @@ import { buildVerifyBundle } from '@xyndicate/receipts'
 import type { Address, Hex } from 'viem'
 import type { ServerConfig } from './config'
 import type { Store } from './store'
+import { parseVersionRef, versionRef } from './store'
 import { decodeUpload, signFileToken } from './util'
 
 export interface PipelineCtx {
@@ -538,8 +539,11 @@ export async function verify(
   let leaf = args.leaf as Hex | undefined
   let dossierId = args.dossierId
   if (!leaf && dossierId) {
-    const dossier = ctx.store.getDossier(dossierId)
-    const salt = ctx.store.getSalt(dossierId)
+    const ref = parseVersionRef(dossierId)
+    const dossier = ref
+      ? ctx.store.getDossierVersion(ref.dossierId, ref.version)
+      : ctx.store.getDossier(dossierId)
+    const salt = ctx.store.getSalt(ref ? versionRef(ref.dossierId, ref.version) : dossierId)
     if (!dossier || !salt)
       return {
         summary: `No sealed dossier ${dossierId}.`,
@@ -576,6 +580,8 @@ export async function verify(
   }
   const found = anchoredAt > 0n
   const explorerLink = `${explorerBase(ctx.cfg.chainId)}/address/${ctx.cfg.registry}`
+  const baseId = dossierId ? (parseVersionRef(dossierId)?.dossierId ?? dossierId) : undefined
+  const lineage = baseId ? ctx.store.listDossierVersions(baseId) : []
   ctx.store.recordEvent('verify', { leaf, found }, dossierId)
   return {
     summary: found
@@ -594,6 +600,7 @@ export async function verify(
       chainId: ctx.cfg.chainId,
       registry: ctx.cfg.registry,
       explorerLink,
+      lineage,
     },
   }
 }

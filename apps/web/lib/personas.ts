@@ -99,14 +99,41 @@ export interface Persona {
     fidelityPct: number
     fieldDiffs: Array<{ field: string; expected: string; got: string }>
     fieldsChecked: number
-    parsed: { name: string; email: string; experiences: Array<{ org?: string; title?: string; startYm?: string; endYm?: string }> }
+    parsed: {
+      name: string
+      email: string
+      experiences: Array<{ org?: string; title?: string; startYm?: string; endYm?: string }>
+    }
     label: string
   } | null
   seal: PersonaSeal
+  as11Regrade: {
+    standardVersion: 'AS-1.1.0'
+    regradedAt: string
+    rollup: { finalPassed: number; artifacts: number }
+    profiles: {
+      textArtifactsDropPdfClauses: boolean
+      storyBank: {
+        status: string
+        findings: Array<{ code: string; detail: string; ref?: string }>
+      }
+      portfolioPage: {
+        status: string
+        renderedContrastRatio: number
+        findings: Array<{ code: string; detail: string; ref?: string }>
+      }
+    }
+    note: string
+  }
 }
 
 export interface PersonasDoc {
-  meta: { providerMode: string; generatedAt: string; note: string }
+  meta: {
+    providerMode: string
+    generatedAt: string
+    note: string
+    regradedStandardVersion: string
+  }
   personas: Persona[]
 }
 
@@ -130,5 +157,7 @@ export function personaBySlug(slug: string): Persona | undefined {
   return PERSONAS.find((p) => p.slug === slug)
 }
 export function personaTiers(p: Persona): Tier[] {
-  return [...new Set(p.claims.filter((c) => c.status === 'confirmed').map((c) => c.strength))] as Tier[]
+  return [
+    ...new Set(p.claims.filter((c) => c.status === 'confirmed').map((c) => c.strength)),
+  ] as Tier[]
 }

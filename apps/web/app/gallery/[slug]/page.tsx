@@ -119,11 +119,11 @@ export default async function PersonaPage({ params }: { params: Promise<{ slug: 
   const confirmed = p.claims.filter((c) => c.status === 'confirmed')
   const questions = p.claims.filter((c) => c.status === 'needs_confirmation')
   const rollup = p.tribunal.rollup
+  const regrade = p.as11Regrade
 
   // The forged artifact with the most proof-linked sentences tells the "every sentence traces" story.
   const forgedKey =
-    Object.keys(p.sentences).find((k) => k === 'cover_letter') ??
-    Object.keys(p.sentences)[0]
+    Object.keys(p.sentences).find((k) => k === 'cover_letter') ?? Object.keys(p.sentences)[0]
   const forgedSentences = forgedKey ? p.sentences[forgedKey] : []
 
   // Repair story: artifacts with >1 draft first.
@@ -260,6 +260,24 @@ export default async function PersonaPage({ params }: { params: Promise<{ slug: 
       {/* Tribunal repair story */}
       <section className="section-tight">
         <div className="container stack-lg">
+          <div className="parseback" data-testid="persona-as11-regrade">
+            <p className="overline">Honest AS 1.1 re-grade</p>
+            <p className="caption" style={{ marginTop: '0.5rem' }}>
+              {regrade.rollup.finalPassed}/{regrade.rollup.artifacts} original sealed artifacts pass
+              the new profiles. Portfolio screenshot contrast:{' '}
+              <strong>{regrade.profiles.portfolioPage.renderedContrastRatio}:1</strong>. Story bank:{' '}
+              <strong>{regrade.profiles.storyBank.status.toUpperCase()}</strong>.
+            </p>
+            {regrade.profiles.storyBank.findings.map((finding, index) => (
+              <div className="finding" key={`${finding.code}-${index}`}>
+                <span className="finding-code">{finding.code}</span>
+                <span>{finding.detail}</span>
+              </div>
+            ))}
+            <p className="caption" style={{ marginTop: '0.6rem' }}>
+              {regrade.note}
+            </p>
+          </div>
           <div className="pass-rule" data-testid="persona-rollup">
             <div>
               <span className="mono">
@@ -271,7 +289,9 @@ export default async function PersonaPage({ params }: { params: Promise<{ slug: 
               <span className="mono">
                 {rollup.firstDraftPassed}/{rollup.artifacts}
               </span>
-              <span className="caption">passed on the first draft — published so repair can’t flatter itself.</span>
+              <span className="caption">
+                passed on the first draft — published so repair can’t flatter itself.
+              </span>
             </div>
           </div>
           {storyOrder.slice(0, 2).map(([artifactId, drafts]) => (
@@ -295,8 +315,8 @@ export default async function PersonaPage({ params }: { params: Promise<{ slug: 
             </p>
             <p className="caption" style={{ marginBottom: '1rem', maxWidth: '46rem' }}>
               Fidelity:{' '}
-              <strong style={{ color: 'var(--viridian-text)' }}>{p.parseBack.fidelityPct}%</strong> ·{' '}
-              {p.parseBack.fieldDiffs.length} fields lost. {p.parseBack.label}
+              <strong style={{ color: 'var(--viridian-text)' }}>{p.parseBack.fidelityPct}%</strong>{' '}
+              · {p.parseBack.fieldDiffs.length} fields lost. {p.parseBack.label}
             </p>
             <div className="table-wrap">
               <table className="office" data-testid="persona-parseback">
@@ -357,7 +377,10 @@ export default async function PersonaPage({ params }: { params: Promise<{ slug: 
               <span className="caption">Registry · X Layer eip155:{p.seal.chainId}</span>
               <a
                 className="mono"
-                href={p.seal.registryExplorer ?? `https://www.oklink.com/x-layer/address/${p.seal.registry}`}
+                href={
+                  p.seal.registryExplorer ??
+                  `https://www.oklink.com/x-layer/address/${p.seal.registry}`
+                }
                 rel="noopener"
                 target="_blank"
               >
@@ -378,9 +401,9 @@ export default async function PersonaPage({ params }: { params: Promise<{ slug: 
             </div>
           </div>
           <p className="caption" style={{ marginTop: '1rem', maxWidth: '46rem' }}>
-            {p.name} is a fictional persona. The seal proves this dossier&rsquo;s manifest is unchanged
-            since sealing — it does not, by itself, prove any claim inside it. Each claim carries its
-            own evidence tier.
+            {p.name} is a fictional persona. The seal proves this dossier&rsquo;s manifest is
+            unchanged since sealing — it does not, by itself, prove any claim inside it. Each claim
+            carries its own evidence tier.
           </p>
         </div>
       </section>

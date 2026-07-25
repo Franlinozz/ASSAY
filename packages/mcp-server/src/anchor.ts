@@ -1,7 +1,7 @@
 import { RegistryClient } from '@xyndicate/contracts'
 import type { Address, Hex } from 'viem'
 import type { ServerConfig } from './config'
-import type { Store } from './store'
+import { parseVersionRef, type Store } from './store'
 
 // The anchor worker drains seals_pending → RegistryClient.sealBatch on an interval. It NEVER crashes
 // the server: every failure is recorded as a seal attempt and retried next tick. Batch anchoring
@@ -64,7 +64,11 @@ export class AnchorWorker {
         for (const p of batch) {
           this.store.setSealStatus(p.dossierId, 'sealed')
           this.store.removeSeal(p.dossierId)
-          this.store.recordEvent('anchored', { tx, leaf: p.leaf }, p.dossierId)
+          this.store.recordEvent(
+            'anchored',
+            { tx, leaf: p.leaf, versionRef: p.dossierId },
+            parseVersionRef(p.dossierId)?.dossierId ?? p.dossierId,
+          )
         }
         return { sealed: batch.length, tx }
       } catch (e) {

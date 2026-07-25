@@ -79,6 +79,7 @@ export interface PublishedStandard {
   repairLimit: number
   hardChecks: StandardHardCheck[]
   craftAxes: StandardCraftAxis[]
+  artifactProfiles: Array<{ kind: string; checks: string[] }>
 }
 
 export const STANDARD: PublishedStandard = ${JSON.stringify(ASSAY_STANDARD, null, 2)}

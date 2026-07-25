@@ -1,15 +1,15 @@
 # HANDOFF — Assay (for Codex / the next session)
 
-_Last updated: 2026-07-24, after Phase 10 (judge mode + sealed gallery personas) and Phase 11 (the surfacing audit). Both shipped, committed, pushed, and deployed to assayed.xyz._
+_Last updated: 2026-07-24, after Phase 12 (apex breadth) and Phase 13 (trust depth + AS 1.1)._
 
 Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is the operational map so you don't get stuck.
 
 ## Where things stand
 
 - **Branch `main`**, pushed to `Franlinozz/ASSAY`. Working tree clean.
-- **Tests green:** 210 vitest + 4 foundry + 47 Playwright e2e. Route sweep green.
+- **Tests green:** 256 vitest + 4 foundry + 47 Playwright e2e. Route sweep green.
 - **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs · https://api.assayed.xyz/mcp. Listed on OKX.AI as ASP **#8599** (approvalStatus 2, under `archonaudit@gmail.com`).
-- **Phases done:** P0–P11. P10 = judge mode + 3 sealed gallery personas. P11 = surfacing audit (zero ORPHANED capabilities).
+- **Phases done:** P0–P13. P12 = Interview Room + promotion/freelance dossier variants. P13 = redaction, version lineage, privacy-shaped access logs, credential import, and AS-1.1.0.
 
 ## Two machines, don't confuse them
 
@@ -61,8 +61,9 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 | `npm run gen:personas` | Run the pipeline per persona → `lib/personas.generated.json` (fake=default, `ASY_PROVIDER_MODE=live` for real). Launches chromium; NOT a prebuild step. |
 | `npm run gen:fixtures` | Emit the live `/fixtures/*.html` pages LINK_LIVENESS checks. |
 | `npm run seal:personas` | Anchor persona leaves on X Layer mainnet (needs `ASY_SEALER_KEY`). |
+| `npm run regrade:personas` | Re-grade the sealed persona artifact sets against the current Standard using Chromium screenshot sampling. |
 | `npm run sweep` (repo root) | Route sweep: hits every route + validates a real PDF download + forged-token 403. |
-| `npm test` (repo root) | 210 vitest. |
+| `npm test` (repo root) | 256 vitest. |
 | `npm run test:e2e` (repo root) | 47 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400). |
 
 ## Architecture quick-map
@@ -71,6 +72,8 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 - **Judge tour:** `apps/web/app/judge/JudgeTour.tsx` — 14 beats, ~89s, pausable/skippable, driven only by the featured persona's stored data; verify beat = single ref-guarded fetch + cached fallback (survives provider outage).
 - **Gallery:** `/gallery` (featured + others), `/gallery/[slug]` (full dossier + fictional tag). Loader: `apps/web/lib/personas.ts`.
 - **Surfacing audit:** findings table in `FEATURES.md`; `/docs/api` documents machine endpoints; `scripts/route-sweep.mjs` guards against invisible capabilities; bug-taxonomy defenses in `packages/mcp-server/src/taxonomy.test.ts`.
+- **P12 apex:** `packages/renderers/src/interview.ts`, variant writers in `forge.ts`, Studio Interview tab + Brief modes, and `asy_interview_prep`.
+- **P13 trust:** additive SQLite tables `dossier_versions`, `evidence_redactions`, `share_views`; owner controls in Studio Ledger/Report/Share; version-aware `asy_verify`; AS profile router in `packages/tribunal/src/hard/index.ts`; gallery re-grade script/data.
 
 ## Gotchas that bit this session
 
@@ -84,7 +87,7 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 - Docs-link liveness is covered by the docs build (broken MDX links fail the build), not a live-crawl e2e.
 - External explorer (oklink) links are not fetched in e2e (offline test discipline); they're the standard X Layer explorer templates.
 
-## Suggested next work (P12+ is unwritten — ask the operator)
+## Suggested next work
 
 - The optional live-LLM persona re-run above (real spend).
 - A hero README (AGENTS.md notes a "Phase 15" full README; the current one is a scaffold).

@@ -16,6 +16,7 @@ function rig(): { r: TestRig; deps: JobDeps; pipe: PipelineCtx } {
     cfg: r.cfg,
     toPdf: devPdf,
     realPdf: false,
+    sampleContrast: async () => 12.4,
   }
   const pipe = makeCtx(r.store, r.router, r.cfg, r.fetcher)
   return { r, deps, pipe }

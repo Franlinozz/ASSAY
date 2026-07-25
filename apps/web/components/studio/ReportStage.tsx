@@ -171,6 +171,47 @@ export function ReportStage({
         </div>
       </div>
 
+      {state.versions.length > 0 ? (
+        <section className="parseback" data-testid="version-lineage">
+          <p className="overline" style={{ marginBottom: '0.5rem' }}>
+            Version lineage
+          </p>
+          <p className="caption">
+            {state.versions.map((version) => (
+              <span className="mono" key={version.version} style={{ marginRight: '0.8rem' }}>
+                v{version.version}
+                {version.sealStatus ? ` · ${version.sealStatus}` : ' · unsealed'}
+              </span>
+            ))}
+          </p>
+          {state.compare ? (
+            <div style={{ marginTop: '0.8rem' }}>
+              <p className="caption">
+                v{state.compare.from} → v{state.compare.to}:{' '}
+                {state.compare.artifacts.filter((a) => a.scoreDelta !== 0).length} score changes
+              </p>
+              {state.compare.artifacts
+                .filter((artifact) =>
+                  Boolean(
+                    artifact.added.length || artifact.removed.length || artifact.scoreDelta !== 0,
+                  ),
+                )
+                .map((artifact) => (
+                  <p className="caption mono" key={artifact.id}>
+                    {artifact.id}: {artifact.added.length}+ / {artifact.removed.length}− · craft{' '}
+                    {artifact.scoreDelta >= 0 ? '+' : ''}
+                    {artifact.scoreDelta}
+                  </p>
+                ))}
+            </div>
+          ) : (
+            <p className="caption" style={{ marginTop: '0.5rem' }}>
+              Re-forge after changing the ledger or brief to create v2 and unlock comparison.
+            </p>
+          )}
+        </section>
+      ) : null}
+
       <div className="report-list">
         {ordered.map(([artifactId, drafts]) => (
           <div key={artifactId} className="stack">

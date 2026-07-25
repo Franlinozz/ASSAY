@@ -366,7 +366,73 @@ export const PII_HYGIENE: HardCheck = {
       findings.push({ code: 'PII_PHONE', detail: 'share view exposes an unapproved phone number' })
     if (email && body.includes(email) && !approved.includes('email'))
       findings.push({ code: 'PII_EMAIL', detail: 'share view exposes an unapproved email' })
+    const redacted = Array.isArray(artifact.meta['redactedSourceFragments'])
+      ? (artifact.meta['redactedSourceFragments'] as string[])
+      : []
+    for (const fragment of redacted) {
+      if (fragment && body.includes(fragment))
+        findings.push({
+          code: 'PII_REDACTION_LEAK',
+          detail: 'share view contains bytes marked for redaction',
+        })
+    }
     return result(findings)
+  },
+}
+
+export const STAR_COMPLETENESS: HardCheck = {
+  id: 'STAR_COMPLETENESS',
+  title: 'STAR completeness',
+  description:
+    'Story-bank entries must make situation, task, action, and result legible; a result without the path to it is not a complete interview story.',
+  run({ artifact }: CheckContext): CheckResult {
+    if (artifact.kind !== 'story_bank') return { status: 'skip', findings: [] }
+    const findings: CheckFinding[] = []
+    for (const [index, sentence] of (artifact.sentences ?? []).entries()) {
+      const text = sentence.text
+      const parts = {
+        situation: /\b(situation|context|when|while|challenge)\b/i.test(text),
+        task: /\b(task|goal|objective|needed to|responsible)\b/i.test(text),
+        action:
+          /\b(i|we)\s+(built|led|changed|created|implemented|designed|introduced|reduced|improved|shipped|mentored)\b/i.test(
+            text,
+          ),
+        result: /\b(result|outcome|therefore|which|by \d|\d+(?:\.\d+)?%?)\b/i.test(text),
+      }
+      const missing = Object.entries(parts)
+        .filter(([, ok]) => !ok)
+        .map(([name]) => name)
+      if (missing.length)
+        findings.push({
+          code: 'STAR_INCOMPLETE',
+          detail: `story ${index + 1} is missing ${missing.join(', ')}`,
+          ref: artifact.id,
+        })
+    }
+    return result(findings)
+  },
+}
+
+export const PORTFOLIO_CONTRAST: HardCheck = {
+  id: 'PORTFOLIO_CONTRAST',
+  title: 'Rendered portfolio contrast',
+  description:
+    'Portfolio pages are screenshot-sampled in Chromium; rendered body text must measure at least 4.5:1 against its actual background.',
+  run({ artifact }: CheckContext): CheckResult {
+    if (artifact.kind !== 'portfolio_page') return { status: 'skip', findings: [] }
+    const ratio = artifact.meta['renderedContrastRatio']
+    if (typeof ratio !== 'number') return { status: 'pending', findings: [] }
+    return result(
+      ratio >= 4.5
+        ? []
+        : [
+            {
+              code: 'PORTFOLIO_CONTRAST',
+              detail: `rendered contrast ${ratio.toFixed(2)}:1 is below 4.5:1`,
+            },
+          ],
+      `screenshot-sampled contrast ${ratio.toFixed(2)}:1`,
+    )
   },
 }
 

@@ -38,7 +38,7 @@ describe('gradeArtifact (fake mode)', () => {
     expect(r.pass).toBe(true)
     expect(r.draftIndex).toBe(0)
     expect(r.craft).toHaveLength(6)
-    expect(r.standardVersion).toBe('AS-1.0.0')
+    expect(r.standardVersion).toBe('AS-1.1.0')
   })
 
   it('fails and attaches a repair brief when a hard check fails', async () => {

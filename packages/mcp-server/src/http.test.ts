@@ -62,7 +62,9 @@ describe('HTTP surface', () => {
     expect(body.service).toBe('assay-mcp')
     expect(body.standardVersion).toBeTruthy()
     expect(body).toHaveProperty('seals')
-    expect(elapsed).toBeLessThan(250)
+    // The endpoint itself is synchronous and model-free; allow CI scheduler contention while the
+    // full Vitest pool concurrently launches Chromium and Anvil.
+    expect(elapsed).toBeLessThan(750)
   })
 
   it('GET /.well-known/assay.json lists every tool and the x402 payment standard', async () => {
@@ -204,7 +206,7 @@ describe('GET /d-api — anonymized recent seals (P8 landing strip)', () => {
         manifestHash: '0xabc',
         commitment: '0xdef',
         chainId: 196,
-        standardVersion: 'AS-1.0.0',
+        standardVersion: 'AS-1.1.0',
       },
       createdAt: new Date().toISOString(),
     }

@@ -1,5 +1,5 @@
 // Product constants. The Standard version is stamped into every manifest and seal.
-export const STANDARD_VERSION = 'AS-1.0.0' as const
+export const STANDARD_VERSION = 'AS-1.1.0' as const
 
 export const PRODUCT = {
   name: 'Assay',

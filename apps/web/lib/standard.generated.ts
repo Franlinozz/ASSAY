@@ -22,10 +22,11 @@ export interface PublishedStandard {
   repairLimit: number
   hardChecks: StandardHardCheck[]
   craftAxes: StandardCraftAxis[]
+  artifactProfiles: Array<{ kind: string; checks: string[] }>
 }
 
 export const STANDARD: PublishedStandard = {
-  "version": "AS-1.0.0",
+  "version": "AS-1.1.0",
   "craftPassMean": 72,
   "craftAxisFloor": 60,
   "repairLimit": 2,
@@ -94,6 +95,16 @@ export const STANDARD: PublishedStandard = {
       "id": "INTERVIEW_INTEGRITY",
       "title": "Interview answer integrity",
       "description": "A finalized interview answer must be STAR-complete and every factual number must agree with the confirmed ledger; contradictions block the answer."
+    },
+    {
+      "id": "STAR_COMPLETENESS",
+      "title": "STAR completeness",
+      "description": "Story-bank entries must make situation, task, action, and result legible; a result without the path to it is not a complete interview story."
+    },
+    {
+      "id": "PORTFOLIO_CONTRAST",
+      "title": "Rendered portfolio contrast",
+      "description": "Portfolio pages are screenshot-sampled in Chromium; rendered body text must measure at least 4.5:1 against its actual background."
     }
   ],
   "craftAxes": [
@@ -133,10 +144,243 @@ export const STANDARD: PublishedStandard = {
       "weight": 2,
       "description": "Every claim is framed at the strength its evidence earns — no overreach."
     }
+  ],
+  "artifactProfiles": [
+    {
+      "kind": "resume_ats",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "FORMAT_LAW",
+        "ATS_PARSE_BACK",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "resume_designed",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "FORMAT_LAW",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "resume_docx",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "DOCX_INTEGRITY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "cover_letter",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "story_bank",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE",
+        "STAR_COMPLETENESS"
+      ]
+    },
+    {
+      "kind": "fit_map",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "gap_brief",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "portfolio_page",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE",
+        "PORTFOLIO_CONTRAST"
+      ]
+    },
+    {
+      "kind": "manifest_json",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "interview_evaluation",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE",
+        "INTERVIEW_INTEGRITY"
+      ]
+    },
+    {
+      "kind": "promotion_narrative",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "promotion_memo",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "manager_one_pager",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "capability_statement",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "case_studies",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    },
+    {
+      "kind": "proposal_letter",
+      "checks": [
+        "CLAIM_COVERAGE",
+        "EVIDENCE_RESOLVES",
+        "LINK_LIVENESS",
+        "PLACEHOLDER_TEXT",
+        "DATE_SANITY",
+        "XARTIFACT_CONSISTENCY",
+        "CONTACT_VALIDITY",
+        "PII_HYGIENE",
+        "JD_COVERAGE"
+      ]
+    }
   ]
 }
 
-export const STANDARD_MARKDOWN: string = "# The Assay Standard — AS-1.0.0\n\n> The standard does not bend for our own marketing.\n\nAn artifact passes only when **every hard check passes**, the craft weighted mean is **≥ 72**, and **no craft axis is below 60**. Failing drafts are repaired at most **2** times, and every draft's report ships in the dossier.\n\n## Hard checks (deterministic — any failure blocks or triggers repair)\n\n- **Claim coverage** (`CLAIM_COVERAGE`) — Every rendered sentence resolves to a confirmed claim backed by existing evidence, and every number appears in that evidence. Unsupported prose cannot ship.\n- **Evidence resolves** (`EVIDENCE_RESOLVES`) — Every referenced evidence item exists, and file-backed evidence has readable content. A dangling or unreadable source is a hard failure.\n- **Link liveness** (`LINK_LIVENESS`) — Every URL in the artifact is fetch-checked and must resolve live. A dead or unsafe link never passes.\n- **No placeholders** (`PLACEHOLDER_TEXT`) — No [BRACKETS], \"YOUR X HERE\", TBD, lorem, or XXX placeholder text survives into any artifact.\n- **Date sanity** (`DATE_SANITY`) — No future dates, each end is on/after its start, tenure math is correct, and overlaps are flagged — all evaluated in the candidate's timezone.\n- **Cross-artifact consistency** (`XARTIFACT_CONSISTENCY`) — Every number tied to a claim renders identically wherever that claim appears across the resume, letter, and stories.\n- **Format law** (`FORMAT_LAW`) — The ATS variant is single-column with no tables/images/text-boxes, uses only approved section headings, and stays within 2 pages; the designed variant meets a 4.5:1 body-text contrast ratio.\n- **DOCX integrity** (`DOCX_INTEGRITY`) — The generated .docx reopens in a parser and contains the same section headings as the ATS resume.\n- **ATS parse-back** (`ATS_PARSE_BACK`) — The ATS PDF is re-parsed by Assay's deterministic parser and diffed field-by-field against the source profile; 100% of required fields must survive. Verified against Assay's deterministic parser and ATS format law — not a simulation of any specific vendor.\n- **Contact validity** (`CONTACT_VALIDITY`) — The contact email is well-formed and every contact link is a syntactically valid URL.\n- **PII hygiene** (`PII_HYGIENE`) — A share-view artifact exposes only the fields the candidate approved; unapproved personal data must be redacted.\n- **JD keyword coverage (informational)** (`JD_COVERAGE`) — We report weighted must/nice keyword coverage against the job description. We report coverage; we do not stuff keywords. This check never fails.\n- **Interview answer integrity** (`INTERVIEW_INTEGRITY`) — A finalized interview answer must be STAR-complete and every factual number must agree with the confirmed ledger; contradictions block the answer.\n\n## Craft axes (Claude critic, scored 0–100)\n\n| Axis | Weight | What it grades |\n|---|---:|---|\n| Voice | 1 | Confident, human, and specific — not generic AI prose. |\n| Specificity | 1.5 | Concrete actions, tools, and outcomes rather than vague responsibilities. |\n| Quantification | 1.5 | Impact is measured where evidence supports it — never invented. |\n| Positioning | 1 | The strongest, most relevant evidence leads. |\n| Tailoring | 1.5 | The artifact answers this specific brief, not a generic role. |\n| Evidence honesty | 2 | Every claim is framed at the strength its evidence earns — no overreach. |\n"
+export const STANDARD_MARKDOWN: string = "# The Assay Standard — AS-1.1.0\n\n> The standard does not bend for our own marketing.\n\nAn artifact passes only when **every hard check passes**, the craft weighted mean is **≥ 72**, and **no craft axis is below 60**. Failing drafts are repaired at most **2** times, and every draft's report ships in the dossier.\n\n## Hard checks (deterministic — any failure blocks or triggers repair)\n\n- **Claim coverage** (`CLAIM_COVERAGE`) — Every rendered sentence resolves to a confirmed claim backed by existing evidence, and every number appears in that evidence. Unsupported prose cannot ship.\n- **Evidence resolves** (`EVIDENCE_RESOLVES`) — Every referenced evidence item exists, and file-backed evidence has readable content. A dangling or unreadable source is a hard failure.\n- **Link liveness** (`LINK_LIVENESS`) — Every URL in the artifact is fetch-checked and must resolve live. A dead or unsafe link never passes.\n- **No placeholders** (`PLACEHOLDER_TEXT`) — No [BRACKETS], \"YOUR X HERE\", TBD, lorem, or XXX placeholder text survives into any artifact.\n- **Date sanity** (`DATE_SANITY`) — No future dates, each end is on/after its start, tenure math is correct, and overlaps are flagged — all evaluated in the candidate's timezone.\n- **Cross-artifact consistency** (`XARTIFACT_CONSISTENCY`) — Every number tied to a claim renders identically wherever that claim appears across the resume, letter, and stories.\n- **Format law** (`FORMAT_LAW`) — The ATS variant is single-column with no tables/images/text-boxes, uses only approved section headings, and stays within 2 pages; the designed variant meets a 4.5:1 body-text contrast ratio.\n- **DOCX integrity** (`DOCX_INTEGRITY`) — The generated .docx reopens in a parser and contains the same section headings as the ATS resume.\n- **ATS parse-back** (`ATS_PARSE_BACK`) — The ATS PDF is re-parsed by Assay's deterministic parser and diffed field-by-field against the source profile; 100% of required fields must survive. Verified against Assay's deterministic parser and ATS format law — not a simulation of any specific vendor.\n- **Contact validity** (`CONTACT_VALIDITY`) — The contact email is well-formed and every contact link is a syntactically valid URL.\n- **PII hygiene** (`PII_HYGIENE`) — A share-view artifact exposes only the fields the candidate approved; unapproved personal data must be redacted.\n- **JD keyword coverage (informational)** (`JD_COVERAGE`) — We report weighted must/nice keyword coverage against the job description. We report coverage; we do not stuff keywords. This check never fails.\n- **Interview answer integrity** (`INTERVIEW_INTEGRITY`) — A finalized interview answer must be STAR-complete and every factual number must agree with the confirmed ledger; contradictions block the answer.\n- **STAR completeness** (`STAR_COMPLETENESS`) — Story-bank entries must make situation, task, action, and result legible; a result without the path to it is not a complete interview story.\n- **Rendered portfolio contrast** (`PORTFOLIO_CONTRAST`) — Portfolio pages are screenshot-sampled in Chromium; rendered body text must measure at least 4.5:1 against its actual background.\n\n## Per-artifact profiles\n\n| Artifact kind | Deterministic checks routed to it |\n|---|---|\n| `resume_ats` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `FORMAT_LAW`, `ATS_PARSE_BACK`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `resume_designed` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `FORMAT_LAW`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `resume_docx` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `DOCX_INTEGRITY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `cover_letter` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `story_bank` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE`, `STAR_COMPLETENESS` |\n| `fit_map` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `gap_brief` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `portfolio_page` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE`, `PORTFOLIO_CONTRAST` |\n| `manifest_json` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `interview_evaluation` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE`, `INTERVIEW_INTEGRITY` |\n| `promotion_narrative` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `promotion_memo` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `manager_one_pager` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `capability_statement` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `case_studies` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n| `proposal_letter` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |\n\n## Craft axes (Claude critic, scored 0–100)\n\n| Axis | Weight | What it grades |\n|---|---:|---|\n| Voice | 1 | Confident, human, and specific — not generic AI prose. |\n| Specificity | 1.5 | Concrete actions, tools, and outcomes rather than vague responsibilities. |\n| Quantification | 1.5 | Impact is measured where evidence supports it — never invented. |\n| Positioning | 1 | The strongest, most relevant evidence leads. |\n| Tailoring | 1.5 | The artifact answers this specific brief, not a generic role. |\n| Evidence honesty | 2 | Every claim is framed at the strength its evidence earns — no overreach. |\n"
 
 // The fixed price table (guardrail #5) — read from assay-core, the same source the paywall reads.
 export const TOOL_PRICES: Record<string, number> = {

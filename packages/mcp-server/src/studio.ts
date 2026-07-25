@@ -40,7 +40,7 @@ import { gradeArtifact, gradeWithRepair, summarize, type TribunalReport } from '
 import { buildVerifyBundle, newSalt } from '@xyndicate/receipts'
 import type { Address, Hex } from 'viem'
 import type { ServerConfig } from './config'
-import type { Store } from './store'
+import { versionRef, type Store } from './store'
 import { signedLink } from './pipelines'
 import { signCapabilityToken, decodeUpload } from './util'
 
@@ -58,6 +58,7 @@ export interface StudioDeps {
   // True when toPdf is the real headless-chromium renderer (prod, or forced in e2e). The ATS
   // parse-back can only re-parse a real PDF; against the dev stub it stays honestly 'pending'.
   realPdf: boolean
+  sampleContrast?: (html: string) => Promise<number>
 }
 
 const WRITER_KINDS = new Set([
@@ -437,7 +438,12 @@ export async function runStudioForge(
     : []
 
   store.recordStudioEvent(id, 'Forge', 'writing evidence-cited artifacts')
-  const forge = await forgeDossier({ dossier: forgeDossierObj, router, coverage, deps: { toPdf } })
+  const forge = await forgeDossier({
+    dossier: forgeDossierObj,
+    router,
+    coverage,
+    deps: { toPdf, ...(deps.sampleContrast ? { sampleContrast: deps.sampleContrast } : {}) },
+  })
 
   const selected = new Set(
     input.selected && input.selected.length ? input.selected : forge.artifacts.map((a) => a.id),
@@ -522,8 +528,10 @@ export async function runStudioForge(
     if (a.sentences) out.sentences = a.sentences
     return out
   })
-  const next: Dossier = DossierSchema.parse({
+  const version = store.latestDossierVersion(id) + 1
+  const nextInput: Record<string, unknown> = {
     ...dossier,
+    version,
     artifacts: lean,
     tribunalReports: reports.map((r) => ({
       artifactId: r.artifactId,
@@ -535,8 +543,11 @@ export async function runStudioForge(
       craftScores: Object.fromEntries(r.craft.map((c) => [c.axis, c.score])),
       createdAt: r.createdAt,
     })),
-  })
+  }
+  delete nextInput['seal']
+  const next: Dossier = DossierSchema.parse(nextInput)
   store.saveDossier(next)
+  store.saveDossierVersion(next)
   store.setStage(id, 'forged')
 
   // Store the rich forge output (sentences per artifact, full reports, file ids, parse-back) as a
@@ -600,7 +611,8 @@ export async function sealDossier(
   const dossier = store.getDossier(dossierId)
   if (!dossier) throw new Error('dossier not found')
   store.recordStudioEvent(dossierId, 'Sealer', 'canonically hashing the dossier manifest')
-  const salt = store.getSalt(dossierId) ?? newSalt()
+  const ref = versionRef(dossierId, dossier.version)
+  const salt = store.getSalt(ref) ?? newSalt()
   const bundle = await buildVerifyBundle(dossier, {
     chainId: cfg.chainId,
     registry: cfg.registry as Address,
@@ -619,7 +631,8 @@ export async function sealDossier(
   })
   store.saveDossier(sealed, salt)
   store.setSalt(dossierId, salt)
-  store.enqueueSeal(dossierId, bundle.leaf)
+  store.saveDossierVersion(sealed, { salt, leaf: bundle.leaf, sealStatus: 'pending' })
+  store.enqueueSeal(ref, bundle.leaf)
   store.setStage(dossierId, 'sealed')
   store.recordStudioEvent(
     dossierId,
@@ -645,6 +658,7 @@ export interface ShareConfig {
   showContact: boolean
   expiryDays: 7 | 30 | null
   preset?: 'recruiter' | 'samples'
+  logViews?: boolean
 }
 
 export function createOrUpdateShare(
@@ -660,6 +674,7 @@ export function createOrUpdateShare(
     exposedClaimIds: config.exposedClaimIds,
     showContact: config.showContact,
     preset: config.preset ?? 'recruiter',
+    logViews: config.logViews === true,
   }
   let slug = store.latestShareForDossier(dossierId)
   if (slug) {
@@ -690,6 +705,7 @@ export function getShareView(
   cfg: ServerConfig,
   shareId: string,
   now: number = Date.now(), // injectable clock so expiry is testable (P11 taxonomy)
+  recordView = true,
 ): Record<string, unknown> {
   const share = store.getShareFull(shareId)
   if (!share) return { found: false }
@@ -703,7 +719,9 @@ export function getShareView(
     exposedClaimIds?: string[]
     showContact?: boolean
     preset?: 'recruiter' | 'samples'
+    logViews?: boolean
   }
+  if (recordView && config.logViews) store.recordShareView(shareId, now)
   const exposed = new Set(
     config.exposedClaimIds ??
       dossier.claims.filter((c) => c.status === 'confirmed').map((c) => c.id),
@@ -716,19 +734,25 @@ export function getShareView(
       ? a.id === 'case_studies'
       : a.id === 'resume_ats' || a.id === 'resume_designed',
   )
-  const sentences = (resumeArtifact?.sentences ?? []).filter(
-    (s) => s.claimIds.length > 0 && s.claimIds.every((cid) => exposed.has(cid)),
-  )
+  const redactions = store.getEvidenceRedactions(share.dossierId)
+  const secrets = redactedFragments(dossier, redactions)
+  const clean = (text: string): string =>
+    secrets.reduce((out, secret) => out.split(secret).join('████'), text)
+  const sentences = (resumeArtifact?.sentences ?? [])
+    .filter((s) => s.claimIds.length > 0 && s.claimIds.every((cid) => exposed.has(cid)))
+    .map((s) => ({ ...s, text: clean(s.text) }))
 
   const exposedClaims = dossier.claims
     .filter((c) => exposed.has(c.id) && c.status === 'confirmed')
     .map((c) => ({
       id: c.id,
-      text: c.text,
+      text: clean(c.text),
       strength: c.strength,
       tier: c.strength,
       tierExplanation: tierExplanation(c),
-      numericFacts: c.numericFacts,
+      numericFacts: c.numericFacts.filter(
+        (fact) => !secrets.some((secret) => secret.includes(String(fact.value))),
+      ),
     }))
 
   const evidenceById = new Map(dossier.evidence.map((e) => [e.id, e]))
@@ -766,7 +790,9 @@ export function getShareView(
     candidate: {
       name: dossier.profile.fullName,
       headline: dossier.profile.headline ?? '',
-      ...(config.showContact && dossier.profile.contact.email
+      ...(config.showContact &&
+      dossier.profile.contact.email &&
+      !secrets.includes(dossier.profile.contact.email)
         ? { email: dossier.profile.contact.email }
         : {}),
     },
@@ -786,6 +812,136 @@ export function getShareView(
       : null,
     expiresAt: share.expiresAt,
     preset: config.preset ?? 'recruiter',
+  }
+}
+
+function redactedFragments(dossier: Dossier, records: Record<string, unknown>): string[] {
+  const out = new Set<string>()
+  for (const [evidenceId, raw] of Object.entries(records)) {
+    const record = raw as {
+      fields?: string[]
+      textRanges?: Array<{ start: number; end: number }>
+    }
+    if (record.fields?.includes('email') && dossier.profile.contact.email)
+      out.add(dossier.profile.contact.email)
+    if (record.fields?.includes('phone') && dossier.profile.contact.phone)
+      out.add(dossier.profile.contact.phone)
+    const text = dossier.evidence.find((e) => e.id === evidenceId)?.contentText ?? ''
+    for (const range of record.textRanges ?? []) {
+      const fragment = text.slice(Math.max(0, range.start), Math.max(0, range.end)).trim()
+      if (fragment) out.add(fragment)
+    }
+  }
+  return [...out]
+}
+
+export function setRedactions(
+  store: Store,
+  dossierId: string,
+  evidenceId: string,
+  record: {
+    fields: Array<'email' | 'phone'>
+    textRanges: Array<{ start: number; end: number }>
+    regions: Array<{ page: number; x: number; y: number; width: number; height: number }>
+  },
+): { ok: boolean } {
+  const dossier = store.getDossier(dossierId)
+  if (!dossier?.evidence.some((e) => e.id === evidenceId)) return { ok: false }
+  store.setEvidenceRedactions(dossierId, evidenceId, record)
+  store.recordStudioEvent(
+    dossierId,
+    'Redaction',
+    'share copy updated; marked source regions stay server-side',
+  )
+  return { ok: true }
+}
+
+export async function importCredential(
+  deps: StudioDeps,
+  dossierId: string,
+  input: { filename: string; contentB64?: string; text?: string },
+): Promise<Record<string, unknown>> {
+  const dossier = deps.store.getDossier(dossierId)
+  if (!dossier) throw new Error('dossier not found')
+  const { bytes } = decodeUpload({ text: input.text, textB64: input.contentB64 })
+  const ing = await ingestDocument(input.filename, bytes)
+  if (!ing.ok || !ing.contentText.trim()) throw new Error('credential could not be read')
+  const text = ing.contentText
+  const issuer = text
+    .match(/\b(?:issuer|issued by|awarded by)\s*[:\-]?\s*([^\n,;]{2,80})/i)?.[1]
+    ?.trim()
+  const ym = text.match(/\b(20\d{2})[-/](0[1-9]|1[0-2])\b/)
+  const evidence: EvidenceItem = {
+    id: newEvidenceId(),
+    kind: 'document',
+    label: input.filename,
+    sourceRef: input.filename,
+    contentText: text,
+    addedAt: new Date().toISOString(),
+  }
+  const name =
+    text.match(/\b(?:certificate|certification)\s+(?:of|in)\s+([^\n]{2,100})/i)?.[1]?.trim() ??
+    input.filename.replace(/\.[^.]+$/, '')
+  const next = DossierSchema.parse({
+    ...dossier,
+    evidence: [...dossier.evidence, evidence],
+    profile: {
+      ...dossier.profile,
+      certifications: [
+        ...dossier.profile.certifications,
+        {
+          name,
+          ...(issuer ? { issuer } : {}),
+          ...(ym ? { issuedYm: `${ym[1]}-${ym[2]}` } : {}),
+        },
+      ],
+    },
+  })
+  deps.store.saveDossier(next)
+  deps.store.recordStudioEvent(
+    dossierId,
+    'Credential',
+    'certificate imported as Documented evidence',
+  )
+  return {
+    evidence: { id: evidence.id, kind: evidence.kind, strength: 'documented' },
+    extracted: { name, issuer: issuer ?? null, issuedYm: ym ? `${ym[1]}-${ym[2]}` : null },
+    note: 'Issuer confirmation is out of scope in v1; this tier proves the document was supplied, not independently verified.',
+  }
+}
+
+export function compareVersions(
+  store: Store,
+  dossierId: string,
+  fromVersion: number,
+  toVersion: number,
+): Record<string, unknown> | undefined {
+  const from = store.getDossierVersion(dossierId, fromVersion)
+  const to = store.getDossierVersion(dossierId, toVersion)
+  if (!from || !to) return undefined
+  const score = (d: Dossier, id: string): number => {
+    const report = [...d.tribunalReports].reverse().find((r) => r.artifactId === id)
+    const values = Object.values(report?.craftScores ?? {})
+    return values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0
+  }
+  const ids = [...new Set([...from.artifacts.map((a) => a.id), ...to.artifacts.map((a) => a.id)])]
+  return {
+    from: fromVersion,
+    to: toVersion,
+    artifacts: ids.map((id) => {
+      const a = from.artifacts.find((x) => x.id === id)
+      const b = to.artifacts.find((x) => x.id === id)
+      const aText = (a?.sentences ?? []).map((s) => s.text)
+      const bText = (b?.sentences ?? []).map((s) => s.text)
+      return {
+        id,
+        added: bText.filter((x) => !aText.includes(x)),
+        removed: aText.filter((x) => !bText.includes(x)),
+        scoreFrom: score(from, id),
+        scoreTo: score(to, id),
+        scoreDelta: score(to, id) - score(from, id),
+      }
+    }),
   }
 }
 
@@ -867,6 +1023,7 @@ export function getStudioState(
       id: e.id,
       kind: e.kind,
       label: e.label,
+      contentPreview: (e.contentText ?? '').slice(0, 800),
       ...(e.fetchedOk !== undefined ? { fetchedOk: e.fetchedOk } : {}),
     })),
     claims: dossier.claims.map((c) => ({
@@ -916,8 +1073,20 @@ export function getStudioState(
           revoked: shareFull.revoked,
           expiresAt: shareFull.expiresAt,
           config: shareFull.config,
+          views: store.shareViewLog(share!),
         }
       : null,
+    redactions: store.getEvidenceRedactions(id),
+    versions: store.listDossierVersions(id),
+    compare:
+      store.latestDossierVersion(id) >= 2
+        ? compareVersions(
+            store,
+            id,
+            store.latestDossierVersion(id) - 1,
+            store.latestDossierVersion(id),
+          )
+        : null,
   }
 }
 

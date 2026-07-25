@@ -66,7 +66,7 @@ function mkReport(over: Partial<TribunalReport>): TribunalReport {
     pass: true,
     hardPass: true,
     craftPass: true,
-    standardVersion: 'AS-1.0.0',
+    standardVersion: 'AS-1.1.0',
     createdAt: '2026-07-01T00:00:00.000Z',
     ...over,
   }

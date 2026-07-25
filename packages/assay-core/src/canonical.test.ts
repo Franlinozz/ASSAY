@@ -80,7 +80,7 @@ describe('buildManifest (privacy-preserving)', () => {
     ])
     expect(m.artifactHashes[0]).toMatchObject({ id: 'resume_ats', kind: 'resume_ats' })
     expect(m.artifactHashes[0].hash).toMatch(/^[0-9a-f]{64}$/)
-    expect(m.standardVersion).toBe('AS-1.0.0')
+    expect(m.standardVersion).toBe('AS-1.1.0')
   })
 
   it('manifest hash is stable regardless of profile key order or claim order', () => {

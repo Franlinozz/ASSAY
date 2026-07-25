@@ -22,9 +22,10 @@ describe('site constants', () => {
 })
 
 describe('generated standard (guardrail #2)', () => {
-  it('has the 13 shipped hard checks and 6 craft axes', () => {
-    expect(STANDARD.hardChecks).toHaveLength(13)
+  it('has the 15 shipped hard checks, 6 craft axes, and artifact profiles', () => {
+    expect(STANDARD.hardChecks).toHaveLength(15)
     expect(STANDARD.craftAxes).toHaveLength(6)
+    expect(STANDARD.artifactProfiles).toHaveLength(16)
   })
   it('markdown carries the no-bend motto', () => {
     expect(STANDARD_MARKDOWN).toContain('The standard does not bend for our own marketing.')

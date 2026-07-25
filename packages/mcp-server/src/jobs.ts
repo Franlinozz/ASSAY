@@ -35,6 +35,7 @@ export interface JobDeps {
   // Whether toPdf is the real chromium renderer (drives the Studio's ATS parse-back). The MCP
   // dossier pipeline ignores it; the Studio forge job reads it.
   realPdf: boolean
+  sampleContrast?: (html: string) => Promise<number>
 }
 
 interface DossierJobInput {
@@ -131,7 +132,15 @@ export async function runDossierPipeline(
   )
 
   // 5) forge — evidence-gated prose + PDFs/DOCX/portfolio (claim gate enforced inside).
-  const forge = await forgeDossier({ dossier, router, coverage, deps: { toPdf: deps.toPdf } })
+  const forge = await forgeDossier({
+    dossier,
+    router,
+    coverage,
+    deps: {
+      toPdf: deps.toPdf,
+      ...(deps.sampleContrast ? { sampleContrast: deps.sampleContrast } : {}),
+    },
+  })
 
   // 6) grade every artifact against the Standard
   const reports: TribunalReport[] = []

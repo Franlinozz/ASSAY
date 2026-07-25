@@ -15,6 +15,7 @@ export function ShareControls({ state, actions }: { state: StudioState; actions:
   )
   const [showContact, setShowContact] = useState(existing?.config.showContact ?? false)
   const [expiry, setExpiry] = useState<7 | 30 | null>(30)
+  const [logViews, setLogViews] = useState(existing?.config.logViews ?? false)
   const samplesPreset = state.variant === 'freelance'
   const [copied, setCopied] = useState(false)
 
@@ -54,6 +55,15 @@ export function ShareControls({ state, actions }: { state: StudioState; actions:
         />
         <span>Show my contact email</span>
       </label>
+      <label className="share-check share-check-contact">
+        <input
+          type="checkbox"
+          checked={logViews}
+          onChange={(e) => setLogViews(e.target.checked)}
+          data-testid="share-log-views"
+        />
+        <span>Log views (count and hour only; no IP address)</span>
+      </label>
 
       <div className="share-expiry">
         <span className="share-legend">Link expires</span>
@@ -80,6 +90,7 @@ export function ShareControls({ state, actions }: { state: StudioState; actions:
               showContact,
               expiryDays: expiry,
               preset: samplesPreset ? 'samples' : 'recruiter',
+              logViews,
             })
           }
         >
@@ -122,6 +133,12 @@ export function ShareControls({ state, actions }: { state: StudioState; actions:
             {existing.expiresAt ? (
               <span className="caption">
                 expires {new Date(existing.expiresAt).toLocaleDateString()}
+              </span>
+            ) : null}
+            {existing.config.logViews ? (
+              <span className="caption" data-testid="share-view-count">
+                {existing.views.count} views
+                {existing.views.recent[0] ? ` · last seen ${existing.views.recent[0]}` : ''}
               </span>
             ) : null}
           </div>

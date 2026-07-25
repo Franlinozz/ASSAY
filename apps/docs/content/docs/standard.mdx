@@ -8,7 +8,7 @@ description: The grading rubric, rendered from the same code that grades.
 This page mirrors [assayed.xyz/standard](https://assayed.xyz/standard). Both are generated from
 `packages/tribunal/src/standard.ts` — the module the grader runs (guardrail: published = shipped).
 
-# The Assay Standard — AS-1.0.0
+# The Assay Standard — AS-1.1.0
 
 > The standard does not bend for our own marketing.
 
@@ -29,6 +29,29 @@ An artifact passes only when **every hard check passes**, the craft weighted mea
 - **PII hygiene** (`PII_HYGIENE`) — A share-view artifact exposes only the fields the candidate approved; unapproved personal data must be redacted.
 - **JD keyword coverage (informational)** (`JD_COVERAGE`) — We report weighted must/nice keyword coverage against the job description. We report coverage; we do not stuff keywords. This check never fails.
 - **Interview answer integrity** (`INTERVIEW_INTEGRITY`) — A finalized interview answer must be STAR-complete and every factual number must agree with the confirmed ledger; contradictions block the answer.
+- **STAR completeness** (`STAR_COMPLETENESS`) — Story-bank entries must make situation, task, action, and result legible; a result without the path to it is not a complete interview story.
+- **Rendered portfolio contrast** (`PORTFOLIO_CONTRAST`) — Portfolio pages are screenshot-sampled in Chromium; rendered body text must measure at least 4.5:1 against its actual background.
+
+## Per-artifact profiles
+
+| Artifact kind | Deterministic checks routed to it |
+|---|---|
+| `resume_ats` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `FORMAT_LAW`, `ATS_PARSE_BACK`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `resume_designed` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `FORMAT_LAW`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `resume_docx` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `DOCX_INTEGRITY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `cover_letter` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `story_bank` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE`, `STAR_COMPLETENESS` |
+| `fit_map` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `gap_brief` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `portfolio_page` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE`, `PORTFOLIO_CONTRAST` |
+| `manifest_json` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `interview_evaluation` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE`, `INTERVIEW_INTEGRITY` |
+| `promotion_narrative` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `promotion_memo` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `manager_one_pager` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `capability_statement` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `case_studies` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
+| `proposal_letter` | `CLAIM_COVERAGE`, `EVIDENCE_RESOLVES`, `LINK_LIVENESS`, `PLACEHOLDER_TEXT`, `DATE_SANITY`, `XARTIFACT_CONSISTENCY`, `CONTACT_VALIDITY`, `PII_HYGIENE`, `JD_COVERAGE` |
 
 ## Craft axes (Claude critic, scored 0–100)
 

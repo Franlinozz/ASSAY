@@ -7,10 +7,12 @@ import { htmlToPdf } from './pdf'
 import { buildResumeDocx } from './docx'
 import { buildAgentManifest } from './manifest'
 import { renderCoverSvg } from './cover'
+import { sampleRenderedContrast } from './contrast'
 
 export interface ForgeDeps {
   toPdf?: (html: string) => Promise<Uint8Array>
   toDocx?: (dossier: Dossier, sentences: Sentence[]) => Promise<Uint8Array>
+  sampleContrast?: (html: string) => Promise<number>
 }
 
 export interface ForgeInput {
@@ -40,6 +42,7 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
   const { dossier, router, coverage = [], theme = 'light' } = input
   const toPdf = input.deps?.toPdf ?? htmlToPdf
   const toDocx = input.deps?.toDocx ?? buildResumeDocx
+  const sampleContrast = input.deps?.sampleContrast ?? sampleRenderedContrast
 
   if (dossier.variant === 'promotion' || dossier.variant === 'freelance') {
     return forgeVariant({ ...input, coverage, theme }, toPdf)
@@ -96,13 +99,19 @@ export async function forgeDossier(input: ForgeInput): Promise<ForgeOutput> {
   // Portfolio share page (static HTML, share view)
   const portfolioRb: RenderBundle = { dossier, sentences: bullets.sentences, theme }
   const portfolioHtml = renderArtifactHtml('portfolio_page', portfolioRb)
+  const renderedContrastRatio = await sampleContrast(portfolioHtml)
   files.set('portfolio_page', { ext: 'html', bytes: enc(portfolioHtml) })
   artifacts.push({
     id: 'portfolio_page',
     kind: 'portfolio_page',
     fileRef: 'portfolio_page.html',
     sentences: bullets.sentences,
-    meta: { html: portfolioHtml, shareView: true, approvedFields: ['email', 'links'] },
+    meta: {
+      html: portfolioHtml,
+      shareView: true,
+      approvedFields: ['email', 'links'],
+      renderedContrastRatio,
+    },
   })
 
   // Typographic cover (SVG, no image model)

@@ -15,6 +15,9 @@ import {
   sealDossier,
   createShare,
   revokeShare,
+  saveRedactions,
+  importCredential,
+  type RedactionRecord,
   type StudioState,
   type FeedEvent,
   type SealReceipt,
@@ -58,8 +61,11 @@ export interface StudioActions {
     showContact: boolean
     expiryDays: 7 | 30 | null
     preset?: 'recruiter' | 'samples'
+    logViews?: boolean
   }) => Promise<void>
   revoke: () => Promise<void>
+  redact: (evidenceId: string, record: RedactionRecord) => Promise<void>
+  credential: (input: { filename: string; contentB64?: string; text?: string }) => Promise<void>
   goTo: (s: Stage) => void
 }
 
@@ -226,6 +232,27 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
         await refresh()
       } catch {
         setError('could not withdraw the link')
+      }
+    },
+    redact: async (evidenceId, record) => {
+      setError(null)
+      try {
+        await saveRedactions(id, token, evidenceId, record)
+        await refresh()
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'could not save those redactions')
+      }
+    },
+    credential: async (input) => {
+      setBusy(true)
+      setError(null)
+      try {
+        await importCredential(id, token, input)
+        await refresh()
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'could not read that credential')
+      } finally {
+        setBusy(false)
       }
     },
     goTo: setActive,

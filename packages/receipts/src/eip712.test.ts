@@ -7,7 +7,7 @@ const REG = '0x1111111111111111111111111111111111111111' as const
 const seal: DossierSeal = {
   manifestHash: `0x${'ab'.repeat(32)}` as Hex,
   dossierId: 'DSR-1',
-  standardVersion: 'AS-1.0.0',
+  standardVersion: 'AS-1.1.0',
   issuedAt: 1750000000n,
 }
 
