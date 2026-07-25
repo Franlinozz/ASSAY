@@ -11,7 +11,7 @@ The exact table the MCP server registers. One endpoint: `https://api.assayed.xyz
 
 ## `asy_ats_scan` — ATS scan · 0.05 USDT
 
-Scan an existing résumé the way an applicant-tracking system would: re-parse it, flag format-law violations that scramble in ATS software, and (with a job description) report honest must/nice keyword coverage. Price: 0.05 USDT (x402 on X Layer, eip155:196). Example: &#123;resumeText:"…", jd:"Senior Backend Engineer…"&#125; → format findings + parse-back + coverage. Proof promise: findings come from Assay's deterministic parser and the published Standard's format law — not a guess.
+Scan an existing résumé the way an applicant-tracking system would: re-parse it, flag format-law violations that scramble in ATS software, and (with a job description) report honest must/nice keyword coverage. Price: 0.05 USDT (x402 on X Layer, eip155:196). Example: &#123;resumeText:"…", jd:"Senior Backend Engineer…"&#125; → format findings + parse-back + coverage. Proof promise: findings come from Assay's deterministic parser and the published Standard's format law — not a guess. Also runnable as a background job via asy_create_dossier_job.
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -33,7 +33,7 @@ Audit résumé bullets or a list of claims for unsupported figures, vagueness, a
 
 ## `asy_fit_brief` — Fit brief · 0.10 USDT
 
-Decompose a job description into requirements and map your evidence to each one — strong / partial / confirm / missing — with zero keyword stuffing. Price: 0.1 USDT (x402 on X Layer, eip155:196). Example: &#123;jd:"…", claims:["Scaled payments to 12k rps"]&#125; → an honest coverage map. Proof promise: 'missing' is reported honestly; we never invent coverage.
+Decompose a job description into requirements and map your evidence to each one — strong / partial / confirm / missing — with zero keyword stuffing. Price: 0.1 USDT (x402 on X Layer, eip155:196). Example: &#123;jd:"…", claims:["Scaled payments to 12k rps"]&#125; → an honest coverage map. Proof promise: 'missing' is reported honestly; we never invent coverage. Also runnable as a background job via asy_create_dossier_job.
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -43,7 +43,7 @@ Decompose a job description into requirements and map your evidence to each one 
 
 ## `asy_cover_letter` — Cover letter · 0.15 USDT
 
-Draft a cover letter where every sentence cites a confirmed claim — nothing invented. Price: 0.15 USDT (x402 on X Layer, eip155:196). Example: &#123;claims:[…], jd:"…"&#125; → 3–5 cited sentences + a tribunal pass. Proof promise: unsupported sentences become questions, never prose. Needs claims+evidence or a dossierId — it will politely refuse to fabricate.
+Draft a cover letter where every sentence cites a confirmed claim — nothing invented. Price: 0.15 USDT (x402 on X Layer, eip155:196). Example: &#123;claims:[…], jd:"…"&#125; → 3–5 cited sentences + a tribunal pass. Proof promise: unsupported sentences become questions, never prose. Needs claims+evidence or a dossierId — it will politely refuse to fabricate. Also runnable as a background job via asy_create_dossier_job.
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -55,7 +55,7 @@ Draft a cover letter where every sentence cites a confirmed claim — nothing in
 
 ## `asy_story_bank` — Story bank · 0.20 USDT
 
-Build 2–4 STAR interview stories, each grounded in a confirmed claim. Price: 0.2 USDT (x402 on X Layer, eip155:196). Example: &#123;dossierId:"dsr_…"&#125; → cited stories + tribunal grade. Proof promise: every story traces to evidence; thin air is refused.
+Build 2–4 STAR interview stories, each grounded in a confirmed claim. Price: 0.2 USDT (x402 on X Layer, eip155:196). Example: &#123;dossierId:"dsr_…"&#125; → cited stories + tribunal grade. Proof promise: every story traces to evidence; thin air is refused. Also runnable as a background job via asy_create_dossier_job.
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -80,7 +80,7 @@ Generate evidence-grounded behavioral and gap-probing interview questions; optio
 
 ## `asy_tailor_resume` — Tailor résumé · 0.30 USDT
 
-Rewrite résumé achievement bullets against a target JD, evidence-constrained and format-law clean. Price: 0.3 USDT (x402 on X Layer, eip155:196). Example: &#123;claims:[…], jd:"…"&#125; → tailored bullets + tribunal grade. Proof promise: no bullet renders without a confirmed claim behind it.
+Rewrite résumé achievement bullets against a target JD, evidence-constrained and format-law clean. Price: 0.3 USDT (x402 on X Layer, eip155:196). Example: &#123;claims:[…], jd:"…"&#125; → tailored bullets + tribunal grade. Proof promise: no bullet renders without a confirmed claim behind it. Also runnable as a background job via asy_create_dossier_job.
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |

@@ -38,7 +38,9 @@ async function hit(base, path, { expect = [200], allowRawGap = false, method = '
   try {
     res = await fetch(url, {
       method,
-      ...(body ? { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {}),
+      ...(body
+        ? { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
+        : {}),
     })
   } catch (e) {
     failures.push(`${method} ${path} → threw ${e.message}`)
@@ -54,6 +56,7 @@ async function hit(base, path, { expect = [200], allowRawGap = false, method = '
   }
   const tag = expect.includes(res.status) ? '✓' : '✗'
   console.log(`  ${tag} ${res.status}  ${method} ${path}`)
+  return { res, text }
 }
 
 async function main() {
@@ -85,7 +88,11 @@ async function main() {
 
     console.log('\n[route-sweep] Next API')
     await hit(web, '/api/recent-seals', { expect: [200] })
-    await hit(web, '/api/verify', { method: 'POST', body: { leaf: personas[0].seal.leaf }, expect: [200] })
+    await hit(web, '/api/verify', {
+      method: 'POST',
+      body: { leaf: personas[0].seal.leaf },
+      expect: [200],
+    })
     await hit(web, '/api/verify', { method: 'POST', body: {}, expect: [400] })
 
     console.log('\n[route-sweep] mcp-server public HTTP')
@@ -94,7 +101,25 @@ async function main() {
     await hit(api, '/d-api', { expect: [200] })
     await hit(api, `/d-api/${seeded.dossierId}`, { expect: [200] })
     await hit(api, '/d-api/DSR-NOPE', { expect: [404], allowRawGap: true })
-    await hit(api, '/mcp', { expect: [405], allowRawGap: true })
+    const unpaidMcp = await hit(api, '/mcp', { expect: [402], allowRawGap: true })
+    const paymentRequired = unpaidMcp?.res.headers.get('PAYMENT-REQUIRED')
+    if (!paymentRequired) {
+      failures.push('GET /mcp → 402 without PAYMENT-REQUIRED challenge')
+    } else {
+      try {
+        const challenge = JSON.parse(Buffer.from(paymentRequired, 'base64').toString())
+        const accepted = challenge.accepts?.[0]
+        if (
+          challenge.x402Version !== 2 ||
+          accepted?.network !== 'eip155:196' ||
+          accepted?.amount !== '50000'
+        ) {
+          failures.push('GET /mcp → malformed generic x402 challenge')
+        }
+      } catch {
+        failures.push('GET /mcp → PAYMENT-REQUIRED is not valid base64 JSON')
+      }
+    }
     // The seeded dossier's portfolio share slug (agent-facing /p/:slug), if present.
     const portfolio = seeded.result?.portfolio
     if (portfolio) await hit(api, new URL(portfolio).pathname, { expect: [200] })
@@ -108,8 +133,13 @@ async function main() {
       const buf = Buffer.from(await res.arrayBuffer())
       const magic = buf.subarray(0, 5).toString('latin1')
       const ok = res.status === 200 && magic.startsWith('%PDF') && buf.length > 1000
-      console.log(`  ${ok ? '✓' : '✗'} ${res.status}  download ${pdf.kind} → ${magic.trim()} (${buf.length}B)`)
-      if (!ok) failures.push(`download ${pdf.kind}: status ${res.status}, magic "${magic}", ${buf.length}B`)
+      console.log(
+        `  ${ok ? '✓' : '✗'} ${res.status}  download ${pdf.kind} → ${magic.trim()} (${buf.length}B)`,
+      )
+      if (!ok)
+        failures.push(
+          `download ${pdf.kind}: status ${res.status}, magic "${magic}", ${buf.length}B`,
+        )
     } else {
       failures.push('no downloadable PDF artifact in the dossier result')
     }

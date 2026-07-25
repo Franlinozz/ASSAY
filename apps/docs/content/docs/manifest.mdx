@@ -1,0 +1,56 @@
+---
+title: Agent manifest hand-off
+description: The machine-readable dossier summary another agent can inspect before using its artifacts.
+---
+
+# Agent manifest hand-off
+
+Every forged dossier includes `manifest_json.json`: a compact, machine-readable hand-off for the
+next agent in a workflow. It is an artifact, graded with the dossier, returned by
+`asy_job_result`, and covered by the dossier's integrity seal.
+
+This is distinct from `/.well-known/assay.json`, which describes the Assay service itself. The
+service manifest answers “how do I call Assay?”; the dossier manifest answers “what did this
+dossier establish?”
+
+## Contract
+
+```json
+{
+  "dossierId": "DSR-…",
+  "standardVersion": "AS-1.1.0",
+  "coverage": {
+    "strong": 4,
+    "partial": 2,
+    "missing": 1,
+    "confirm": 0
+  },
+  "approvedClaims": [
+    {
+      "id": "clm_…",
+      "strength": "documented",
+      "text": "Reduced onboarding time by 18%."
+    }
+  ],
+  "risks": ["Missing coverage: req_…"],
+  "integrity": {
+    "manifestSha256": "…"
+  }
+}
+```
+
+`approvedClaims` contains only confirmed claim text and its earned evidence strength. It does not
+embed uploaded documents, source fragments, redaction geometry, contact fields, or salts.
+`risks` keeps missing coverage visible instead of turning it into invented prose.
+
+## Agent-to-agent hand-off
+
+1. Create the dossier with `asy_create_dossier_job`.
+2. Poll `asy_job_status`; fetch it once with `asy_job_result`.
+3. Pass the returned `manifest_json` artifact to the next agent.
+4. Let that agent use only `approvedClaims`, preserve `risks`, and cite `standardVersion`.
+5. Verify the dossier or a specific `DSR-…@vN` lineage member with free `asy_verify`.
+
+The integrity digest proves which canonical dossier the hand-off summarizes. The on-chain seal
+proves that commitment has not changed; it does not independently prove that a career claim is
+objectively true.

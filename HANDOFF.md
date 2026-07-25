@@ -1,15 +1,15 @@
 # HANDOFF — Assay (for Codex / the next session)
 
-_Last updated: 2026-07-24, after Phase 12 (apex breadth) and Phase 13 (trust depth + AS 1.1)._
+_Last updated: 2026-07-25, after Phase 14 (marketplace depth + agent-consumer polish)._
 
 Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is the operational map so you don't get stuck.
 
 ## Where things stand
 
 - **Branch `main`**, pushed to `Franlinozz/ASSAY`. Working tree clean.
-- **Tests green:** 260 vitest + 4 foundry + 47 Playwright e2e. Route sweep green.
-- **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs · https://api.assayed.xyz/mcp. OKX.AI ASP **#8599** is owned by `archonaudit@gmail.com`; its first review was rejected because generic probes reached MCP transport errors before x402. Remediation is deployed: the official `x402-check` reports `valid:true`; marketplace resubmission is the remaining external step.
-- **Phases done:** P0–P13. P12 = Interview Room + promotion/freelance dossier variants. P13 = redaction, version lineage, privacy-shaped access logs, credential import, and AS-1.1.0.
+- **Tests green:** 260 vitest + 4 foundry + 48 Playwright e2e. Route sweep green.
+- **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs · https://api.assayed.xyz/mcp. OKX.AI ASP **#8599** is owned by `archonaudit@gmail.com`; its first review was rejected because generic probes reached MCP transport errors before x402. Remediation is deployed: the official `x402-check` reports `valid:true`; marketplace approval/publication is the remaining external gate.
+- **Phases done:** P0–P14. P14 = listing breadth refresh, agent-consumer smoke, dossier-manifest hand-off docs, outreach kit, and manifest/docs/pricing CI consistency.
 
 ## Two machines, don't confuse them
 
@@ -56,15 +56,16 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 
 ## Key scripts
 
-| Command (in `apps/web` unless noted) | What it does |
-| --- | --- |
-| `npm run gen:personas` | Run the pipeline per persona → `lib/personas.generated.json` (fake=default, `ASY_PROVIDER_MODE=live` for real). Launches chromium; NOT a prebuild step. |
-| `npm run gen:fixtures` | Emit the live `/fixtures/*.html` pages LINK_LIVENESS checks. |
-| `npm run seal:personas` | Anchor persona leaves on X Layer mainnet (needs `ASY_SEALER_KEY`). |
-| `npm run regrade:personas` | Re-grade the sealed persona artifact sets against the current Standard using Chromium screenshot sampling. |
-| `npm run sweep` (repo root) | Route sweep: hits every route + validates a real PDF download + forged-token 403. |
-| `npm test` (repo root) | 260 vitest. |
-| `npm run test:e2e` (repo root) | 47 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400). |
+| Command (in `apps/web` unless noted)    | What it does                                                                                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run gen:personas`                  | Run the pipeline per persona → `lib/personas.generated.json` (fake=default, `ASY_PROVIDER_MODE=live` for real). Launches chromium; NOT a prebuild step. |
+| `npm run gen:fixtures`                  | Emit the live `/fixtures/*.html` pages LINK_LIVENESS checks.                                                                                            |
+| `npm run seal:personas`                 | Anchor persona leaves on X Layer mainnet (needs `ASY_SEALER_KEY`).                                                                                      |
+| `npm run regrade:personas`              | Re-grade the sealed persona artifact sets against the current Standard using Chromium screenshot sampling.                                              |
+| `npm run sweep` (repo root)             | Route sweep: hits every route + validates a real PDF download + forged-token 403.                                                                       |
+| `npm test` (repo root)                  | 260 vitest.                                                                                                                                             |
+| `npm run test:e2e` (repo root)          | 48 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400).                                                                                 |
+| `npm run check:marketplace` (repo root) | Regenerates and proves machine manifest = docs = pricing for all 11 tools.                                                                              |
 
 ## Architecture quick-map
 
@@ -75,6 +76,8 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 - **P12 apex:** `packages/renderers/src/interview.ts`, variant writers in `forge.ts`, Studio Interview tab + Brief modes, and `asy_interview_prep`.
 - **P13 trust:** additive SQLite tables `dossier_versions`, `evidence_redactions`, `share_views`; owner controls in Studio Ledger/Report/Share; version-aware `asy_verify`; AS profile router in `packages/tribunal/src/hard/index.ts`; gallery re-grade script/data.
 - **ASP #8599 remediation:** `/mcp` challenges unpaid GET, bare POST, `initialize`, and `tools/list` before MCP content negotiation. Generic discovery is 0.05 USD₮0; paid tools keep their table prices; `asy_verify`, `asy_job_status`, and `asy_job_result` remain free. Re-run `onchainos agent x402-check --endpoint https://api.assayed.xyz/mcp` after every payment-layer deploy.
+- **P14 listing refresh:** ten services added successfully in tx `0xcf0a3f61e15e142d63e9931be3e27c8a48f32bf1e95af93588ee8f3c66e9e423`. The three original services remain unchanged because the platform blocks full-record changes once a service is in use. The public agent URL still returned HTTP 404 on 2026-07-25, so screenshot proof is intentionally pending approval; `node scripts/capture-marketplace.mjs` fails closed until all names/prices are public.
+- **P14 A2A decision:** skipped. Current docs expect a trained, multi-round negotiation/delivery agent and 10–20 scenario simulations; Assay proves A2MCP/background jobs today but not that negotiation suite.
 
 ## Gotchas that bit this session
 

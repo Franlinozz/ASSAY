@@ -21,6 +21,7 @@
     "clean": "npm run clean --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "check:marketplace": "npm run gen --workspace @xyndicate/web && npm run gen --workspace @xyndicate/docs && node scripts/check-marketplace-consistency.mjs",
     "sweep": "node scripts/route-sweep.mjs"
   },
   "devDependencies": {

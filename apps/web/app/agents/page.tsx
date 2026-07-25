@@ -7,7 +7,7 @@ import { GuillocheBand } from '../../components/Guilloche'
 export const metadata: Metadata = {
   title: 'For Agents',
   description:
-    'Call Assay over A2MCP: one endpoint, ten tools, x402 metered payment in USDT on X Layer. Schemas generated from the code that serves them.',
+    'Call Assay over A2MCP: one endpoint, eleven tools, x402 metered payment in USDT on X Layer. Schemas generated from the code that serves them.',
   openGraph: { images: ['/og/agents.png'] },
 }
 
@@ -19,6 +19,14 @@ const MCP_CONFIG = `{
     }
   }
 }`
+
+const TEST_PROMPT = `Register Assay as a Streamable HTTP MCP server:
+${SITE.mcpEndpoint}
+
+Then run this three-step consumer check:
+1. Call asy_verify for dossierId "DSR-WC0Q7NZ7". This tool is free; return the seal status, leaf, and version lineage.
+2. Call asy_ats_scan with resumeText "Ada Example\\nada@example.com\\nEXPERIENCE\\nProduct analyst\\nSKILLS\\nSQL" and jd "Product analyst with SQL". Before paying, show me the x402 amount, token, network, and recipient and wait for my approval.
+3. After approval, pay once through Agentic Wallet, replay the same request, and return the PAYMENT-RESPONSE receipt plus the ATS findings. Never retry a settled idempotency key.`
 
 const X402_STEPS = [
   {
@@ -44,7 +52,7 @@ export default function AgentsPage() {
     <>
       <div className="container page-head">
         <p className="overline">For agents · A2MCP · agent #{SITE.agentId}</p>
-        <h1>Ten tools. One endpoint. Pay per call.</h1>
+        <h1>Eleven tools. One endpoint. Pay per call.</h1>
         <p className="lede">
           Assay is an Agent Service Provider on OKX.AI: any agent can commission proof-grade career
           artifacts over MCP and settle in USDT via x402 — the same pipeline humans use in the
@@ -76,6 +84,26 @@ export default function AgentsPage() {
             </a>
             .
           </p>
+        </div>
+      </section>
+
+      <section className="section-tight">
+        <div className="container stack">
+          <div>
+            <p className="overline" style={{ marginBottom: '0.4rem' }}>
+              Consumer smoke · register → verify free → pay once
+            </p>
+            <p className="caption">
+              Paste this into an agent with Onchain OS and an Agentic Wallet. The paid step must
+              show its terms and wait for approval; the free verification step requires no payment.
+            </p>
+          </div>
+          <div className="codeblock">
+            <CopyButton text={TEST_PROMPT} label="copy test script" />
+            <pre data-testid="consumer-test-script" tabIndex={0}>
+              {TEST_PROMPT}
+            </pre>
+          </div>
         </div>
       </section>
 
@@ -117,6 +145,14 @@ export default function AgentsPage() {
               docs
             </a>
             .
+          </p>
+          <p className="caption" style={{ marginBottom: '1.4rem' }}>
+            A completed dossier also includes an <span className="mono">Agent manifest (JSON)</span>{' '}
+            for hand-off to another agent: approved claims with evidence strength, coverage counts,
+            named risks, Standard version, and an integrity digest.{' '}
+            <a href="/docs/manifest" className="mono">
+              Manifest contract →
+            </a>
           </p>
           <div className="stack-lg">
             {TOOLS.map((tool) => (

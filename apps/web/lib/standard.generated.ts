@@ -409,6 +409,7 @@ export interface ToolArgDoc {
 export interface ToolDoc {
   name: string
   title: string
+  marketplaceSummary: string
   description: string
   priceUsdt: number
   args: ToolArgDoc[]
@@ -418,7 +419,8 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_ats_scan",
     "title": "ATS scan",
-    "description": "Scan an existing résumé the way an applicant-tracking system would: re-parse it, flag format-law violations that scramble in ATS software, and (with a job description) report honest must/nice keyword coverage. Price: 0.05 USDT (x402 on X Layer, eip155:196). Example: {resumeText:\"…\", jd:\"Senior Backend Engineer…\"} → format findings + parse-back + coverage. Proof promise: findings come from Assay's deterministic parser and the published Standard's format law — not a guess.",
+    "marketplaceSummary": "Re-parse an existing résumé, flag ATS format-law failures, and report honest job-description coverage.",
+    "description": "Scan an existing résumé the way an applicant-tracking system would: re-parse it, flag format-law violations that scramble in ATS software, and (with a job description) report honest must/nice keyword coverage. Price: 0.05 USDT (x402 on X Layer, eip155:196). Example: {resumeText:\"…\", jd:\"Senior Backend Engineer…\"} → format findings + parse-back + coverage. Proof promise: findings come from Assay's deterministic parser and the published Standard's format law — not a guess. Also runnable as a background job via asy_create_dossier_job.",
     "priceUsdt": 0.05,
     "args": [
       {
@@ -450,6 +452,7 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_claim_audit",
     "title": "Claim audit",
+    "marketplaceSummary": "Classify résumé claims as supported, vague, or carrying an unverified number, then return a repair brief.",
     "description": "Audit résumé bullets or a list of claims for unsupported figures, vagueness, and contradictions, and return a concrete repair brief. Price: 0.05 USDT (x402 on X Layer, eip155:196). Example: {claims:[\"Grew revenue 300%\",\"Led the team\"]} → each classified SUPPORTED / UNSUPPORTED_NUMBER / VAGUE. Proof promise: every verdict is deterministic and traces to the source text.",
     "priceUsdt": 0.05,
     "args": [
@@ -482,7 +485,8 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_fit_brief",
     "title": "Fit brief",
-    "description": "Decompose a job description into requirements and map your evidence to each one — strong / partial / confirm / missing — with zero keyword stuffing. Price: 0.1 USDT (x402 on X Layer, eip155:196). Example: {jd:\"…\", claims:[\"Scaled payments to 12k rps\"]} → an honest coverage map. Proof promise: 'missing' is reported honestly; we never invent coverage.",
+    "marketplaceSummary": "Map a job description requirement-by-requirement to confirmed evidence: strong, partial, confirm, or missing.",
+    "description": "Decompose a job description into requirements and map your evidence to each one — strong / partial / confirm / missing — with zero keyword stuffing. Price: 0.1 USDT (x402 on X Layer, eip155:196). Example: {jd:\"…\", claims:[\"Scaled payments to 12k rps\"]} → an honest coverage map. Proof promise: 'missing' is reported honestly; we never invent coverage. Also runnable as a background job via asy_create_dossier_job.",
     "priceUsdt": 0.1,
     "args": [
       {
@@ -508,7 +512,8 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_cover_letter",
     "title": "Cover letter",
-    "description": "Draft a cover letter where every sentence cites a confirmed claim — nothing invented. Price: 0.15 USDT (x402 on X Layer, eip155:196). Example: {claims:[…], jd:\"…\"} → 3–5 cited sentences + a tribunal pass. Proof promise: unsupported sentences become questions, never prose. Needs claims+evidence or a dossierId — it will politely refuse to fabricate.",
+    "marketplaceSummary": "Draft a target-specific cover letter where every sentence cites a confirmed claim.",
+    "description": "Draft a cover letter where every sentence cites a confirmed claim — nothing invented. Price: 0.15 USDT (x402 on X Layer, eip155:196). Example: {claims:[…], jd:\"…\"} → 3–5 cited sentences + a tribunal pass. Proof promise: unsupported sentences become questions, never prose. Needs claims+evidence or a dossierId — it will politely refuse to fabricate. Also runnable as a background job via asy_create_dossier_job.",
     "priceUsdt": 0.15,
     "args": [
       {
@@ -546,7 +551,8 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_story_bank",
     "title": "Story bank",
-    "description": "Build 2–4 STAR interview stories, each grounded in a confirmed claim. Price: 0.2 USDT (x402 on X Layer, eip155:196). Example: {dossierId:\"dsr_…\"} → cited stories + tribunal grade. Proof promise: every story traces to evidence; thin air is refused.",
+    "marketplaceSummary": "Build tribunal-graded STAR stories grounded in confirmed claims and evidence.",
+    "description": "Build 2–4 STAR interview stories, each grounded in a confirmed claim. Price: 0.2 USDT (x402 on X Layer, eip155:196). Example: {dossierId:\"dsr_…\"} → cited stories + tribunal grade. Proof promise: every story traces to evidence; thin air is refused. Also runnable as a background job via asy_create_dossier_job.",
     "priceUsdt": 0.2,
     "args": [
       {
@@ -584,6 +590,7 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_interview_prep",
     "title": "Interview prep",
+    "marketplaceSummary": "Generate evidence-grounded questions and check typed answers for STAR structure and ledger contradictions.",
     "description": "Generate evidence-grounded behavioral and gap-probing interview questions; optionally evaluate one typed answer for STAR structure, relevance, and contradictions against the confirmed ledger. Price: 0.2 USDT (x402 on X Layer, eip155:196). Example: {dossierId:\"DSR-…\", answer:\"I led 12 people…\"} → questions + ledger contradiction if the dossier says 8. Proof promise: it evaluates; it never impersonates an interviewer.",
     "priceUsdt": 0.2,
     "args": [
@@ -628,7 +635,8 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_tailor_resume",
     "title": "Tailor résumé",
-    "description": "Rewrite résumé achievement bullets against a target JD, evidence-constrained and format-law clean. Price: 0.3 USDT (x402 on X Layer, eip155:196). Example: {claims:[…], jd:\"…\"} → tailored bullets + tribunal grade. Proof promise: no bullet renders without a confirmed claim behind it.",
+    "marketplaceSummary": "Tailor résumé achievement bullets to a target role without exceeding the evidence.",
+    "description": "Rewrite résumé achievement bullets against a target JD, evidence-constrained and format-law clean. Price: 0.3 USDT (x402 on X Layer, eip155:196). Example: {claims:[…], jd:\"…\"} → tailored bullets + tribunal grade. Proof promise: no bullet renders without a confirmed claim behind it. Also runnable as a background job via asy_create_dossier_job.",
     "priceUsdt": 0.3,
     "args": [
       {
@@ -666,6 +674,7 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_create_dossier_job",
     "title": "Create dossier (job)",
+    "marketplaceSummary": "Run the full job, promotion, or freelance dossier pipeline asynchronously, then grade and seal every artifact.",
     "description": "Run the full Assay pipeline — extract → grade → seal — and get back a complete Career Dossier: ATS + designed résumé, cover letter, story bank, fit map, portfolio, plus an EIP-712 seal on X Layer. Price: 2 USDT (x402 on X Layer, eip155:196). Returns a jobId immediately (the pipeline is async, gotcha: never blocks a marketplace client). Example: {resumeText:\"…\", jd:\"…\"} → {jobId}. Poll asy_job_status, fetch asy_job_result. Proof promise: every artifact is graded against the published Standard and sealed.",
     "priceUsdt": 2,
     "args": [
@@ -722,6 +731,7 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_job_status",
     "title": "Job status",
+    "marketplaceSummary": "Poll a background dossier job without another charge.",
     "description": "Check a dossier job: queued / running / done / failed. Free. Example: {jobId:\"job_…\"}.",
     "priceUsdt": 0,
     "args": [
@@ -736,6 +746,7 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_job_result",
     "title": "Job result",
+    "marketplaceSummary": "Fetch signed artifact links, tribunal results, portfolio URL, and seal after a paid dossier job.",
     "description": "Fetch a finished dossier's artifacts (signed download links), tribunal summary and seal. Free. (Paid once at create.) Example: {jobId:\"job_…\"}.",
     "priceUsdt": 0,
     "args": [
@@ -750,6 +761,7 @@ export const TOOLS: ToolDoc[] = [
   {
     "name": "asy_verify",
     "title": "Verify seal",
+    "marketplaceSummary": "Verify a dossier version or commitment leaf against AssayRegistry on X Layer, free forever.",
     "description": "Verify a dossier's on-chain seal: pass a dossierId or a raw leaf → {found, sealStatus, anchoredAt, explorerLink}. Free. FREE FOREVER — anyone can check a seal. Proof promise: reads the AssayRegistry directly on X Layer.",
     "priceUsdt": 0,
     "args": [

@@ -101,6 +101,7 @@ export interface ToolArgDoc {
 export interface ToolDoc {
   name: string
   title: string
+  marketplaceSummary: string
   description: string
   priceUsdt: number
   args: ToolArgDoc[]

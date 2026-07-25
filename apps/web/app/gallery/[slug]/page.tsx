@@ -354,7 +354,8 @@ export default async function PersonaPage({ params }: { params: Promise<{ slug: 
       {/* Seal */}
       <section className="section-tight">
         <div className="container">
-          <div className="seal-receipt" data-testid="persona-seal">
+          <div className="seal-receipt persona-seal-receipt" data-testid="persona-seal">
+            <p className="overline">Fictional persona — demonstration · real mainnet seal</p>
             <div className="seal-detail">
               <span className="caption">Commitment leaf</span>
               <span className="mono">{p.seal.leaf}</span>

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { TOOL_PRICES } from '../../lib/standard.generated'
+import { TOOLS } from '../../lib/standard.generated'
 import { SITE } from '../../lib/site'
 
 export const metadata: Metadata = {
@@ -10,55 +10,11 @@ export const metadata: Metadata = {
   openGraph: { images: ['/og/pricing.png'] },
 }
 
-// What each priced call actually buys — human framing around the fixed table (guardrail #5:
-// names + prices come from the generated table; asy_verify is free forever).
-const TOOL_COPY: Record<string, { label: string; what: string }> = {
-  asy_ats_scan: {
-    label: 'ATS scan',
-    what: 'Your existing résumé, re-parsed the way an ATS reads it — format-law findings and honest keyword coverage.',
-  },
-  asy_claim_audit: {
-    label: 'Claim audit',
-    what: 'Every bullet classified: supported, vague, or citing a number your evidence does not back.',
-  },
-  asy_fit_brief: {
-    label: 'Fit brief',
-    what: 'A job description decomposed into requirements, each mapped to your strongest proof — missing means missing.',
-  },
-  asy_cover_letter: {
-    label: 'Cover letter',
-    what: 'A letter where every sentence cites a confirmed claim. Thin air is refused, not embellished.',
-  },
-  asy_story_bank: {
-    label: 'Story bank',
-    what: 'STAR interview stories grounded in your confirmed claims — ready to say out loud.',
-  },
-  asy_tailor_resume: {
-    label: 'Tailored résumé',
-    what: 'Achievement bullets rewritten against a target brief, evidence-constrained and format-law clean.',
-  },
-  asy_create_dossier_job: {
-    label: 'Career Dossier — the full pipeline',
-    what: 'Extract → grade → seal: ATS + designed résumé, cover letter, story bank, fit map, gap brief, portfolio, manifest — graded against the Standard and sealed on X Layer.',
-  },
-  asy_job_status: { label: 'Job status', what: 'Poll a running dossier job.' },
-  asy_job_result: {
-    label: 'Job result',
-    what: 'Fetch the finished dossier — signed download links, tribunal reports, seal receipt. Paid once at create.',
-  },
-  asy_verify: {
-    label: 'Verify a seal',
-    what: 'Check any dossier against the on-chain registry. Anyone, anytime, no wallet.',
-  },
-}
-
-const ORDER = Object.keys(TOOL_PRICES)
-
-function priceLabel(tool: string): string {
-  const p = TOOL_PRICES[tool] ?? 0
+function priceLabel(tool: (typeof TOOLS)[number]): string {
+  const p = tool.priceUsdt
   if (p > 0) return `${p.toFixed(2)} USDT`
-  if (tool === 'asy_verify') return 'free forever'
-  if (tool === 'asy_job_result') return 'free · paid at create'
+  if (tool.name === 'asy_verify') return 'free forever'
+  if (tool.name === 'asy_job_result') return 'free · paid at create'
   return 'free'
 }
 
@@ -97,18 +53,18 @@ export default function PricingPage() {
                 </tr>
               </thead>
               <tbody>
-                {ORDER.map((tool) => (
-                  <tr key={tool}>
+                {TOOLS.map((tool) => (
+                  <tr key={tool.name}>
                     <td>
-                      <span style={{ fontWeight: 560 }}>{TOOL_COPY[tool]?.label ?? tool}</span>
+                      <span style={{ fontWeight: 560 }}>{tool.title}</span>
                       <br />
-                      <span className="mono caption">{tool}</span>
+                      <span className="mono caption">{tool.name}</span>
                     </td>
                     <td style={{ color: 'var(--ink-soft)', maxWidth: '30rem' }}>
-                      {TOOL_COPY[tool]?.what}
+                      {tool.marketplaceSummary}
                     </td>
                     <td className="num">
-                      {tool === 'asy_verify' ? (
+                      {tool.name === 'asy_verify' ? (
                         <strong style={{ color: 'var(--viridian-text)' }}>
                           {priceLabel(tool)}
                         </strong>

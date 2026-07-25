@@ -49,6 +49,23 @@ test.describe('copy-to-clipboard (/agents)', () => {
     expect(clip.length).toBeGreaterThan(0)
     expect(clip).toMatch(/assay|mcp|api\.assayed\.xyz/i)
   })
+
+  test('the consumer script covers free verify and one approved paid ATS call', async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+    await page.goto('/agents')
+    const script = page.getByTestId('consumer-test-script')
+    await expect(script).toContainText('asy_verify')
+    await expect(script).toContainText('asy_ats_scan')
+    await expect(script).toContainText('wait for my approval')
+    const copy = page.getByRole('button', { name: /copy test script/i })
+    await copy.click()
+    const clip = await page.evaluate(() => navigator.clipboard.readText())
+    expect(clip).toContain('DSR-WC0Q7NZ7')
+    expect(clip).toContain('PAYMENT-RESPONSE')
+  })
 })
 
 test.describe('in-product links resolve', () => {

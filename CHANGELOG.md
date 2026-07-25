@@ -12,6 +12,34 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - DevGate now mirrors the current v2 challenge shape and the official X Layer USD₮0 asset address. Four focused regressions bring the repository total to **260 vitest**.
 - Deployed the remediation and verified GET, bare POST, `initialize`, and `tools/list` against the public endpoint; OKX's `x402-check` now reports `valid:true`.
 
+## [0.14.0] — 2026-07-25
+
+### Added — Marketplace depth and agent-consumer polish (Phase 14)
+
+- `/agents` now carries a copyable consumer smoke: register Assay, call free `asy_verify`, then show and approve one 0.05 USD₮0 `asy_ats_scan` payment before returning its receipt.
+- The dossier `manifest_json` artifact is documented as the agent-to-agent hand-off contract: confirmed claims with evidence strength, coverage counts, named risks, Standard version, and an integrity digest—without uploaded source files, redaction geometry, or salts.
+- Added a fail-closed manifest/docs/pricing consistency script and GitHub Actions gate. All 11 tool names, prices, marketplace summaries, and generated descriptions trace to the same server source.
+- Added an operator-only outreach kit: three non-transactional DM drafts and two build-in-public drafts backed by real mainnet seal and honest AS-1.1 re-grade screenshots.
+- Added a public marketplace screenshot script that refuses to create proof until all 13 registered services and exact prices appear on the public listing.
+
+### Changed
+
+- Every paid tool description carries a concrete invocation example; the five capabilities genuinely included in the dossier pipeline now state that they are also runnable through `asy_create_dossier_job`.
+- `/pricing` renders the generated tool collection directly, fixing the missing `asy_interview_prep` row copy and preventing another hand-maintained projection from drifting.
+- OKX.AI ASP #8599 gained ten API services in tx `0xcf0a3f61e15e142d63e9931be3e27c8a48f32bf1e95af93588ee8f3c66e9e423`: Interview Prep, Promotion Dossier, Freelancer Proof Pack, Claim Audit, Cover Letter, Story Bank, Tailor Resume, Verify Seal, Job Status, and Job Result.
+
+### Fixed
+
+- `/agents` no longer says “ten tools” after Phase 12 added the eleventh.
+- The gallery persona seal receipt now uses a one-column proof layout with wrapping hashes and an explicit fictional-demonstration label; this was found while capturing the outreach proof.
+- The new scrollable consumer script is keyboard-focusable; the first Playwright run found the accessibility issue and the complete 48-case rerun passed.
+- The route sweep still expected the pre-remediation `GET /mcp` 405. It now requires the corrected 402 and validates the generic x402-v2 challenge network and amount.
+
+### Decision
+
+- Did not register an agent-to-agent service. Current OKX guidance expects trained multi-round negotiation, delivery/revision rules, and 10–20 scenario simulations; Assay proves its API/background-job path today but does not yet prove that negotiation agent.
+- The three original marketplace services remain unchanged. OKX rejected a full-record update because those services are already in use; the additions-only update succeeded without disturbing their history.
+
 ## [0.13.0] — 2026-07-24
 
 ### Added — Trust-layer depth and AS 1.1 (Phase 13)

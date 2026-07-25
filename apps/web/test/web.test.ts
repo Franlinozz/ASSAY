@@ -51,6 +51,7 @@ describe('generated price table (guardrail #5)', () => {
   it('documents all eleven tools with schema-derived args', () => {
     expect(TOOLS).toHaveLength(11)
     for (const tool of TOOLS) {
+      expect(tool.marketplaceSummary.length).toBeGreaterThan(30)
       expect(tool.description.length).toBeGreaterThan(40)
       expect(Array.isArray(tool.args)).toBe(true)
     }

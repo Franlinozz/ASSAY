@@ -1913,11 +1913,29 @@ table.office td.num {
 .seal-detail .receipt-line {
   padding: 0.4rem 0;
 }
+.persona-seal-receipt {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+.persona-seal-receipt .seal-detail {
+  display: grid;
+  grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+}
+.persona-seal-receipt .mono {
+  overflow-wrap: anywhere;
+}
 @media (max-width: 620px) {
   .seal-receipt {
     grid-template-columns: 1fr;
     justify-items: center;
     text-align: left;
+  }
+  .persona-seal-receipt .seal-detail {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+    width: 100%;
   }
 }
 

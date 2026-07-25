@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Manifest, docs, and pricing consistency
+        run: |
+          npm run check:marketplace
+          git diff --exit-code -- apps/web/lib/standard.generated.ts apps/docs/content/docs/tools.mdx apps/docs/content/docs/standard.mdx
+      - run: npm run typecheck
+      - run: npm test
