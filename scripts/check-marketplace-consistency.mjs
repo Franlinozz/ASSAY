@@ -43,7 +43,7 @@ try {
   const config = await import(pathToFileURL(resolve(tmp, 'config.js')).href)
   const toolspec = await import(pathToFileURL(resolve(tmp, 'toolspec.js')).href)
   const web = await import(pathToFileURL(resolve(tmp, 'web.js')).href)
-  const docs = readFileSync(resolve(root, 'apps/docs/content/docs/tools.mdx'), 'utf8')
+  const docsIndex = readFileSync(resolve(root, 'apps/docs/content/docs/tools/index.mdx'), 'utf8')
   const pricingSource = readFileSync(resolve(root, 'apps/web/app/pricing/page.tsx'), 'utf8')
 
   const sourceTools = toolspec.toolDocs()
@@ -83,9 +83,19 @@ try {
       `${tool.name}: pricing-page projection is stale`,
     )
     const price = tool.priceUsdt > 0 ? `${tool.priceUsdt.toFixed(2)} USDT` : 'free'
+    const docsPage = readFileSync(
+      resolve(root, `apps/docs/content/docs/tools/${tool.name}.mdx`),
+      'utf8',
+    )
     invariant(
-      docs.includes(`## \`${tool.name}\` — ${tool.title} · ${price}`),
-      `${tool.name}: docs name/title/price projection is stale`,
+      docsIndex.includes(`/docs/tools/${tool.name}`),
+      `${tool.name}: absent from docs index`,
+    )
+    invariant(
+      docsPage.includes(`# \`${tool.name}\` — ${tool.title}`) &&
+        docsPage.includes(`**Price:** ${price}`) &&
+        docsPage.includes(tool.marketplaceSummary),
+      `${tool.name}: generated docs page is stale`,
     )
   }
 

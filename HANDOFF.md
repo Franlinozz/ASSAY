@@ -1,15 +1,18 @@
 # HANDOFF — Assay (for Codex / the next session)
 
-_Last updated: 2026-07-25, after Phase 14 (marketplace depth + agent-consumer polish)._
+_Last updated: 2026-07-25, after Phase 15 source and fresh-clone validation._
 
 Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is the operational map so you don't get stuck.
 
 ## Where things stand
 
-- **Branch `main`**, pushed to `Franlinozz/ASSAY`. Working tree clean.
-- **Tests green:** 260 vitest + 4 foundry + 48 Playwright e2e. Route sweep green.
+- **Branch `main`**, Phase 15 release commit prepared locally; push/tag/deploy status must be
+  checked before the next mutation.
+- **Release matrix:** 262 Vitest + 4 Foundry + 48 Playwright e2e. Judged-artifact,
+  generated-doc, marketplace-consistency, route, and dead-link gates are green.
 - **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs · https://api.assayed.xyz/mcp. OKX.AI ASP **#8599** is owned by `archonaudit@gmail.com`; its first review was rejected because generic probes reached MCP transport errors before x402. Remediation is deployed: the official `x402-check` reports `valid:true`; marketplace approval/publication is the remaining external gate.
-- **Phases done:** P0–P14. P14 = listing breadth refresh, agent-consumer smoke, dossier-manifest hand-off docs, outreach kit, and manifest/docs/pricing CI consistency.
+- **Phases done:** P0–P15 source and operator validation. P15 tag/deploy status is recorded below
+  once the final amended commit has passed CI.
 
 ## Two machines, don't confuse them
 
@@ -66,6 +69,9 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 | `npm test` (repo root)                  | 260 vitest.                                                                                                                                             |
 | `npm run test:e2e` (repo root)          | 48 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400).                                                                                 |
 | `npm run check:marketplace` (repo root) | Regenerates and proves machine manifest = docs = pricing for all 11 tools.                                                                              |
+| `npm run check:judge` (repo root)       | Regenerates public facts, verifies README/test counts, and checks local + public links.                                                                 |
+| `npm run dossier` (repo root)           | Runs a deterministic dossier through real Chromium render + parse-back; no provider key required.                                                       |
+| `npm run studio:dev` (repo root)        | Starts the fake-provider MCP/API and local Studio on ports 8455/3400.                                                                                   |
 
 ## Architecture quick-map
 
@@ -93,6 +99,7 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 
 ## Suggested next work
 
+- Finish the P15 release validation listed under “Where things stand”; do not tag from source work
+  alone.
 - The optional live-LLM persona re-run above (real spend).
-- A hero README (AGENTS.md notes a "Phase 15" full README; the current one is a scaffold).
 - Marketplace-mediated self-test + public-price check remain gated on OKX listing approval (P7 note).

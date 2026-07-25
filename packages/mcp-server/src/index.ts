@@ -1,4 +1,4 @@
-// @xyndicate/mcp-server — the sellable ASP: 10-tool MCP server, x402 payment gate, async dossier
+// @xyndicate/mcp-server — the sellable ASP: 11-tool MCP server, x402 payment gate, async dossier
 // jobs, better-sqlite3 store, and the on-chain anchor worker.
 
 export const packageName = '@xyndicate/mcp-server' as const
@@ -25,6 +25,8 @@ export { JobRunner, runDossierPipeline, devPdf } from './jobs'
 export type { JobDeps } from './jobs'
 export { AnchorWorker } from './anchor'
 export type { DrainResult } from './anchor'
+export { SEALED_EXHIBITS, sealedExhibitFor } from './sealedExhibits'
+export type { SealedExhibit } from './sealedExhibits'
 export {
   atsScan,
   claimAudit,

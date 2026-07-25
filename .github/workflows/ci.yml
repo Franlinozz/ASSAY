@@ -19,10 +19,15 @@ jobs:
           version: stable
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Manifest, docs, and pricing consistency
+      - name: Judged-artifact consistency and dead links
         run: |
-          npm run check:marketplace
-          git diff --exit-code -- apps/web/lib/standard.generated.ts apps/docs/content/docs/tools.mdx apps/docs/content/docs/standard.mdx
+          npm run check:judge
+          git diff --exit-code -- apps/web/lib/standard.generated.ts apps/docs/content/docs/tools apps/docs/content/docs/case-studies apps/docs/content/docs/standard.mdx
       - run: npm run typecheck
       - run: npm test
+      - name: Build the clean-checkout e2e stack
+        run: |
+          node packages/mcp-server/scripts/bundle.mjs
+          npm run build --workspace @xyndicate/web
+      - run: npm run test:e2e
       - run: forge test --root packages/contracts

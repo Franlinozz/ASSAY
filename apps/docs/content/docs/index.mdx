@@ -33,7 +33,7 @@ Free tools work immediately — try a seal check:
 curl -s https://api.assayed.xyz/mcp \
   -H 'content-type: application/json' \
   -H 'accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"asy_verify","arguments":{"leaf":"0x…"}}}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"asy_verify","arguments":{"dossierId":"DSR-WC0Q7NZ7"}}}'
 ```
 
 Paid tools return **HTTP 402** with an x402 challenge first — see
@@ -42,5 +42,7 @@ Paid tools return **HTTP 402** with an x402 challenge first — see
 
 ## The loop
 
-**EVIDENCE → BRIEF → FORGE → TRIBUNAL → SEAL → SHARE.** The [tools reference](/docs/tools) lists
-all ten `asy_*` tools with their schemas — generated from the same code the server registers.
+**EVIDENCE → BRIEF → FORGE → TRIBUNAL → SEAL → SHARE.** The [tools reference](/docs/tools) links
+all eleven `asy_*` tools to individual schema pages generated from the same zod definitions the
+server registers. The [persona case studies](/docs/case-studies) are clearly fictional while their
+pipeline outputs and mainnet seals are real.

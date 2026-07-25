@@ -4,13 +4,50 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
-### Fixed
+## [1.0.0] — 2026-07-25
+
+### Added — Judged-artifact repository (Phase 15)
+
+- Replaced the scaffold README with the definitive cold-reader exhibit: product thesis, five-band
+  architecture, six-step loop, four defensibility moats, all 11 tool prices, executable fake-mode
+  quickstart, real mainnet verification evidence, test provenance, and explicit proof limitations.
+- Added the hand-crafted `assets/architecture.svg`. It uses only repository design tokens and
+  embedded SVG primitives, includes no external font/image/script dependency, and fixes its paper
+  background so GitHub light and dark render identically.
+- Documentation now generates one page per MCP tool directly from the zod-backed tool
+  specification, alongside the code-generated Assay Standard mirror and three fictional-tagged
+  sealed-persona case studies.
+- Added a repository judge gate that verifies README headings, release version, Standard version,
+  agent/registry/dossier identifiers, tool prices, and dynamically counted Vitest, Playwright, and
+  Foundry totals.
+- Added a dead-link sweep over README, security/listing exhibits, generated docs, and site source.
+  CI now regenerates the Standard/tool/case-study pages, rejects diffs, runs the repository judge,
+  checks links, and executes all **314 tests** (262 Vitest + 48 Playwright + 4 Foundry).
+- Added `npm run dossier` and `npm run studio:dev` as the deterministic, keyless five-minute
+  evaluation path.
+
+### Changed
+
+- Promoted every workspace package to `1.0.0` and made the production MCP default
+  `https://api.assayed.xyz`.
+- Updated the holding-page and Open Graph Standard labels to AS-1.1.0.
+- Replaced the security stub with concrete disclosure, SSRF, prompt-injection, PII/redaction,
+  capability-URL, seal, payment, secret, and honest-scope documentation.
+
+### Fixed — x402 listing remediation
 
 - **OKX.AI ASP #8599 x402 discovery compatibility:** `GET /mcp`, bare unpaid POSTs, and MCP `initialize` / `tools/list` probes now receive an x402-v2 `402 PAYMENT-REQUIRED` challenge before content-type or SSE negotiation can reject them. The generic discovery price is **0.05 USD₮0** (`50000` atomic units) on `eip155:196`, paid to the configured treasury.
 - Paid MCP discovery replays no longer fail the SDK's dual-`Accept` transport check: the server normalizes that internal transport requirement while preserving a plain JSON response. GET discovery is idempotent and returns its settlement proof.
 - The payment resource URL is sourced from `ASY_BASE_URL`, so reverse-proxied challenges advertise `https://api.assayed.xyz/mcp` rather than an internal `http://` URL.
-- DevGate now mirrors the current v2 challenge shape and the official X Layer USD₮0 asset address. Four focused regressions bring the repository total to **260 vitest**.
-- Deployed the remediation and verified GET, bare POST, `initialize`, and `tools/list` against the public endpoint; OKX's `x402-check` now reports `valid:true`.
+- DevGate now mirrors the current v2 challenge shape and the official X Layer USD₮0 asset address. Four focused regressions bring the repository total to **260 Vitest**.
+- Deployed the remediation and verified GET, bare POST, `initialize`, and `tools/list` against the public endpoint; OKX's `x402-check` reports `valid:true`.
+- Public gallery dossier IDs now resolve through `asy_verify` even though those sealed exhibits are
+  generated outside the mutable production SQLite store. A regression cross-checks all three
+  public ID→leaf mappings against the committed gallery data; raw-leaf verification remains the
+  trustless fallback.
+- The hosted e2e gate now builds the bundled MCP server and production web app explicitly. The
+  first Phase 15 CI run exposed that local warm artifacts had previously masked this clean-checkout
+  prerequisite.
 
 ## [0.14.0] — 2026-07-25
 

@@ -1,0 +1,17 @@
+{
+  "title": "MCP tools",
+  "pages": [
+    "index",
+    "asy_ats_scan",
+    "asy_claim_audit",
+    "asy_fit_brief",
+    "asy_cover_letter",
+    "asy_story_bank",
+    "asy_interview_prep",
+    "asy_tailor_resume",
+    "asy_create_dossier_job",
+    "asy_job_status",
+    "asy_job_result",
+    "asy_verify"
+  ]
+}

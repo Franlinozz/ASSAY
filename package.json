@@ -1,6 +1,6 @@
 {
   "name": "assay",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Assay — an evidence-backed career studio. Proof before polish.",
@@ -18,10 +18,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "dossier": "npm run run:dossier --workspace @xyndicate/renderers",
+    "studio:dev": "node scripts/dev-studio.mjs",
     "clean": "npm run clean --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:marketplace": "npm run gen --workspace @xyndicate/web && npm run gen --workspace @xyndicate/docs && node scripts/check-marketplace-consistency.mjs",
+    "check:links": "node scripts/dead-link-sweep.mjs",
+    "check:judge": "npm run check:marketplace && node scripts/check-judged-artifact.mjs && npm run check:links",
     "sweep": "node scripts/route-sweep.mjs"
   },
   "devDependencies": {

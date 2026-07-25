@@ -13,6 +13,12 @@ A sealed dossier's manifest is canonically hashed, EIP-712-signed, and anchored 
 Use [assayed.xyz/verify](https://assayed.xyz/verify): paste a dossier ID (`DSR-…`) or a raw leaf
 (`0x…`, 32 bytes) and read what the chain says — sealed, pending, or not found.
 
+The featured fictional demonstration is a real mainnet exhibit:
+
+- dossier `DSR-WC0Q7NZ7`
+- leaf `0xf838233e08922df8238f2fea3f22d98bbb1a1f32d08b8dd1b6f17d880ae64b29`
+- [seal batch on the X Layer explorer](https://www.oklink.com/x-layer/tx/0xae83407122efebea92e422921f91dd319ad504c611388fe15196274dc92b923e)
+
 ## Over MCP
 
 `asy_verify` is **free forever** and never payment-gated:
@@ -22,13 +28,14 @@ Use [assayed.xyz/verify](https://assayed.xyz/verify): paste a dossier ID (`DSR-�
   "jsonrpc": "2.0",
   "id": 1,
   "method": "tools/call",
-  "params": { "name": "asy_verify", "arguments": { "dossierId": "DSR-…" } }
+  "params": { "name": "asy_verify", "arguments": { "dossierId": "DSR-WC0Q7NZ7" } }
 }
 ```
 
 The result carries `found`, `sealStatus`, `anchoredAt`, and an `explorerLink` for independent
-checking. With a raw `leaf` the check needs nothing from Assay at all — any X Layer RPC can read
-`anchoredAt(leaf)` on the registry directly.
+checking. A version-qualified reference such as `DSR-…@v2` selects one immutable version and
+returns its available lineage. With a raw `leaf`, any X Layer RPC can independently read
+`anchoredAt(leaf)` on the registry.
 
 ## What a seal means — and what it does not
 

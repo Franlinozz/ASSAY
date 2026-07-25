@@ -1,6 +1,6 @@
 {
   "name": "@xyndicate/renderers",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "run:dossier": "tsx scripts/run-dossier.mjs",
+    "run:dossier": "node --import tsx scripts/run-dossier.mjs",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {

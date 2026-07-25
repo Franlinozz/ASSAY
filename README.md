@@ -1,18 +1,191 @@
+<div align="center">
+
 # ASSAY
 
 ### _Proof before polish._
 
-Assay turns your scattered work history into an evidence-backed Career Dossier — every claim traced to proof, every document graded against a published standard, machine-verified to survive ATS parsing, and sealed with checkable provenance on X Layer — so in a world where AI makes everyone sound impressive, you're the one who can prove it.
+Assay turns scattered work history into an evidence-backed Career Dossier: every sentence traces
+to confirmed proof, every artifact is graded against a published standard, the ATS résumé is
+re-parsed by machine, and each immutable version can be sealed on X Layer. It is a career system
+for job seekers, career changers, freelancers, and working professionals—and an A2MCP service
+other agents can hire by the call.
 
-An Agent Service Provider for the OKX.AI Genesis Hackathon (Lifestyle Companion track), by [Xyndicate](https://github.com/Franlinozz) — the studio behind Occestra and Sigil.
+[![Live site](https://img.shields.io/badge/live-assayed.xyz-205C4C)](https://assayed.xyz)
+[![OKX.AI agent](https://img.shields.io/badge/OKX.AI_agent-%238599-1B1F2A)](https://assayed.xyz/agents)
+[![X Layer registry](https://img.shields.io/badge/X_Layer_registry-196-C63D21)](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
+[![Assay Standard](https://img.shields.io/badge/Assay_Standard-AS--1.1.0-205C4C)](https://assayed.xyz/standard)
+[![Release](https://img.shields.io/badge/release-v1.0.0-1B1F2A)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-314_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
 
-- **Live:** [assayed.xyz](https://assayed.xyz) · [The Standard](https://assayed.xyz/standard) · [How it grades](https://assayed.xyz/evaluation) · [Verify a seal](https://assayed.xyz/verify) · [For agents](https://assayed.xyz/agents) · [Docs](https://assayed.xyz/docs)
-- **For agents:** MCP endpoint `https://api.assayed.xyz/mcp` · manifest [`/.well-known/assay.json`](https://api.assayed.xyz/.well-known/assay.json) · OKX.AI agent **#8599**
-- **On-chain:** `AssayRegistry` on X Layer mainnet (`eip155:196`) at [`0x96f8b5f0bf…8ef4`](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4) — salted commitments only, zero personal data
-- **The build constitution:** [`AGENTS.md`](./AGENTS.md)
-- **The vision:** [`ASSAY.md`](./ASSAY.md)
-- **What's shipped:** [`FEATURES.md`](./FEATURES.md) · [`CHANGELOG.md`](./CHANGELOG.md)
+**[Open the Studio](https://assayed.xyz/studio)** ·
+**[Watch the 90-second judged run](https://assayed.xyz/judge)** ·
+**[Read the docs](https://assayed.xyz/docs)**
 
-**Tests:** 260 vitest + 48 Playwright e2e + 4 foundry, all green. `npm test` · `npm run test:e2e` · `npm run sweep`
+</div>
 
-> The full README — hero, architecture diagram, quickstart, tool table, Standard link, and live numbers — lands in **Phase 15**. This is the scaffold.
+<img src="assets/architecture.svg" width="100%" alt="Assay architecture: callers, MCP payment gate, evidence pipeline, Tribunal, receipts, and X Layer registry">
+
+## The problem
+
+AI can make every candidate sound exceptional, which makes fluent prose cheap and trust scarce.
+Traditional résumé tools optimize keywords without knowing whether a claim is supported. Career
+evidence is usually scattered across documents, links, memories, and systems that never reconcile.
+
+## How it works
+
+1. **[Evidence](https://assayed.xyz/studio)** — ingest documents, links, certificates, and guided answers into a tiered claim ledger.
+2. **[Brief](https://assayed.xyz/docs/tools/asy_fit_brief)** — decompose a job, promotion, or client brief into honest strong/partial/confirm/missing coverage.
+3. **[Forge](https://assayed.xyz/docs/tools/asy_create_dossier_job)** — produce evidence-gated résumés, letters, stories, review packs, proof packs, portfolios, and manifests.
+4. **[Tribunal](https://assayed.xyz/standard)** — grade deterministic laws and craft, then issue a bounded repair brief instead of quietly lowering the bar.
+5. **[Seal](https://assayed.xyz/docs/verify)** — sign the canonical version and anchor only its salted commitment leaf on X Layer.
+6. **[Share](https://assayed.xyz/gallery)** — expose a redacted recruiter portal, selected work samples, or a machine-readable agent hand-off.
+
+## Four moats
+
+### 1. The claim gate
+
+No artifact sentence renders unless its `claimIds[]` resolve to confirmed claims backed by existing
+evidence. Unsupported experience becomes a question, never polished fiction. The same rule checks
+typed interview answers against the ledger, so “led 12” is flagged when the evidence says 8.
+
+### 2. A standard that grades its maker
+
+[AS-1.1.0](https://assayed.xyz/standard) is code, site, and documentation from one source. It
+combines 15 deterministic hard checks with six craft axes and artifact-specific profiles. Failed
+drafts receive at most two repair attempts; old reports stay immutable when the Standard changes.
+
+### 3. Machine verification, not an “ATS score”
+
+Assay renders the ATS PDF, opens the resulting bytes again, extracts the text with its deterministic
+parser, and diffs 14 profile fields in the featured case. The gallery’s sealed demonstration
+résumés parse back at 100%; the limitation of that statement is documented below.
+
+### 4. Provenance with honest privacy
+
+Every dossier version has a canonical manifest, EIP-712 receipt, Tribunal report, and separately
+sealable commitment. Only `keccak256(manifestHash || salt)` reaches
+[`AssayRegistry`](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
+on X Layer; source documents, career prose, contact data, and salts stay off-chain.
+
+## MCP tools and prices
+
+One stateless Streamable HTTP endpoint: `https://api.assayed.xyz/mcp`. Prices are USDT-denominated
+per call and settle through x402 on X Layer (`eip155:196`).
+
+| Tool                                                                              | What it does                                                               |            Price |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------: |
+| [`asy_ats_scan`](https://assayed.xyz/docs/tools/asy_ats_scan)                     | Re-parse a résumé, flag format-law failures, and report honest JD coverage |        0.05 USDT |
+| [`asy_claim_audit`](https://assayed.xyz/docs/tools/asy_claim_audit)               | Classify supported, vague, and unsupported-number claims                   |        0.05 USDT |
+| [`asy_fit_brief`](https://assayed.xyz/docs/tools/asy_fit_brief)                   | Map brief requirements to confirmed evidence and visible gaps              |        0.10 USDT |
+| [`asy_cover_letter`](https://assayed.xyz/docs/tools/asy_cover_letter)             | Draft a target-specific, evidence-cited letter                             |        0.15 USDT |
+| [`asy_story_bank`](https://assayed.xyz/docs/tools/asy_story_bank)                 | Build Tribunal-graded STAR stories from confirmed claims                   |        0.20 USDT |
+| [`asy_interview_prep`](https://assayed.xyz/docs/tools/asy_interview_prep)         | Generate questions and grade typed answers against STAR and the ledger     |        0.20 USDT |
+| [`asy_tailor_resume`](https://assayed.xyz/docs/tools/asy_tailor_resume)           | Tailor achievement bullets without exceeding the evidence                  |        0.30 USDT |
+| [`asy_create_dossier_job`](https://assayed.xyz/docs/tools/asy_create_dossier_job) | Run the complete job, promotion, or freelance dossier asynchronously       |        2.00 USDT |
+| [`asy_job_status`](https://assayed.xyz/docs/tools/asy_job_status)                 | Poll a dossier job                                                         |             free |
+| [`asy_job_result`](https://assayed.xyz/docs/tools/asy_job_result)                 | Fetch the paid job’s artifacts, reports, portfolio, and seal               |             free |
+| [`asy_verify`](https://assayed.xyz/docs/tools/asy_verify)                         | Verify a dossier version or raw commitment leaf                            | **free forever** |
+
+Tool names, schemas, descriptions, and prices originate in
+[`toolspec.ts`](packages/mcp-server/src/toolspec.ts); the server, pricing page, generated docs, and
+CI consistency gate consume that source.
+
+## Five-minute quickstart
+
+Prerequisites: Node.js 22+, npm, Git, and a Chromium-compatible Linux/macOS environment. Fake mode
+is deterministic and needs no provider key, wallet, or funds.
+
+```bash
+git clone https://github.com/Franlinozz/ASSAY.git
+cd ASSAY
+npm ci
+npx playwright install chromium
+
+export ASY_PROVIDER_MODE=fake
+npm run dossier
+npm run studio:dev
+```
+
+The dossier command runs extract → coverage → Forge → Tribunal → real Chromium PDF parse-back and
+writes local artifacts to `packages/renderers/artifacts-out/`. When the development stack prints
+its ready lines, open **http://127.0.0.1:3400/studio**. The local stack uses fake providers, a
+temporary SQLite store, and the development payment gate.
+
+## Verify it yourself
+
+The featured fictional persona, Adaeze Okonkwo, has dossier ID `DSR-WC0Q7NZ7` and commitment leaf
+`0xf838233e08922df8238f2fea3f22d98bbb1a1f32d08b8dd1b6f17d880ae64b29`. Its three-person seal
+batch is visible on the
+[`X Layer explorer`](https://www.oklink.com/x-layer/tx/0xae83407122efebea92e422921f91dd319ad504c611388fe15196274dc92b923e).
+
+```bash
+curl -sS https://api.assayed.xyz/mcp \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  --data-binary '{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"tools/call",
+    "params":{
+      "name":"asy_verify",
+      "arguments":{"dossierId":"DSR-WC0Q7NZ7"}
+    }
+  }'
+```
+
+`asy_verify` is never payment-gated. You can also paste the dossier ID or leaf into the
+[public verifier](https://assayed.xyz/verify).
+
+## What the proofs do—and do not—mean
+
+- **Parse-back proves readable round-trip through Assay’s deterministic parser and format law.** It
+  is not a simulation or endorsement of Workday, Greenhouse, Lever, or every proprietary ATS, and
+  it does not predict recruiter ranking.
+- **A seal proves integrity, version, signer, and anchoring time.** It does not prove a career claim
+  is objectively true. Attested, Documented, Linked, and Sealed evidence tiers remain visible
+  because integrity and truth are different questions.
+- **Linked means a URL resolved and passed the guarded fetch at evaluation time.** It is not a
+  permanent authenticity guarantee for third-party content.
+- **Certificate import is documented evidence, not issuer confirmation.** Independent employer,
+  school, and credential verification are outside v1.
+- **The gallery is fictional.** Its personas are unmistakably labeled demonstrations; their
+  pipeline output, Chromium parse-back, Tribunal reports, and X Layer seals are real. The sealed
+  AS-1.0 sets honestly re-grade at 7/8 under AS-1.1 because their story banks fail the newer STAR
+  completeness profile.
+- **A2A negotiation is not shipped.** Assay is listed and proven as A2MCP; it will not claim a
+  negotiated-delivery agent until that training and acceptance suite exists.
+- **No voice interviewer or impersonation.** Interview Room evaluates typed answers; it does not
+  roleplay a person.
+
+## Test evidence
+
+The release gate runs **314 tests**: **262 Vitest + 48 Playwright end-to-end + 4 Foundry**. It also
+typechecks every workspace, regenerates the published Standard and 11 tool pages, proves
+manifest/docs/pricing consistency, and runs the repository dead-link gauntlet. See
+[CI](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml) and the
+[fresh-clone transcript](docs/QUICKSTART-TRANSCRIPT.md).
+
+## Repository guide
+
+| Exhibit                                                          | Purpose                                                                      |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`AGENTS.md`](AGENTS.md)                                         | Build constitution, hard guardrails, price table, and append-only decisions  |
+| [`ASSAY.md`](ASSAY.md)                                           | Product thesis and scope                                                     |
+| [`FEATURES.md`](FEATURES.md)                                     | Every capability mapped to package, route, UI, and test                      |
+| [`LISTING.md`](LISTING.md)                                       | Marketplace copy, service update result, and A2A decision                    |
+| [`SECURITY.md`](SECURITY.md)                                     | Trust boundaries, SSRF, injection, PII, secrets, and disclosure              |
+| [`CHANGELOG.md`](CHANGELOG.md)                                   | Keep-a-Changelog release history                                             |
+| [`apps/docs`](apps/docs)                                         | Generated tool schemas, Standard mirror, integration notes, and case studies |
+| [`docs/QUICKSTART-TRANSCRIPT.md`](docs/QUICKSTART-TRANSCRIPT.md) | Exact v1.0.0 fresh-clone execution proof                                     |
+
+## Links
+
+[Live site](https://assayed.xyz) ·
+[The Standard](https://assayed.xyz/standard) ·
+[Documentation](https://assayed.xyz/docs) ·
+[Marketplace exhibit](LISTING.md) ·
+[Changelog](CHANGELOG.md) ·
+[MIT License](LICENSE)
+
+Built for the **OKX.AI Genesis Hackathon · Lifestyle Companion track** by
+[Xyndicate](https://github.com/Franlinozz).

@@ -37,6 +37,7 @@ import type { Address, Hex } from 'viem'
 import type { ServerConfig } from './config'
 import type { Store } from './store'
 import { parseVersionRef, versionRef } from './store'
+import { sealedExhibitFor } from './sealedExhibits'
 import { decodeUpload, signFileToken } from './util'
 
 export interface PipelineCtx {
@@ -544,18 +545,23 @@ export async function verify(
       ? ctx.store.getDossierVersion(ref.dossierId, ref.version)
       : ctx.store.getDossier(dossierId)
     const salt = ctx.store.getSalt(ref ? versionRef(ref.dossierId, ref.version) : dossierId)
-    if (!dossier || !salt)
-      return {
-        summary: `No sealed dossier ${dossierId}.`,
-        data: { ok: false, found: false },
-        refused: true,
-      }
-    const bundle = await buildVerifyBundle(dossier, {
-      chainId: ctx.cfg.chainId,
-      registry: ctx.cfg.registry as Address,
-      salt: salt as Hex,
-    })
-    leaf = bundle.leaf
+    if (!dossier || !salt) {
+      const exhibit = sealedExhibitFor(dossierId, ctx.cfg.chainId, ctx.cfg.registry)
+      if (!exhibit)
+        return {
+          summary: `No sealed dossier ${dossierId}.`,
+          data: { ok: false, found: false },
+          refused: true,
+        }
+      leaf = exhibit.leaf
+    } else {
+      const bundle = await buildVerifyBundle(dossier, {
+        chainId: ctx.cfg.chainId,
+        registry: ctx.cfg.registry as Address,
+        salt: salt as Hex,
+      })
+      leaf = bundle.leaf
+    }
   }
   if (!leaf)
     return {

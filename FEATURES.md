@@ -102,6 +102,24 @@ Every MCP tool, HTTP route, Next route, and store table was walked and classifie
 
 **Result: zero ORPHANED.** Two API-only endpoints (`/d-api/:id`, `/p/:slug`) lacked a docs page; both are now documented at `/docs/api` (new). Route liveness is asserted by `scripts/route-sweep.mjs` (P11.2) and the full-product e2e (P11.3).
 
+## Phase 15 — repository-as-product surfaces
+
+| Capability                               | Package / source                                 | Route / command                         | Reader surface          | Proof                                                 |
+| ---------------------------------------- | ------------------------------------------------ | --------------------------------------- | ----------------------- | ----------------------------------------------------- |
+| Definitive cold-reader product exhibit   | `README.md`                                      | repository root                         | GitHub README           | `scripts/check-judged-artifact.mjs`                   |
+| Hand-crafted five-band architecture      | `assets/architecture.svg`                        | README embed                            | GitHub light + dark     | `scripts/capture-architecture.mjs`                    |
+| One generated schema page per MCP tool   | `apps/docs/scripts/gen-docs.mjs` + `toolspec.ts` | `/docs/tools/asy_*`                     | Fumadocs tool reference | docs build + marketplace consistency gate             |
+| Standard mirror from shipped grader      | `renderStandardMarkdown()`                       | `/docs/standard` + `/standard`          | docs + web              | generated-file diff gate                              |
+| Fictional sealed-persona case studies    | `personas.generated.json`                        | `/docs/case-studies/*`                  | docs + gallery links    | docs build + fictional-label assertions               |
+| Five-minute deterministic evaluator path | `scripts/dev-studio.mjs` + renderer runner       | `npm run dossier`; `npm run studio:dev` | local Studio            | fresh-clone transcript                                |
+| Repository/security disclosure           | `SECURITY.md`                                    | repository root                         | GitHub security exhibit | judged-artifact phrase checks                         |
+| README/docs/site dead-link gauntlet      | `scripts/dead-link-sweep.mjs`                    | `npm run check:links`                   | CI                      | fails on missing local routes and dead public targets |
+| Stable gallery dossier-ID verification   | `sealedExhibits.ts`                              | free `asy_verify` + `/verify`           | README + gallery + docs | mapping drift test + Playwright mainnet checks        |
+
+These are judge-facing capabilities rather than runtime product routes, but they remain subject to
+guardrail #10: every one has an executable proof and no hand-maintained price, Standard, or test
+count source.
+
 <!--
 Row template:
 | asy_ats_scan — parse-back + format-law + keyword coverage | @xyndicate/tribunal | POST /mcp asy_ats_scan | Studio → Report | packages/tribunal/src/atsScan.test.ts |

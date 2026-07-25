@@ -92,7 +92,7 @@ function template({ title, sub }) {
       <h1>${title}</h1>
       <div class="sub">${sub}</div>
     </div>
-    <div class="meta"><span>ASSAYED.XYZ</span><span>AS v1.0.0 · X LAYER · AGENT #8599</span></div>
+    <div class="meta"><span>ASSAYED.XYZ</span><span>AS-1.1.0 · X LAYER · AGENT #8599</span></div>
   </body></html>`
 }
 

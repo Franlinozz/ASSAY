@@ -3,14 +3,16 @@ title: x402 payment notes
 description: How a paid call settles — the metered USDT flow on X Layer.
 ---
 
-Paid tools are metered per call with the **x402** standard on X Layer (`eip155:196`), settled in
-USDT via the OKX facilitator. There are no accounts and no API keys — payment _is_ the auth.
+Paid tools are metered per call with **x402 v2** on X Layer (`eip155:196`), settled in USD₮0 via
+the OKX facilitator. Assay needs no account or API key; the buyer still needs a compatible wallet
+to authorize a paid replay.
 
 ## The flow
 
 1. **POST /mcp** — call a paid tool with plain JSON-RPC.
-2. **HTTP 402** — the `PAYMENT-REQUIRED` header carries a base64 JSON challenge: scheme `exact`,
-   network `eip155:196`, the pay-to address, and the price as a USD string.
+2. **HTTP 402** — the `PAYMENT-REQUIRED` header carries a base64 JSON challenge: `x402Version: 2`,
+   an `accepts` entry using scheme `exact`, network `eip155:196`, the USD₮0 asset
+   `0x779ded0c9e1022225f8e0630b35a9b54be713736`, atomic amount, and pay-to address.
 3. **Sign** — the client signs an EIP-3009 exact-scheme authorization for the amount and retries
    the _same_ request with the `PAYMENT-SIG` header (also accepted: `X-PAYMENT`,
    `PAYMENT-SIGNATURE`).
@@ -24,6 +26,9 @@ USDT via the OKX facilitator. There are no accounts and no API keys — payment 
 - **Idempotent replay.** A settled call is cached against its `Idempotency-Key` (or the payment
   signature hash). Replays return the original result verbatim — never re-charged, never re-run.
 - **Free means free.** `asy_verify`, `asy_job_status`, and `asy_job_result` are never gated.
+- **Discovery is probeable.** An unpaid generic `GET`, `initialize`, or `tools/list` reaches the
+  same valid 0.05 USD₮0 challenge before MCP content negotiation; buyers can discover payment
+  terms without first constructing an SSE request.
 - **Fixed prices.** The table in [pricing](https://assayed.xyz/pricing) is the table the paywall
   enforces, published machine-readably at
   [`/.well-known/assay.json`](https://api.assayed.xyz/.well-known/assay.json).

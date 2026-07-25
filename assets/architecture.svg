@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Assay architecture</title>
+  <desc id="desc">The Assay evidence-to-provenance architecture, from human and agent callers through the MCP payment gate, evidence pipeline, Tribunal, receipts, and X Layer registry.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#205C4C"/>
+    </marker>
+    <marker id="seal-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#C63D21"/>
+    </marker>
+    <marker id="fail-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#C24141"/>
+    </marker>
+    <style>
+      .title { font: 700 26px ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #1B1F2A; letter-spacing: 3px; }
+      .tagline { font: 400 13px ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #7E7A6E; }
+      .band { font: 700 11px ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #7E7A6E; letter-spacing: 2.4px; }
+      .name { font: 600 15px ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #1B1F2A; }
+      .caption { font: 400 11.5px ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #7E7A6E; }
+      .micro { font: 500 10.5px ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #7E7A6E; }
+      .box { fill: #F4F0E6; stroke: #205C4C; stroke-width: 1.5; }
+      .muted-box { fill: #F4F0E6; stroke: #7E7A6E; stroke-width: 1.5; stroke-dasharray: 6 5; }
+      .container { fill: #EEF1EA; stroke: #1B1F2A; stroke-width: 1.5; }
+      .flow { fill: none; stroke: #205C4C; stroke-width: 1.75; marker-end: url(#arrow); }
+      .seal-flow { fill: none; stroke: #C63D21; stroke-width: 1.75; marker-end: url(#seal-arrow); }
+      .verify-flow { fill: none; stroke: #7E7A6E; stroke-width: 1.5; stroke-dasharray: 7 6; marker-end: url(#arrow); }
+      .pill { fill: #FBF9F3; stroke: #E6E0D2; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="1598" height="1078" rx="24" fill="#FBF9F3" stroke="#E6E0D2" stroke-width="2"/>
+
+  <!-- Guilloché corner flourish -->
+  <g fill="none" stroke="#205C4C" stroke-width="1.2" opacity="0.25">
+    <ellipse cx="1470" cy="78" rx="94" ry="31" transform="rotate(-16 1470 78)"/>
+    <ellipse cx="1470" cy="78" rx="79" ry="45" transform="rotate(17 1470 78)"/>
+    <ellipse cx="1470" cy="78" rx="61" ry="53" transform="rotate(48 1470 78)"/>
+    <ellipse cx="1470" cy="78" rx="45" ry="65" transform="rotate(76 1470 78)"/>
+  </g>
+
+  <text x="48" y="48" class="title">ASSAY</text>
+  <text x="48" y="72" class="tagline">Proof before polish.</text>
+
+  <!-- Legend -->
+  <g transform="translate(915 43)">
+    <line x1="0" y1="0" x2="28" y2="0" stroke="#205C4C" stroke-width="2"/>
+    <text x="36" y="4" class="micro">call flow</text>
+    <line x1="135" y1="0" x2="163" y2="0" stroke="#C63D21" stroke-width="2"/>
+    <text x="171" y="4" class="micro">seal / settlement</text>
+    <line x1="315" y1="0" x2="343" y2="0" stroke="#7E7A6E" stroke-width="1.5" stroke-dasharray="6 5"/>
+    <text x="351" y="4" class="micro">public verification</text>
+  </g>
+
+  <!-- Flow lines render behind boxes -->
+  <path class="flow" d="M 250 206 L 250 238 L 240 238 L 240 319"/>
+  <path class="flow" d="M 745 218 L 745 248 L 300 248 L 300 319"/>
+  <path class="flow" d="M 400 361 L 430 361"/>
+  <path class="flow" d="M 500 538 L 610 538"/>
+  <path class="flow" d="M 990 538 L 1100 538"/>
+  <path class="flow" d="M 1290 595 L 1290 630 L 445 630 L 445 674"/>
+  <path class="flow" d="M 770 742 L 900 742"/>
+  <path class="flow" d="M 290 674 L 290 640 L 1120 640 L 1120 595"/>
+  <path class="seal-flow" d="M 1190 815 L 1190 850 L 1050 850 L 1050 884"/>
+  <path class="verify-flow" d="M 1385 884 L 1385 824 L 1300 824"/>
+
+  <!-- Band 1 -->
+  <text x="48" y="112" class="band">CALLERS</text>
+  <rect x="48" y="126" width="404" height="80" rx="12" class="box"/>
+  <text x="72" y="158" class="name">Humans · assayed.xyz</text>
+  <text x="72" y="181" class="caption">Studio · ledger · interview · share portal</text>
+
+  <rect x="482" y="126" width="526" height="92" rx="12" class="box"/>
+  <text x="506" y="156" class="name">Agents · OKX.AI marketplace (A2MCP)</text>
+  <text x="506" y="179" class="caption">stateless Streamable HTTP · per-tool metering</text>
+  <rect x="506" y="190" width="390" height="20" rx="10" fill="#FBF9F3" stroke="#C63D21" stroke-width="1.2"/>
+  <text x="519" y="204" class="micro" fill="#C63D21">USD₮0 on X Layer · x402 · OKX Payment SDK</text>
+
+  <rect x="1038" y="126" width="514" height="80" rx="12" class="muted-box"/>
+  <text x="1062" y="158" class="name">Agents · A2A negotiation</text>
+  <text x="1062" y="181" class="caption">future — not registered or claimed in v1.0</text>
+
+  <!-- Band 2 -->
+  <text x="48" y="278" class="band">THE ASP</text>
+  <rect x="48" y="290" width="1504" height="154" rx="16" class="container"/>
+  <text x="72" y="316" class="name">mcp-server — api.assayed.xyz</text>
+
+  <rect x="80" y="328" width="320" height="72" rx="12" class="box"/>
+  <text x="102" y="356" class="name">Payment Gate</text>
+  <text x="102" y="379" class="caption">x402 · eip155:196 · policy first</text>
+
+  <rect x="430" y="328" width="340" height="72" rx="12" class="box"/>
+  <text x="452" y="356" class="name">11 MCP Tools + Job Rail</text>
+  <text x="452" y="379" class="caption">fast calls inline · dossiers async</text>
+
+  <rect x="800" y="328" width="340" height="72" rx="12" class="box"/>
+  <text x="822" y="356" class="name">Store</text>
+  <text x="822" y="379" class="caption">SQLite · capability URLs · signed files</text>
+
+  <rect x="1170" y="328" width="340" height="72" rx="12" class="box"/>
+  <text x="1192" y="356" class="name">Anchor Worker</text>
+  <text x="1192" y="379" class="caption">batched leaves · retry-safe queue</text>
+
+  <!-- Band 3 -->
+  <text x="48" y="478" class="band">THE STUDIO PIPELINE</text>
+  <rect x="120" y="494" width="380" height="102" rx="12" class="box"/>
+  <text x="144" y="528" class="name">LEDGER</text>
+  <text x="144" y="553" class="caption">evidence in · claims out, tiered</text>
+  <text x="144" y="575" class="micro">Attested · Documented · Linked · Sealed</text>
+
+  <rect x="610" y="494" width="380" height="102" rx="12" class="box"/>
+  <text x="634" y="528" class="name">BRIEF</text>
+  <text x="634" y="553" class="caption">JD decomposed · honest coverage</text>
+  <text x="634" y="575" class="micro">strong · partial · confirm · missing</text>
+
+  <rect x="1100" y="494" width="380" height="102" rx="12" class="box"/>
+  <text x="1124" y="528" class="name">FORGE</text>
+  <text x="1124" y="553" class="caption">evidence-gated PDF · DOCX · portfolio</text>
+  <text x="1124" y="575" class="micro">claim gate — no sentence without proof</text>
+
+  <!-- Band 4 -->
+  <text x="48" y="658" class="band">QUALITY &amp; PROVENANCE</text>
+  <rect x="120" y="674" width="650" height="142" rx="12" class="box"/>
+  <text x="144" y="706" class="name">TRIBUNAL — Assay Standard AS-1.1.0</text>
+  <text x="144" y="732" class="caption">deterministic: parse-back · dates · links · consistency</text>
+  <path d="M 177 780 A 26 26 0 1 1 219 758" fill="none" stroke="#C24141" stroke-width="2" marker-end="url(#fail-arrow)"/>
+  <text x="238" y="765" class="micro" fill="#C24141">fail → repair (max 2)</text>
+  <text x="238" y="787" class="micro" fill="#2FA96B">pass → immutable report</text>
+
+  <rect x="900" y="674" width="580" height="142" rx="12" class="box"/>
+  <text x="924" y="706" class="name">RECEIPTS</text>
+  <text x="924" y="732" class="caption">EIP-712 seal · salted commitment · per-version lineage</text>
+  <text x="924" y="758" class="micro">integrity proof, not an oracle of objective truth</text>
+
+  <rect x="1008" y="620" width="224" height="24" rx="12" class="pill"/>
+  <text x="1025" y="636" class="micro">repair brief</text>
+  <rect x="1238" y="832" width="262" height="25" rx="12" class="pill"/>
+  <text x="1254" y="849" class="micro">/verify — public, trustless</text>
+
+  <!-- Band 5 -->
+  <text x="48" y="870" class="band">FOUNDATIONS</text>
+  <rect x="48" y="884" width="452" height="122" rx="12" class="box"/>
+  <text x="72" y="916" class="name">PROVIDERS — graceful degradation</text>
+  <text x="72" y="942" class="caption">Claude writer/critic · DeepSeek extraction · safe fetcher</text>
+  <text x="72" y="966" class="micro">timeouts · cost cap · SSRF guarded</text>
+
+  <rect x="520" y="884" width="360" height="122" rx="12" class="box"/>
+  <text x="544" y="916" class="name">assay-core</text>
+  <text x="544" y="942" class="caption">schemas · claim gate · policy</text>
+  <text x="544" y="966" class="micro">canonical manifest · facts block</text>
+
+  <rect x="900" y="884" width="300" height="122" rx="12" class="box"/>
+  <text x="924" y="916" class="name">AssayRegistry.sol</text>
+  <text x="924" y="942" class="caption">X Layer mainnet · chain 196</text>
+  <text x="924" y="966" class="micro">salted leaves only · no PII</text>
+
+  <rect x="1220" y="884" width="332" height="122" rx="12" class="box"/>
+  <text x="1244" y="916" class="name">apps: web · docs</text>
+  <text x="1244" y="942" class="caption">The Assay Office · light / dark</text>
+  <text x="1244" y="966" class="micro">Studio · gallery · standard · verify</text>
+
+  <rect x="1080" y="833" width="164" height="24" rx="12" fill="#FBF9F3" stroke="#E6E0D2"/>
+  <text x="1095" y="849" class="micro" fill="#C63D21">sealBatch(leaf)</text>
+
+  <text x="48" y="1043" class="micro">Every artifact sentence resolves to confirmed claims and evidence. Only salted commitment leaves reach X Layer.</text>
+  <text x="1435" y="1043" class="micro">v1.0</text>
+</svg>
