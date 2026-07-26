@@ -142,6 +142,46 @@ function mergeProfile(existing: Profile, extracted: Profile): Profile {
   })
 }
 
+const CONTACT_LINK_PLACEHOLDER =
+  /(?:^|[./_-])(johndoe|janedoe|yourname|your-name|username|sample|placeholder)(?:$|[/?#._-])/i
+
+async function sanitizeContactLinks(
+  profile: Profile,
+  fetcher: Fetcher,
+  onRejected: (host: string, reason: 'placeholder' | 'invalid' | 'dead') => void,
+): Promise<Profile> {
+  const links: string[] = []
+  for (const candidate of profile.contact.links) {
+    const value = candidate.trim()
+    let parsed: URL
+    try {
+      parsed = new URL(value)
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('protocol')
+    } catch {
+      onRejected(value || 'contact link', 'invalid')
+      continue
+    }
+    if (
+      CONTACT_LINK_PLACEHOLDER.test(parsed.href) ||
+      parsed.hostname.endsWith('.example') ||
+      parsed.hostname === 'example.com'
+    ) {
+      onRejected(parsed.hostname, 'placeholder')
+      continue
+    }
+    const result = await fetcher.fetch(parsed.href)
+    if (!result.ok) {
+      onRejected(parsed.hostname, 'dead')
+      continue
+    }
+    links.push(parsed.href)
+  }
+  return ProfileSchema.parse({
+    ...profile,
+    contact: { ...profile.contact, links: [...new Set(links)] },
+  })
+}
+
 // ── ingest + extract (JOB) ────────────────────────────────────────────────────
 export interface StudioExtractInput {
   dossierId: string
@@ -206,7 +246,23 @@ export async function runStudioExtract(deps: StudioDeps, input: StudioExtractInp
   })
 
   // Merge into the evolving dossier.
-  const mergedProfile = mergeProfile(dossier.profile, extracted.profile)
+  const mergedProfile = await sanitizeContactLinks(
+    mergeProfile(dossier.profile, extracted.profile),
+    fetcher,
+    (host, reason) => {
+      const explanation =
+        reason === 'placeholder'
+          ? 'looks like placeholder text'
+          : reason === 'invalid'
+            ? 'is not a valid web address'
+            : 'did not resolve live'
+      store.recordStudioEvent(
+        id,
+        'Ledger',
+        `${host} held back — ${explanation}; it will not enter the dossier`,
+      )
+    },
+  )
   const existingClaimTexts = new Set(dossier.claims.map((c) => normText(c.text)))
   const newClaims = extracted.claims.filter((c) => !existingClaimTexts.has(normText(c.text)))
   const allEvidence = [...dossier.evidence, ...linkEvidence, ...extracted.evidence]
@@ -432,8 +488,25 @@ export async function runStudioForge(
   // e2e repair-demo: give this forge its own first-draft fail (no-op outside fake demo mode).
   resetFakeRepairDemo()
 
+  // Re-check profile links at the Forge boundary too. This protects older dossiers created before
+  // link quarantine existed and prevents one placeholder/dead contact URL from poisoning every
+  // otherwise-valid artifact.
+  const cleanProfile = await sanitizeContactLinks(dossier.profile, fetcher, (host, reason) => {
+    store.recordStudioEvent(
+      id,
+      'Ledger',
+      `${host} held back before Forge — ${reason === 'placeholder' ? 'placeholder link' : reason === 'invalid' ? 'invalid link' : 'link did not resolve live'}`,
+    )
+  })
+  const profileChanged =
+    JSON.stringify(cleanProfile.contact.links) !== JSON.stringify(dossier.profile.contact.links)
+  const cleanDossier = profileChanged
+    ? DossierSchema.parse({ ...dossier, profile: cleanProfile })
+    : dossier
+  if (profileChanged) store.saveDossier(cleanDossier)
+
   // Forge over ONLY confirmed claims (the claim gate never sees unconfirmed ones).
-  const forgeDossierObj: Dossier = DossierSchema.parse({ ...dossier, claims: confirmed })
+  const forgeDossierObj: Dossier = DossierSchema.parse({ ...cleanDossier, claims: confirmed })
   const coverage: Coverage[] = dossier.brief
     ? computeCoverage(dossier.brief.decomposed, confirmed)
     : []
@@ -501,6 +574,23 @@ export async function runStudioForge(
       artifact,
       gradeDeps,
       repair,
+      {
+        // Rewriting cannot repair profile/evidence plumbing. Stop immediately instead of spending
+        // two calls that are guaranteed to repeat the same hard failure.
+        shouldRepair: (report) =>
+          !report.hard.some(
+            (check) =>
+              check.status === 'fail' &&
+              check.findings.some((finding) =>
+                [
+                  'DEAD_LINK',
+                  'INVALID_CONTACT_URL',
+                  'DANGLING_EVIDENCE',
+                  'UNREADABLE_FILE',
+                ].includes(finding.code),
+              ),
+          ),
+      },
     )
     reports.push(...r)
     finalArtifacts.push(fin)
@@ -518,11 +608,11 @@ export async function runStudioForge(
   const atsPdf = pdfBytes.get('resume_ats')
   let parseBack: { fidelityPct: number; fieldDiffs: unknown[]; fieldsChecked: number } | undefined
   if (atsPdf && deps.realPdf) {
-    const pb = await parseBackFromBuffer(atsPdf, dossier.profile)
+    const pb = await parseBackFromBuffer(atsPdf, cleanDossier.profile)
     parseBack = {
       fidelityPct: pb.fidelityPct,
       fieldDiffs: pb.fieldDiffs,
-      fieldsChecked: 2 + dossier.profile.experiences.length * 4,
+      fieldsChecked: 2 + cleanDossier.profile.experiences.length * 4,
     }
   }
 
@@ -545,7 +635,7 @@ export async function runStudioForge(
   })
   const version = store.latestDossierVersion(id) + 1
   const nextInput: Record<string, unknown> = {
-    ...dossier,
+    ...cleanDossier,
     version,
     artifacts: lean,
     tribunalReports: reports.map((r) => ({

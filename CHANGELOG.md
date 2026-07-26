@@ -4,6 +4,42 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+### Added
+
+- Added theme-aware Assay folder/seal marks to the navbar and footer, a matching browser/app icon,
+  and the operator-supplied evidence-flow brand banner to the GitHub exhibit. Runtime derivatives
+  are 4.7–43 KB; the uploaded high-resolution originals remain untouched.
+- Added four current product captures to the README: the interactive proof hero, fictional sealed
+  gallery, honest Tribunal repair loop, and live X Layer verification.
+- Added paste-ready, judge-optimized OKX.AI Genesis submission answers with a shorter fallback,
+  field-by-field operator placeholders, and explicit alignment to the published judging criteria.
+
+### Changed
+
+- Rebuilt the Studio around a three-column working desk: persistent vertical dossier flow,
+  focused stage workspace, and a sticky run monitor with artifact progress, current role/action,
+  elapsed time, retained event history, and safe-return guidance.
+- Gave the designed résumé a more distinctive Assay Office editorial system—registration masthead,
+  numbered sections, role/date hierarchy, evidence-tier chips, skill pills, credential blocks, and
+  a proof footer—without changing the ATS-safe résumé.
+- Strengthened visible motion on the landing proof graph and active Forge/Tribunal states while
+  preserving the existing reduced-motion fallback and server-rendered landing budget.
+- Reordered primary navigation to lead with Gallery and end with Verify then Docs.
+
+### Fixed
+
+- Fixed a real long-run reconciliation bug: the browser stopped polling after four minutes, so a
+  completed Forge could remain visually stuck until reload. Studio now follows the canonical
+  server stage for up to 30 minutes, refreshes on completion events, and advances to Report.
+- Quarantined placeholder, invalid, and dead profile links before they can enter Forge. This
+  prevents one bad contact URL from failing every otherwise-valid artifact.
+- Repair loops now stop before spending writer/critic calls on deterministic source blockers that
+  prose rewriting cannot fix. Report separates those blockers from genuine claim/craft findings,
+  presents the final verdict first, and keeps earlier drafts collapsed but auditable.
+- Rechecked Agent #8599 without another mutation: all 13 service records remain intact and the
+  x402 validator reports `valid:true`; the public identity currently reads “not listed · Listing
+  under review” with “AI quality review suggested pass” after the avatar-triggered re-review.
+
 ## [1.1.0] — 2026-07-25
 
 ### Added — Submission lockdown (Phase 17)

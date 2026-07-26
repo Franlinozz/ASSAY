@@ -95,6 +95,14 @@ export async function gradeArtifact(
 }
 
 export type RepairFn = (artifact: Artifact, repairBrief: string) => Promise<Artifact>
+export interface RepairLoopOptions {
+  /**
+   * Some failures cannot be repaired by rewriting prose (for example, a dead profile URL).
+   * In those cases the caller can stop before spending two more writer/critic calls on drafts
+   * that are guaranteed to retain the same deterministic blocker.
+   */
+  shouldRepair?: (report: TribunalReport) => boolean
+}
 
 // Grade → repair → regrade, at most REPAIR_LIMIT (2) repairs. EVERY draft's report is returned
 // and ships in the dossier — including failing first drafts.
@@ -103,13 +111,20 @@ export async function gradeWithRepair(
   artifact: Artifact,
   deps: GradeDeps,
   repair: RepairFn,
+  options: RepairLoopOptions = {},
 ): Promise<{ reports: TribunalReport[]; artifact: Artifact }> {
   const reports: TribunalReport[] = []
   let current = artifact
   for (let draft = 0; draft <= REPAIR_LIMIT; draft++) {
     const report = await gradeArtifact(dossier, current, deps, draft)
     reports.push(report)
-    if (report.pass || report.gradeStatus !== 'graded' || draft === REPAIR_LIMIT) break
+    if (
+      report.pass ||
+      report.gradeStatus !== 'graded' ||
+      draft === REPAIR_LIMIT ||
+      options.shouldRepair?.(report) === false
+    )
+      break
     current = await repair(current, report.repairBrief ?? '')
   }
   return { reports, artifact: current }

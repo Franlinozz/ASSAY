@@ -48,6 +48,8 @@ Tribunal link-liveness checks:
 - every redirect is resolved and checked again, with at most three redirects;
 - requests time out after five seconds;
 - responses are capped at 1 MB and restricted to HTML/plain-text content types.
+- profile/contact URLs are validated through this boundary before Forge; placeholder, malformed,
+  and non-resolving links are quarantined instead of being copied into every generated artifact.
 
 The regression suite covers IP literals, DNS rebinding, redirects, metadata ranges, and forbidden
 schemes.
@@ -106,6 +108,8 @@ Tribunal report.
   artifacts; it does not leave broken download links.
 - Critic failure produces `UNGRADED`, never an inferred PASS. Ungraded and unavailable artifacts
   are excluded from pass-rate math and counted separately.
+- Deterministic source blockers such as a dead link or unreadable evidence file stop the bounded
+  repair loop immediately; Assay does not spend provider calls pretending prose can fix plumbing.
 - Running jobs are requeued after process restart. SQLite uses WAL plus a bounded busy timeout;
   lock exhaustion maps to a sanitized retryable response.
 - `/health` reports pending-seal age and low-disk upload readiness. New upload-bearing calls are

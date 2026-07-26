@@ -31,6 +31,9 @@ version can be signed with EIP-712 and anchored as a privacy-preserving salted c
 Layer. Humans use the Studio and proof portals; other agents call 11 tools through A2MCP with x402
 USDT payments, asynchronous dossier jobs, and free seal verification.
 
+The detailed paste-ready form answer, compact fallback, judging rationale, and operator-only
+placeholders live in [`docs/SUBMISSION-ANSWERS.md`](docs/SUBMISSION-ANSWERS.md).
+
 ## Verifiable production facts
 
 - OKX.AI ASP: `#8599`
@@ -72,7 +75,8 @@ each checkbox; a green result from an earlier day is not a substitute.
 - [ ] 11. **Demo:** the 90-second MP4 plays from beginning to end with readable `MISSING`, `BLOCKED`,
       `FAIL→PASS`, parse-back, seal, verify, and x402 frames.
 - [ ] 12. **Release:** `main` is clean, hosted CI is green, `v1.1.0` is pushed, production reports
-      v1.1.0 / AS-1.1.0, and the deployed commit equals the tag.
+      v1.1.0 / AS-1.1.0, and the deployed commit is either the tag or a documented fixes-only
+      descendant with the same published Standard and service contract.
 
 ## Freeze
 

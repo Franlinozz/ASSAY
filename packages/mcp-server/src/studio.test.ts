@@ -108,6 +108,25 @@ describe('studio flow', () => {
     expect(events.some((e) => e.role === 'Extractor')).toBe(true)
   })
 
+  it('quarantines a legacy placeholder contact link at the Forge boundary', async () => {
+    const rig = testRuntime()
+    const { id } = await buildConfirmed(rig)
+    const legacy = rig.store.getDossier(id)!
+    legacy.profile.contact.links = ['https://linkedin.com/in/johndoe']
+    rig.store.saveDossier(legacy)
+
+    await runBrief(deps(rig), id, '- Backend engineering with PostgreSQL')
+    await runStudioForge(deps(rig), { dossierId: id, selected: ['manifest_json'] })
+
+    const stored = rig.store.getDossier(id)!
+    expect(stored.profile.contact.links).not.toContain('https://linkedin.com/in/johndoe')
+    expect(
+      rig.store
+        .listStudioEventsSince(id, 0)
+        .some((event) => event.role === 'Ledger' && /held back before Forge/.test(event.action)),
+    ).toBe(true)
+  })
+
   it('confirms claims, and a needs_confirmation answer attaches an attestation', async () => {
     const rig = testRuntime()
     const { id } = createDossier(rig.store, rig.cfg, { name: 'X', timezone: 'UTC' })

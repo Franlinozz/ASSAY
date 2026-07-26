@@ -8,9 +8,17 @@ export function SiteFooter() {
       <GuillocheBand height={22} opacity={0.4} />
       <div className="container site-footer-grid">
         <div>
-          <p className="wordmark-sm" style={{ marginBottom: '0.4rem' }}>
-            ASSAY
-          </p>
+          <Link
+            href="/"
+            className="wordmark-sm brand-lockup brand-lockup-footer"
+            aria-label="Assay — home"
+          >
+            <span className="brand-mark" aria-hidden="true">
+              <img className="brand-mark-light" src="/brand/mark-light.webp" alt="" />
+              <img className="brand-mark-dark" src="/brand/mark-dark.webp" alt="" />
+            </span>
+            <span>ASSAY</span>
+          </Link>
           <p className="caption" style={{ maxWidth: '26rem' }}>
             {SITE.tagline} An evidence-backed career studio by {SITE.studio} — every claim traced to
             proof, graded against a published standard, sealed on X Layer.

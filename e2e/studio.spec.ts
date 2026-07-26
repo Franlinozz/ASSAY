@@ -31,6 +31,8 @@ async function createDossier(page: Page): Promise<void> {
   await page.getByTestId('start-submit').click()
   await page.waitForURL(/\/d\/DSR-[A-Z0-9]+\?t=/, { timeout: 20_000 })
   await expect(page.getByText('stage 1 / 5')).toBeVisible()
+  await expect(page.getByText('Dossier flow')).toBeVisible()
+  await expect(page.getByTestId('event-feed')).toBeVisible()
 }
 
 test.describe('token security', () => {
@@ -120,10 +122,15 @@ test.describe('the full dossier flow', () => {
 
     // ── FORGE ──
     await page.getByTestId('run-forge').click()
+    await expect(page.getByTestId('forge-live')).toBeVisible()
+    await expect(page.getByTestId('forge-progress')).toBeVisible()
     // Two real chromium PDF renders; give headroom on a shared/loaded box (parallel e2e workers).
-    await page.waitForSelector('[data-testid=forge-result]', { timeout: 180_000 })
+    // Completion reconciles from the server and advances to the Report without a manual reload.
+    await page.waitForSelector('[data-testid=report-rollup]', { timeout: 180_000 })
 
     // Evidence drawer: hovering a sentence pulls a taut thread to its proof.
+    await page.getByTestId('stage-forge').click()
+    await page.waitForSelector('[data-testid=forge-result]')
     const drawer = page.getByTestId('evidence-drawer')
     await expect(drawer).toBeVisible()
     await drawer.locator('button').first().hover()
@@ -138,6 +145,8 @@ test.describe('the full dossier flow', () => {
     await expect(page.getByTestId('gallery-privacy-note')).toContainText(
       'never appears in the public Gallery automatically',
     )
+    const history = page.locator('.report-history').first()
+    if (await history.count()) await history.locator('summary').click()
     await expect(page.locator('.verdict-fail').first()).toBeVisible()
     await expect(page.locator('.repair-brief').first()).toBeVisible()
 

@@ -6,13 +6,13 @@ import { useState } from 'react'
 import { ThemeToggle } from './ThemeToggle'
 
 const NAV = [
+  { href: '/gallery', label: 'Gallery' },
   { href: '/standard', label: 'The Standard' },
   { href: '/evaluation', label: 'Evaluation' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/agents', label: 'For Agents' },
-  { href: '/docs', label: 'Docs' },
-  { href: '/gallery', label: 'Gallery' },
   { href: '/verify', label: 'Verify' },
+  { href: '/docs', label: 'Docs' },
 ] as const
 
 export function SiteHeader() {
@@ -22,8 +22,12 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="container site-header-row">
-        <Link href="/" className="wordmark-sm" aria-label="Assay — home">
-          ASSAY
+        <Link href="/" className="wordmark-sm brand-lockup" aria-label="Assay — home">
+          <span className="brand-mark" aria-hidden="true">
+            <img className="brand-mark-light" src="/brand/mark-light.webp" alt="" />
+            <img className="brand-mark-dark" src="/brand/mark-dark.webp" alt="" />
+          </span>
+          <span>ASSAY</span>
         </Link>
 
         <nav className="site-nav" aria-label="Primary">

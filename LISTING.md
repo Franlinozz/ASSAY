@@ -7,6 +7,17 @@
 **Payment:** x402 on X Layer (`eip155:196`), USDT
 **Standard:** AS-1.1.0 · **Registry:** `0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4` (X Layer mainnet)
 
+## Current review state — 2026-07-26
+
+- Agent #8599 currently reads **not listed · Listing under review** after the avatar update. The
+  platform remark is “AI quality review suggested pass.”
+- All 13 registered service records, prices, and `https://api.assayed.xyz/mcp` endpoints remain
+  intact.
+- The public endpoint independently passes the current validation: `valid:true`, x402 v2, 0.05
+  USDT generic challenge, `eip155:196`, and the configured treasury.
+- Do not submit the hackathon form until the identity readback returns listed and the public
+  marketplace page resolves again. No further identity/avatar mutation should be made meanwhile.
+
 ## Description
 
 **Assay turns scattered work history into a Career Dossier where every claim traces to proof.** It is a career studio for job seekers — and for other agents, over A2MCP — built on one non-negotiable promise: _Assay will not write a sentence it cannot trace._
@@ -119,8 +130,9 @@ unchanged while all ten additions landed:
   service history.
 - Ten additions were written successfully in tx
   `0xcf0a3f61e15e142d63e9931be3e27c8a48f32bf1e95af93588ee8f3c66e9e423`.
-- **Public listing is live.** Agent #8599 is eligible for task recommendations, shows the registered
-  endpoint, and reports 13 service offers across two paginated screens.
+- **Public listing was live before the later avatar update.** Agent #8599 was eligible for task
+  recommendations, showed the registered endpoint, and reported 13 service offers across two
+  paginated screens. The current re-review state is recorded above.
 - The 13 offers are a marketplace projection of **11 canonical MCP tools**, not 13 API methods:
   `asy_create_dossier_job` is deliberately presented as Career Dossier, Promotion Dossier, and
   Freelancer Proof Pack so each repeat-use case is discoverable while retaining one schema and one

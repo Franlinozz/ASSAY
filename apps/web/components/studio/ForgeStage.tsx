@@ -100,6 +100,7 @@ export function ForgeStage({ state, actions }: { state: StudioState; actions: St
                   type="button"
                   className={`artifact-chip ${selected.has(a.id) ? 'artifact-chip-on' : ''}`}
                   aria-pressed={selected.has(a.id)}
+                  disabled={actions.busy}
                   onClick={() => toggle(a.id)}
                 >
                   {a.label}
@@ -121,6 +122,25 @@ export function ForgeStage({ state, actions }: { state: StudioState; actions: St
                   : `Forge ${selected.size} artifact${selected.size === 1 ? '' : 's'}`}
             </button>
           </div>
+
+          {state.stage === 'forging' || actions.busy ? (
+            <section className="forge-live" data-testid="forge-live">
+              <div className="forge-live-orbit" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div>
+                <p className="overline">Forge and Tribunal are in session</p>
+                <h3>Your dossier is moving through the bench.</h3>
+                <p className="caption">
+                  Drafting, Chromium rendering, deterministic checks, critic review, and bounded
+                  repairs happen artifact by artifact. Follow the Run monitor for live progress. The
+                  server keeps working if you leave and return with this private link.
+                </p>
+              </div>
+            </section>
+          ) : null}
 
           {forge ? (
             <div className="forge-result" data-testid="forge-result">

@@ -142,6 +142,16 @@ count source.
 | Dependency and Git-history security gates                                                                               | root scripts                      | `npm audit` · `npm run security:secrets`        | CI/operator                                     | zero advisories · zero secret findings                      |
 | Reproducible performance drill                                                                                          | root scripts                      | `npm run hardening:drills`                      | operator record                                 | 15 ms health p95 · 38 ms fake ATS p95 · 1,712 ms mobile LCP |
 
+## Post-release submission-experience surfaces
+
+| Capability                                      | Package / source                                   | Route / command                             | User/operator surface                                                 | Proof                                   |
+| ----------------------------------------------- | -------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------- |
+| Long-Forge reconciliation + artifact progress   | `StudioWorkspace.tsx` + `EventFeed.tsx`            | `/d/[id]` + `/d-events/:id` + `/d-jobs/:id` | vertical dossier flow · sticky Run monitor · automatic Report handoff | full Studio Playwright flow             |
+| Contact-link quarantine + bounded repair budget | MCP Studio + Tribunal repair loop                  | Studio ingest/Forge                         | Ledger hold-back event · Report input-blocker explanation             | Studio + repair-loop regressions        |
+| Premium designed résumé                         | renderer office templates                          | Studio/MCP artifact download                | designed PDF only; ATS-safe variant remains unchanged                 | renderer Chromium + parse-back suite    |
+| Theme-aware supplied brand system               | `deploy/avatar` + optimized web/GitHub derivatives | global layout + repository root             | navbar · footer · favicon · README banner                             | web build + light/dark visual capture   |
+| Judge-ready form package                        | `docs/SUBMISSION-ANSWERS.md`                       | repository docs                             | paste-ready full/compact ASP descriptions                             | operator review against official fields |
+
 <!--
 Row template:
 | asy_ats_scan — parse-back + format-law + keyword coverage | @xyndicate/tribunal | POST /mcp asy_ats_scan | Studio → Report | packages/tribunal/src/atsScan.test.ts |

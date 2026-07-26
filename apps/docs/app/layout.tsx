@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: '%s · Assay Docs',
   },
   description:
-    'Guides and generated references for Assay: quickstart, the ten asy_* tools, the published Standard, seal verification, and x402 payment notes.',
+    'Guides and generated references for Assay: quickstart, all eleven asy_* tools, the published Standard, seal verification, and x402 payment notes.',
 }
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -23,7 +23,13 @@ export default function Layout({ children }: { children: ReactNode }) {
             tree={source.pageTree}
             nav={{
               title: (
-                <span style={{ fontWeight: 650, letterSpacing: '0.18em' }}>ASSAY&thinsp;/docs</span>
+                <span className="docs-brand">
+                  <span className="docs-brand-mark" aria-hidden="true">
+                    <img className="docs-brand-light" src="/brand/mark-light.webp" alt="" />
+                    <img className="docs-brand-dark" src="/brand/mark-dark.webp" alt="" />
+                  </span>
+                  <span>ASSAY&thinsp;/docs</span>
+                </span>
               ),
               url: 'https://assayed.xyz',
             }}

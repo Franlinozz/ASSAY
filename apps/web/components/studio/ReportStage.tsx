@@ -145,6 +145,28 @@ export function ReportStage({
     byArtifact.set(r.artifactId, list)
   }
   const ordered = [...byArtifact.entries()].sort((a, b) => b[1].length - a[1].length)
+  const finalReports = [...byArtifact.values()].map((reports) =>
+    [...reports].sort((a, b) => a.draftIndex - b.draftIndex).at(-1)!,
+  )
+  const inputBlockers = finalReports.flatMap((report) =>
+    report.hard.flatMap((check) =>
+      check.status === 'fail'
+        ? check.findings
+            .filter((finding) =>
+              ['DEAD_LINK', 'INVALID_CONTACT_URL', 'DANGLING_EVIDENCE', 'UNREADABLE_FILE'].includes(
+                finding.code,
+              ),
+            )
+            .map((finding) => ({ ...finding, artifactId: report.artifactId }))
+        : [],
+    ),
+  )
+  const uniqueBlockers = [
+    ...new Map(
+      inputBlockers.map((finding) => [`${finding.code}:${finding.ref ?? finding.detail}`, finding]),
+    ).values(),
+  ]
+  const inputBlockedArtifacts = new Set(inputBlockers.map((finding) => finding.artifactId)).size
 
   return (
     <div className="stage">
@@ -185,6 +207,44 @@ export function ReportStage({
           </div>
         ) : null}
       </div>
+
+      {uniqueBlockers.length > 0 ? (
+        <section className="report-input-blocker" data-testid="report-input-blocker">
+          <div className="report-input-icon" aria-hidden="true">
+            !
+          </div>
+          <div>
+            <p className="overline">Input blocker · not a verdict on your experience</p>
+            <h3>
+              {uniqueBlockers.length} source issue{uniqueBlockers.length === 1 ? '' : 's'} affected{' '}
+              {inputBlockedArtifacts} artifact{inputBlockedArtifacts === 1 ? '' : 's'}.
+            </h3>
+            <p className="caption">
+              The Tribunal was right to stop these drafts, but the Studio should not have allowed
+              unresolved profile metadata to reach the Forge. New and re-forged versions quarantine
+              these links before writing.
+            </p>
+            <ul className="report-input-list">
+              {uniqueBlockers.map((finding) => (
+                <li key={`${finding.code}:${finding.ref ?? finding.detail}`}>
+                  <span className="finding-code">{finding.code}</span>
+                  <span>
+                    {finding.ref ? `${finding.ref} — ` : ''}
+                    {finding.detail}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => actions.goTo('forge')}
+            >
+              Re-forge a clean version
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       {state.versions.length > 0 ? (
         <section className="parseback" data-testid="version-lineage">
@@ -228,15 +288,43 @@ export function ReportStage({
       ) : null}
 
       <div className="report-list">
-        {ordered.map(([artifactId, drafts]) => (
-          <div key={artifactId} className="stack">
-            {drafts
-              .sort((a, b) => a.draftIndex - b.draftIndex)
-              .map((r) => (
-                <VerdictCard key={r.draftIndex} report={r} />
-              ))}
-          </div>
-        ))}
+        {ordered.map(([artifactId, drafts]) => {
+          const history = [...drafts].sort((a, b) => a.draftIndex - b.draftIndex)
+          const final = history.at(-1)!
+          const previous = history.slice(0, -1)
+          return (
+            <section key={artifactId} className="report-artifact">
+              <div className="report-artifact-head">
+                <div>
+                  <span className="overline">Artifact verdict</span>
+                  <h3>
+                    {FILE_LABEL[artifactId]?.replace(/\s*\([^)]*\)$/, '') ??
+                      artifactId.replace(/_/g, ' ')}
+                  </h3>
+                </div>
+                <span className="caption mono">
+                  final draft {final.draftIndex + 1} · {final.standardVersion}
+                </span>
+              </div>
+              <VerdictCard report={final} />
+              {previous.length > 0 ? (
+                <details className="report-history">
+                  <summary>
+                    <span>
+                      Show {previous.length} earlier draft{previous.length === 1 ? '' : 's'}
+                    </span>
+                    <span className="caption">Failures retained for audit</span>
+                  </summary>
+                  <div className="report-history-list">
+                    {previous.map((report) => (
+                      <VerdictCard key={report.draftIndex} report={report} />
+                    ))}
+                  </div>
+                </details>
+              ) : null}
+            </section>
+          )
+        })}
       </div>
 
       {pb ? (

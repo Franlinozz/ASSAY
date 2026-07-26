@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/brand/github-banner.webp" width="100%" alt="Assay — evidence-backed career dossiers with structured assessment, traceable verification, and X Layer sealing">
+
 # ASSAY
 
 ### _Proof before polish._
@@ -15,7 +17,7 @@ other agents can hire by the call.
 [![X Layer registry](https://img.shields.io/badge/X_Layer_registry-196-C63D21)](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
 [![Assay Standard](https://img.shields.io/badge/Assay_Standard-AS--1.1.0-205C4C)](https://assayed.xyz/standard)
 [![Release](https://img.shields.io/badge/release-v1.1.0-1B1F2A)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-337_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-339_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
 
 **[Open the Studio](https://assayed.xyz/studio)** ·
 **[Watch the 90-second judged run](https://assayed.xyz/judge)** ·
@@ -37,6 +39,27 @@ evidence is usually scattered across documents, links, memories, and systems tha
 4. **[Tribunal](https://assayed.xyz/standard)** — grade deterministic laws and craft, then issue a bounded repair brief instead of quietly lowering the bar.
 5. **[Seal](https://assayed.xyz/docs/verify)** — sign the canonical version and anchor only its salted commitment leaf on X Layer.
 6. **[Share](https://assayed.xyz/gallery)** — expose a redacted recruiter portal, selected work samples, or a machine-readable agent hand-off.
+
+## See the system
+
+<table>
+  <tr>
+    <td width="50%"><img src="assets/screenshots/product-hero.png" alt="Assay landing page showing an evidence-backed résumé connected to documented, linked, attested, and sealed proof"></td>
+    <td width="50%"><img src="assets/screenshots/tribunal-repair.png" alt="Assay Judge mode showing the Tribunal failure-to-repair loop"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Proof before polish</b> — every sentence exposes its evidence thread.</sub></td>
+    <td align="center"><sub><b>FAIL → repair → PASS</b> — the first draft is never quietly hidden.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="assets/screenshots/sealed-gallery.png" alt="Assay gallery of fictional personas produced by the real pipeline and sealed on X Layer"></td>
+    <td width="50%"><img src="assets/screenshots/xlayer-verification.png" alt="Assay public verifier confirming a dossier commitment on X Layer"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Real pipeline exhibits</b> — fictional personas, honest grades, real seals.</sub></td>
+    <td align="center"><sub><b>Public verification</b> — no wallet and no payment required.</sub></td>
+  </tr>
+</table>
 
 ## Four moats
 
@@ -153,14 +176,15 @@ curl -sS https://api.assayed.xyz/mcp \
   pipeline output, Chromium parse-back, Tribunal reports, and X Layer seals are real. The sealed
   AS-1.0 sets honestly re-grade at 7/8 under AS-1.1 because their story banks fail the newer STAR
   completeness profile.
-- **A2A negotiation is not shipped.** Assay is listed and proven as A2MCP; it will not claim a
-  negotiated-delivery agent until that training and acceptance suite exists.
+- **A2A negotiation is not shipped.** Assay is registered and technically proven as A2MCP; its
+  public listing is currently back under review after the operator-approved avatar update. It will
+  not claim a negotiated-delivery agent until that training and acceptance suite exists.
 - **No voice interviewer or impersonation.** Interview Room evaluates typed answers; it does not
   roleplay a person.
 
 ## Test evidence
 
-The release gate runs **337 tests**: **282 Vitest + 51 Playwright end-to-end + 4 Foundry**. It also
+The release gate runs **339 tests**: **284 Vitest + 51 Playwright end-to-end + 4 Foundry**. It also
 typechecks every workspace, regenerates the published Standard and 11 tool pages, proves
 manifest/docs/pricing consistency, and runs the repository dead-link gauntlet. See
 [CI](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml) and the
@@ -188,7 +212,9 @@ manifest/docs/pricing consistency, and runs the repository dead-link gauntlet. S
 The diagram belongs here as the implementation map after the product, proofs, and runnable path—not
 as a wall between a cold reader and the problem Assay solves.
 
-<img src="assets/architecture.svg" width="100%" alt="Assay architecture: callers, MCP payment gate, evidence pipeline, Tribunal, receipts, and X Layer registry">
+<p align="center">
+  <img src="assets/architecture.svg" width="100%" alt="Assay architecture: callers, MCP payment gate, evidence pipeline, Tribunal, receipts, and X Layer registry">
+</p>
 
 ## Links
 

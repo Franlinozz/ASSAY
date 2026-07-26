@@ -10,3 +10,36 @@
 .dark {
   --color-fd-primary: hsl(163 41% 47%);
 }
+
+.docs-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+}
+.docs-brand-mark {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 8px;
+}
+.docs-brand-mark img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.docs-brand-dark {
+  display: none;
+}
+.dark .docs-brand-light {
+  display: none;
+}
+.dark .docs-brand-dark {
+  display: block;
+}

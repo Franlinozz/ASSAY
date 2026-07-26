@@ -1,6 +1,6 @@
 # HANDOFF — Assay (for Codex / the next session)
 
-_Last updated: 2026-07-25, at the Phase 17 v1.1.0 release candidate._
+_Last updated: 2026-07-26, during the post-release submission-experience correction._
 
 Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is the operational map so you don't get stuck.
 
@@ -8,16 +8,17 @@ Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is t
 
 - **Release:** every workspace and the production health default are **v1.1.0**; the published
   grader remains **AS-1.1.0**. Resolve the final tagged commit with `git rev-list -n1 v1.1.0`.
-- **Release matrix:** 282 Vitest + 4 Foundry + 51 Playwright e2e = **337 tests**. Production builds,
+- **Release matrix:** 284 Vitest + 4 Foundry + 51 Playwright e2e = **339 tests**. Production builds,
   full typecheck, judged-artifact, generated-doc, marketplace-consistency, npm audit, secret scan,
   and dead-link gates are green.
 - **Hosted CI:** use the `v1.1.0` tag / latest `main` run as the clean-runner record. Do not rely on
   the older Phase-15 run after the release tag exists.
 - **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs ·
   https://api.assayed.xyz/mcp deploy from `main`; all three systemd services must be active.
-  Health must report v1.1.0 / AS-1.1.0 / OKX payment mode. ASP **#8599** is listed with 13 offers
-  (11 canonical tools; the dossier job has three marketplace entry points), is owned by
-  `archonaudit@gmail.com`, and `x402-check` must remain `valid:true`.
+  Health must report v1.1.0 / AS-1.1.0 / OKX payment mode. ASP **#8599** retains all 13 registered
+  offers (11 canonical tools; the dossier job has three marketplace entry points), but the
+  2026-07-26 readback says **not listed · Listing under review** after the avatar update, with
+  “AI quality review suggested pass.” `x402-check` remains `valid:true`.
 - **Phases done:** P0–P17. After v1.1.0 this branch is fixes-only. Operator-only work that cannot be
   fabricated by code remains: record/upload the real video, publish the X thread, paste its URL
   into `SUBMISSION.md`, and submit the organizer form.
@@ -74,7 +75,7 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 | `npm run seal:personas`                 | Anchor persona leaves on X Layer mainnet (needs `ASY_SEALER_KEY`).                                                                                      |
 | `npm run regrade:personas`              | Re-grade the sealed persona artifact sets against the current Standard using Chromium screenshot sampling.                                              |
 | `npm run sweep` (repo root)             | Route sweep: hits every route + validates a real PDF download + forged-token 403.                                                                       |
-| `npm test` (repo root)                  | 282 Vitest.                                                                                                                                             |
+| `npm test` (repo root)                  | 284 Vitest.                                                                                                                                             |
 | `npm run test:e2e` (repo root)          | 51 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400).                                                                                 |
 | `npm run check:marketplace` (repo root) | Regenerates and proves machine manifest = docs = pricing for all 11 tools.                                                                              |
 | `npm run check:judge` (repo root)       | Regenerates public facts, verifies README/test counts, and checks local + public links.                                                                 |
@@ -95,6 +96,13 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
   `0x46b94488ce8b5e7435229d22a0cab33559f8833dc92c571714ef6a065e30b4b8`. The identity API
   returned `SUCCESS`, then the public listing temporarily returned 404 while re-indexing. Do not
   mutate the identity again; rerun the fail-closed marketplace capture once OKX republishes it.
+- **Post-release Studio correction:** owner pages now reconcile a long Forge from server state
+  instead of ending their poll after four minutes. The Run monitor shows artifact-level progress
+  and auto-advances to Report. Placeholder/dead contact links are quarantined before Forge, and
+  deterministic source blockers no longer consume two impossible prose repairs.
+- **Brand pack:** the ten operator-supplied high-resolution originals live in `deploy/avatar/`.
+  Lightweight theme-aware web marks live in `apps/web/public/brand/`; the favicon/app icon uses the
+  same mark, and `assets/brand/github-banner.webp` is the repository banner.
 - **P14 A2A decision:** skipped. Current docs expect a trained, multi-round negotiation/delivery agent and 10–20 scenario simulations; Assay proves A2MCP/background jobs today but not that negotiation suite.
 
 ## Gotchas that bit this session

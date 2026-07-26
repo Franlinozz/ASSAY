@@ -7,9 +7,14 @@ function endLabel(endYm: string | null): string {
 
 // Bullets → experiences. If Experience.claimIds link them, use that; otherwise all bullets go
 // under the most recent experience (heuristic — precise attribution is an apex-month refinement).
-export function bulletsForExperience(dossier: Dossier, expIndex: number, bullets: Sentence[]): Sentence[] {
+export function bulletsForExperience(
+  dossier: Dossier,
+  expIndex: number,
+  bullets: Sentence[],
+): Sentence[] {
   const exp = dossier.profile.experiences[expIndex]
-  if (exp.claimIds.length > 0) return bullets.filter((b) => b.claimIds.some((id) => exp.claimIds.includes(id)))
+  if (exp.claimIds.length > 0)
+    return bullets.filter((b) => b.claimIds.some((id) => exp.claimIds.includes(id)))
   return expIndex === 0 ? bullets : []
 }
 
@@ -25,7 +30,10 @@ export function renderAtsHtml(dossier: Dossier, bullets: Sentence[]): string {
   const parts: string[] = []
   parts.push(`<h1>${esc(p.fullName)}</h1>`)
   if (p.headline) parts.push(`<div class="headline">${esc(p.headline)}</div>`)
-  const contact = [p.contact.email, ...p.contact.links].filter((x): x is string => Boolean(x)).map(esc).join('  |  ')
+  const contact = [p.contact.email, ...p.contact.links]
+    .filter((x): x is string => Boolean(x))
+    .map(esc)
+    .join('  |  ')
   if (contact) parts.push(`<div class="contact">${contact}</div>`)
 
   if (p.experiences.length > 0) {
@@ -39,7 +47,10 @@ export function renderAtsHtml(dossier: Dossier, bullets: Sentence[]): string {
   }
   if (p.education.length > 0) {
     parts.push('<h2>EDUCATION</h2>')
-    for (const e of p.education) parts.push(`<div class="role">${esc(e.org)}${e.credential ? ` — ${esc(e.credential)}` : ''}</div>`)
+    for (const e of p.education)
+      parts.push(
+        `<div class="role">${esc(e.org)}${e.credential ? ` — ${esc(e.credential)}` : ''}</div>`,
+      )
   }
   if (p.skills.length > 0) {
     parts.push('<h2>SKILLS</h2>')
@@ -53,43 +64,92 @@ export function renderAtsHtml(dossier: Dossier, bullets: Sentence[]): string {
 }
 
 // Designed variant: editorial, hairlines, viridian structure, evidence-tier chips on bullets.
-export function renderDesignedHtml(dossier: Dossier, bullets: Sentence[], theme: Theme = 'light'): string {
+export function renderDesignedHtml(
+  dossier: Dossier,
+  bullets: Sentence[],
+  theme: Theme = 'light',
+): string {
   const p = dossier.profile
   const parts: string[] = []
+  parts.push('<header class="resume-mast">')
+  parts.push('<div class="registration">ASSAY / EVIDENCE-BACKED CAREER DOSSIER</div>')
   parts.push(`<div class="wordmark">${esc(p.fullName)}</div>`)
   if (p.headline) parts.push(`<div class="headline">${esc(p.headline)}</div>`)
-  const contact = [p.contact.email, ...p.contact.links].filter((x): x is string => Boolean(x)).map(esc).join('  ·  ')
+  const contact = [p.contact.email, ...p.contact.links]
+    .filter((x): x is string => Boolean(x))
+    .map(esc)
+    .join('  ·  ')
   if (contact) parts.push(`<div class="contact">${contact}</div>`)
-  parts.push('<div class="rule"></div>')
+  parts.push('<div class="mast-rule"><span></span></div>')
+  parts.push('</header>')
 
   if (p.experiences.length > 0) {
-    parts.push('<h2>Experience</h2>')
+    parts.push(
+      '<section class="resume-section"><div class="section-index">01</div><div class="section-body"><h2>Experience</h2>',
+    )
     p.experiences.forEach((exp, i) => {
-      parts.push(`<div class="role">${esc(exp.org)} — ${esc(exp.title)}</div>`)
-      parts.push(`<div class="dates">${esc(exp.startYm)} – ${esc(endLabel(exp.endYm))}</div>`)
+      parts.push('<article class="experience-entry">')
+      parts.push(
+        `<div class="role-row"><div class="role">${esc(exp.org)} <span>— ${esc(exp.title)}</span></div>`,
+      )
+      parts.push(`<div class="dates">${esc(exp.startYm)} – ${esc(endLabel(exp.endYm))}</div></div>`)
       const bs = bulletsForExperience(dossier, i, bullets)
       if (bs.length > 0) {
         parts.push(
-          `<ul>${bs.map((b) => `<li>${esc(b.text)}<span class="chip">${esc(tierOf(dossier, b))}</span></li>`).join('')}</ul>`,
+          `<ul>${bs.map((b) => `<li><span class="bullet-copy">${esc(b.text)}</span><span class="chip">${esc(tierOf(dossier, b))}</span></li>`).join('')}</ul>`,
         )
       }
+      parts.push('</article>')
     })
+    parts.push('</div></section>')
   }
   if (p.skills.length > 0) {
-    parts.push('<h2>Skills</h2>')
-    parts.push(`<p>${esc(p.skills.join(' · '))}</p>`)
+    parts.push(
+      '<section class="resume-section"><div class="section-index">02</div><div class="section-body"><h2>Skills</h2>',
+    )
+    parts.push(
+      `<div class="skill-list">${p.skills.map((skill) => `<span>${esc(skill)}</span>`).join('')}</div>`,
+    )
+    parts.push('</div></section>')
   }
-  return htmlDoc({ title: `${p.fullName} — Résumé`, css: officeCss(theme), body: parts.join('\n'), theme })
+  if (p.education.length > 0 || p.certifications.length > 0) {
+    parts.push(
+      '<section class="resume-section"><div class="section-index">03</div><div class="section-body"><h2>Education & credentials</h2><div class="credential-grid">',
+    )
+    for (const education of p.education)
+      parts.push(
+        `<div class="credential"><strong>${esc(education.org)}</strong><span>${education.credential ? esc(education.credential) : 'Education record'}${education.field ? ` · ${esc(education.field)}` : ''}</span></div>`,
+      )
+    for (const certification of p.certifications)
+      parts.push(
+        `<div class="credential"><strong>${esc(certification.name)}</strong><span>${certification.issuer ? esc(certification.issuer) : 'Documented credential'}${certification.issuedYm ? ` · ${esc(certification.issuedYm)}` : ''}</span></div>`,
+      )
+    parts.push('</div></div></section>')
+  }
+  parts.push(
+    '<footer class="resume-foot"><span>PROOF BEFORE POLISH.</span><span>Evidence tier shown beside each achievement.</span></footer>',
+  )
+  return htmlDoc({
+    title: `${p.fullName} — Résumé`,
+    css: officeCss(theme),
+    body: parts.join('\n'),
+    theme,
+  })
 }
 
 // Plain-text mirror of the ATS structure — used by the .docx builder and as a parse reference.
-export function atsPlainText(dossier: Dossier, bullets: Sentence[]): { lines: string[]; headings: string[] } {
+export function atsPlainText(
+  dossier: Dossier,
+  bullets: Sentence[],
+): { lines: string[]; headings: string[] } {
   const p = dossier.profile
   const lines: string[] = []
   const headings: string[] = []
   lines.push(p.fullName)
   if (p.headline) lines.push(p.headline)
-  const contact = [p.contact.email, ...p.contact.links].filter((x): x is string => Boolean(x)).join('  |  ')
+  const contact = [p.contact.email, ...p.contact.links]
+    .filter((x): x is string => Boolean(x))
+    .join('  |  ')
   if (contact) lines.push(contact)
   if (p.experiences.length > 0) {
     headings.push('EXPERIENCE')

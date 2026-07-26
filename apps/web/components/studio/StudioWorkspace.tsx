@@ -75,13 +75,21 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
   const [active, setActive] = useState<Stage>('ledger')
   const [feed, setFeed] = useState<FeedEvent[]>([])
   const [busy, setBusy] = useState(false)
+  const [forgeTargetCount, setForgeTargetCount] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fatal, setFatal] = useState<'token' | 'missing' | null>(null)
   const cursor = useRef(0)
   const didInitStage = useRef(false)
+  const previousServerStage = useRef<StudioState['stage'] | null>(null)
   const reduced = useReducedMotion()
   const stageOrder: Stage[] = ['ledger', 'brief', 'interview', 'forge', 'report']
   const stageIndex = stageOrder.indexOf(active)
+  const serverWorking = state?.stage === 'forging'
+  const working = busy || serverWorking
+  const defaultArtifactCount =
+    state?.variant === 'promotion' || state?.variant === 'freelance' ? 4 : 9
+  const expectedArtifacts =
+    forgeTargetCount ?? state?.forge?.artifacts.length ?? defaultArtifactCount
 
   const refresh = useCallback(async (): Promise<StudioState | null> => {
     try {
@@ -120,6 +128,7 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
         if (events.length) {
           cursor.current = next
           setFeed((prev) => [...prev, ...events])
+          if (events.some((event) => /artifacts? processed/i.test(event.action))) void refresh()
         }
       } catch {
         /* transient */
@@ -131,7 +140,26 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
       alive = false
       clearInterval(iv)
     }
-  }, [id, token, fatal])
+  }, [id, token, fatal, refresh])
+
+  // A Forge can outlive the request that started it or a page visit. Reconcile against the
+  // canonical server stage so reopening the same capability URL always catches up.
+  useEffect(() => {
+    if (!token || fatal || state?.stage !== 'forging') return
+    const timer = setInterval(() => void refresh(), 2500)
+    return () => clearInterval(timer)
+  }, [fatal, refresh, state?.stage, token])
+
+  // When a long Forge finishes, advance into the Report instead of leaving the owner stranded on
+  // Stage 4 with a completed event feed.
+  useEffect(() => {
+    const previous = previousServerStage.current
+    previousServerStage.current = state?.stage ?? null
+    if (previous === 'forging' && state?.stage === 'forged') {
+      setBusy(false)
+      setActive('report')
+    }
+  }, [state?.stage])
 
   const runJob = useCallback(
     async (starter: () => Promise<{ jobId: string }>) => {
@@ -139,16 +167,25 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
       setError(null)
       try {
         const { jobId } = await starter()
-        for (let i = 0; i < 240; i++) {
+        let completed = false
+        for (let i = 0; i < 1800; i++) {
           const st = await jobStatus(id, token, jobId)
-          if (st.status === 'done') break
+          if (st.status === 'done') {
+            completed = true
+            break
+          }
           if (st.status === 'failed') {
             setError(st.error ?? 'that step could not be completed — please retry')
             break
           }
           await new Promise((r) => setTimeout(r, 1000))
         }
-        await refresh()
+        const next = await refresh()
+        if (completed && next?.stage === 'forged') setActive('report')
+        if (!completed && next?.stage === 'forging')
+          setError(
+            'The run is still safe on the server. You can leave this page and return with the same private link.',
+          )
       } catch (e) {
         setError(e instanceof Error ? e.message : 'something went wrong — please retry')
       } finally {
@@ -159,7 +196,7 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
   )
 
   const actions: StudioActions = {
-    busy,
+    busy: working,
     runIngest: (body) => runJob(() => ingest(id, token, body)),
     confirmClaim: async (claimId, action, patch) => {
       setError(null)
@@ -206,7 +243,10 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
         setBusy(false)
       }
     },
-    runForge: (selected) => runJob(() => startForge(id, token, selected)),
+    runForge: (selected) => {
+      setForgeTargetCount(selected?.length ?? defaultArtifactCount)
+      return runJob(() => startForge(id, token, selected))
+    },
     seal: async () => {
       setBusy(true)
       setError(null)
@@ -294,7 +334,7 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
 
   return (
     <div className="studio">
-      <div className={`studio-topbar${busy ? ' studio-is-busy' : ''}`} aria-busy={busy}>
+      <div className={`studio-topbar${working ? ' studio-is-busy' : ''}`} aria-busy={working}>
         <div className="container studio-topbar-row">
           <div>
             <span className="overline">Career dossier</span>
@@ -306,7 +346,16 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
               </span>
             </p>
           </div>
-          <StageRail state={state} active={active} onNavigate={setActive} />
+          <div className={`studio-run-state${working ? ' studio-run-state-live' : ''}`}>
+            <span className="studio-run-dot" aria-hidden="true" />
+            <span>
+              {working
+                ? 'Run in progress'
+                : state?.stage === 'sealed'
+                  ? 'Sealed'
+                  : 'Private workspace'}
+            </span>
+          </div>
         </div>
         <div className="studio-progress-track" aria-hidden="true">
           <span
@@ -317,6 +366,23 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
       </div>
 
       <div className="container studio-body">
+        <aside className="studio-nav-panel">
+          <div className="studio-nav-heading">
+            <span className="overline">Dossier flow</span>
+            <p>Build proof in order. Revisit any completed room.</p>
+          </div>
+          <StageRail state={state} active={active} onNavigate={setActive} />
+          <div className="studio-proof-note">
+            <span className="studio-proof-mark" aria-hidden="true">
+              A
+            </span>
+            <p>
+              <strong>Claim gate active.</strong>
+              <span>No sentence ships without confirmed evidence.</span>
+            </p>
+          </div>
+        </aside>
+
         <div className="studio-main">
           {error ? (
             <div className="studio-error" role="alert" data-testid="studio-error">
@@ -350,7 +416,7 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
           )}
         </div>
         <aside className="studio-side">
-          <EventFeed events={feed} busy={busy} />
+          <EventFeed events={feed} busy={working} expectedArtifacts={expectedArtifacts} />
         </aside>
       </div>
     </div>

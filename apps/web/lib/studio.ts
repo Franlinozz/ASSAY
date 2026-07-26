@@ -279,7 +279,7 @@ export interface Report {
     id: string
     title: string
     status: string
-    findings: Array<{ code: string; detail: string }>
+    findings: Array<{ code: string; detail: string; ref?: string }>
   }>
   repairBrief?: string
   standardVersion: string
