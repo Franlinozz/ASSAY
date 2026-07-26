@@ -5,6 +5,7 @@ import { SealedStrip } from '../components/SealedStrip'
 import { LoopDiagram } from '../components/LoopDiagram'
 import { GuillocheBand } from '../components/Guilloche'
 import { Reveal } from '../components/Reveal'
+import { EditorialImage } from '../components/EditorialImage'
 import { SITE } from '../lib/site'
 import demo from '../lib/demo-run.generated.json'
 
@@ -146,7 +147,7 @@ export default function LandingPage() {
           <p className="overline">Four moats, visible in sixty seconds</p>
 
           {/* 01 — claim gate */}
-          <Reveal className="moat">
+          <Reveal className="moat moat-editorial moat-claim">
             <div className="moat-copy">
               <p className="moat-num">{MOATS[0].num}</p>
               <h3>{MOATS[0].title}</h3>
@@ -154,29 +155,38 @@ export default function LandingPage() {
                 {MOATS[0].body}
               </p>
             </div>
-            <div className="capture">
-              <div className="capture-head">
-                <span className="overline">Forge output — every sentence cites its claim</span>
-                <span className="caption mono">real pipeline output</span>
-              </div>
-              {atsSentences.map((s, i) => (
-                <div key={i} className="sentence-row">
-                  <span>{s.text}</span>
-                  <span className="sentence-claims">
-                    {s.claimIds.map((id) => (
-                      <span key={id} className="claim-ref">
-                        {id}
-                      </span>
-                    ))}
-                  </span>
+            <div className="moat-photo-stack moat-photo-stack-claim">
+              <EditorialImage
+                src="/media/editorial/assay/every-claim-has-a-source.webp"
+                alt="Hands tracing a résumé claim to supporting professional evidence."
+                variant="claim-gate"
+                sizes="(max-width: 900px) 100vw, 56vw"
+                objectPosition="52% 48%"
+              />
+              <div className="capture">
+                <div className="capture-head">
+                  <span className="overline">Forge output — every sentence cites its claim</span>
+                  <span className="caption mono">real pipeline output</span>
                 </div>
-              ))}
-              <div className="refusal">
-                <span className="mono" style={{ color: 'var(--graphite)' }}>
-                  asy_cover_letter · no evidence supplied →
-                </span>{' '}
-                &ldquo;I won&rsquo;t write a cover letter from thin air. Provide claims + evidence —
-                Assay never writes a sentence it can&rsquo;t trace.&rdquo;
+                {atsSentences.map((s, i) => (
+                  <div key={i} className="sentence-row">
+                    <span>{s.text}</span>
+                    <span className="sentence-claims">
+                      {s.claimIds.map((id) => (
+                        <span key={id} className="claim-ref">
+                          {id}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                ))}
+                <div className="refusal">
+                  <span className="mono" style={{ color: 'var(--graphite)' }}>
+                    asy_cover_letter · no evidence supplied →
+                  </span>{' '}
+                  &ldquo;I won&rsquo;t write a cover letter from thin air. Provide claims + evidence
+                  — Assay never writes a sentence it can&rsquo;t trace.&rdquo;
+                </div>
               </div>
             </div>
           </Reveal>
@@ -265,7 +275,7 @@ export default function LandingPage() {
           </Reveal>
 
           {/* 04 — recruiter portal */}
-          <Reveal className="moat moat-flip">
+          <Reveal className="moat moat-flip moat-editorial moat-recruiter">
             <div className="moat-copy">
               <p className="moat-num">{MOATS[3].num}</p>
               <h3>{MOATS[3].title}</h3>
@@ -276,31 +286,40 @@ export default function LandingPage() {
                 <Link href="/gallery">See a dossier →</Link>
               </p>
             </div>
-            <div className="capture">
-              <div className="capture-head">
-                <span className="overline">Share portal — what the recruiter sees</span>
-                <span className="caption mono">read-only · revocable</span>
-              </div>
-              <div className="sentence-row">
-                <span>{demo.claims[0]?.text}</span>
-                <span className="sentence-claims">
-                  <span className="chip chip-documented">Documented</span>
-                </span>
-              </div>
-              <div className="sentence-row">
-                <span>Tribunal grade</span>
-                <span className="sentence-claims">
-                  <span className="chip chip-ok">
-                    PASS · {demo.tribunal.rollup.finalPassed}/{demo.tribunal.rollup.artifacts}{' '}
-                    artifacts
+            <div className="moat-photo-stack moat-photo-stack-recruiter">
+              <EditorialImage
+                src="/media/editorial/assay/what-the-recruiter-actually-sees.webp"
+                alt="A recruiter comparing a résumé statement with its supporting work evidence."
+                variant="recruiter-blend"
+                sizes="(max-width: 900px) 100vw, 56vw"
+                objectPosition="54% 50%"
+              />
+              <div className="capture">
+                <div className="capture-head">
+                  <span className="overline">Share portal — what the recruiter sees</span>
+                  <span className="caption mono">read-only · revocable</span>
+                </div>
+                <div className="sentence-row">
+                  <span>{demo.claims[0]?.text}</span>
+                  <span className="sentence-claims">
+                    <span className="chip chip-documented">Documented</span>
                   </span>
-                </span>
-              </div>
-              <div className="sentence-row">
-                <span>Seal status</span>
-                <span className="sentence-claims">
-                  <span className="chip chip-sealed">verify on X Layer</span>
-                </span>
+                </div>
+                <div className="sentence-row">
+                  <span>Tribunal grade</span>
+                  <span className="sentence-claims">
+                    <span className="chip chip-ok">
+                      PASS · {demo.tribunal.rollup.finalPassed}/{demo.tribunal.rollup.artifacts}{' '}
+                      artifacts
+                    </span>
+                  </span>
+                </div>
+                <div className="sentence-row">
+                  <span>Seal status</span>
+                  <span className="sentence-claims">
+                    <span className="chip chip-sealed">verify on X Layer</span>
+                  </span>
+                </div>
               </div>
             </div>
           </Reveal>
@@ -326,14 +345,21 @@ export default function LandingPage() {
       <GuillocheBand height={24} opacity={0.45} className="motion-band" />
 
       {/* ── CTA ── */}
-      <section className="cta-band">
-        <Reveal className="container">
+      <section className="cta-band cta-band-editorial">
+        <EditorialImage
+          src="/media/editorial/assay/the-room-before-the-interview.webp"
+          alt="A professional waiting outside an interview room with a verified evidence dossier."
+          variant="cta-environment"
+          sizes="100vw"
+          objectPosition="50% 52%"
+        />
+        <Reveal className="container cta-editorial-copy">
           <h2>Begin a dossier.</h2>
-          <p className="lede" style={{ maxWidth: '34rem', marginInline: 'auto' }}>
+          <p className="lede">
             Bring whatever you have — an old résumé, project docs, links, or just your answers.
             Assay files the proof; the polish follows.
           </p>
-          <div className="hero-ctas" style={{ justifyContent: 'center' }}>
+          <div className="hero-ctas cta-actions">
             <Link href="/studio" className="btn btn-primary">
               Open the Studio
             </Link>

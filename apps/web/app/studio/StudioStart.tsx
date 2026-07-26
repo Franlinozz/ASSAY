@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createDossier } from '../../lib/studio'
 import { RegCorners } from '../../components/Guilloche'
+import { EditorialImage } from '../../components/EditorialImage'
 
 export function StudioStart() {
   const router = useRouter()
@@ -151,6 +152,13 @@ export function StudioStart() {
             </span>
           </li>
         </ol>
+        <EditorialImage
+          src="/media/editorial/assay/begin-a-dossier.webp"
+          alt="A professional organizing years of work into a new evidence dossier."
+          variant="studio-documentary"
+          sizes="(max-width: 820px) 100vw, 420px"
+          objectPosition="52% 50%"
+        />
         <p className="caption start-privacy">
           No account. The private link Assay issues is the only key to your dossier — keep it, and
           it&rsquo;s yours to revoke.

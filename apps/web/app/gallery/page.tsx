@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { TierChip } from '../../components/TierChip'
 import { Reveal } from '../../components/Reveal'
 import { featuredPersona, otherPersonas, personaTiers, type Persona } from '../../lib/personas'
+import { EditorialImage } from '../../components/EditorialImage'
 
 export const metadata: Metadata = {
   title: 'Gallery',
@@ -93,6 +94,15 @@ export default function GalleryPage() {
 
       <section className="section-tight">
         <div className="container">
+          <Reveal className="editorial-break editorial-gallery-break">
+            <EditorialImage
+              src="/media/editorial/assay/dossiers-on-display.webp"
+              alt="Three evidence dossiers displaying work from operations, engineering and healthcare."
+              variant="gallery-panorama"
+              sizes="(max-width: 720px) 100vw, 1200px"
+              objectPosition="50% 48%"
+            />
+          </Reveal>
           <Reveal className="gallery-privacy-note gallery-privacy-note-wide">
             <p className="overline">Public showcase · private Studio</p>
             <p className="caption">

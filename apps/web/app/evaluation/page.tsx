@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { GuillocheBand } from '../../components/Guilloche'
 import { STANDARD } from '../../lib/standard.generated'
 import demo from '../../lib/demo-run.generated.json'
+import { EditorialImage } from '../../components/EditorialImage'
+import { Reveal } from '../../components/Reveal'
 
 export const metadata: Metadata = {
   title: 'Evaluation — how the Tribunal grades',
@@ -197,6 +199,17 @@ export default function EvaluationPage() {
           </div>
         </div>
       </section>
+
+      <Reveal className="container editorial-break editorial-tribunal-break">
+        <p className="overline">The Tribunal · independent review</p>
+        <EditorialImage
+          src="/media/editorial/assay/the-tribunal.webp"
+          alt="Independent reviewers examining a candidate’s evidence dossier."
+          variant="tribunal-band"
+          sizes="(max-width: 720px) 100vw, 1200px"
+          objectPosition="50% 50%"
+        />
+      </Reveal>
 
       <section className="section-tight">
         <div className="container stack-lg">

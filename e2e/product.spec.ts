@@ -92,6 +92,77 @@ test('landing proof interaction has no ornamental vertical scan overlay', async 
   expect(scanContent).toBe('none')
 })
 
+const EDITORIAL_IMAGES = [
+  {
+    path: '/',
+    alt: 'Hands tracing a résumé claim to supporting professional evidence.',
+  },
+  {
+    path: '/',
+    alt: 'A recruiter comparing a résumé statement with its supporting work evidence.',
+  },
+  {
+    path: '/',
+    alt: 'A professional waiting outside an interview room with a verified evidence dossier.',
+  },
+  {
+    path: '/standard',
+    alt: 'Three reviewers independently applying a professional evidence standard.',
+  },
+  {
+    path: '/studio',
+    alt: 'A professional organizing years of work into a new evidence dossier.',
+  },
+  {
+    path: '/evaluation',
+    alt: 'Independent reviewers examining a candidate’s evidence dossier.',
+  },
+  {
+    path: '/verify',
+    alt: 'An archival specialist applying an integrity mark to a professional dossier.',
+  },
+  {
+    path: '/gallery',
+    alt: 'Three evidence dossiers displaying work from operations, engineering and healthcare.',
+  },
+] as const
+
+test.describe('editorial photography system', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    test(`all eight meaningful photographs load in the ${theme} theme`, async ({ page }) => {
+      await page.addInitScript((value) => localStorage.setItem('assay-theme', value), theme)
+      let currentPath = ''
+      for (const item of EDITORIAL_IMAGES) {
+        if (item.path !== currentPath) {
+          await page.goto(item.path)
+          currentPath = item.path
+          await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+        }
+        const image = page.getByAltText(item.alt)
+        await image.scrollIntoViewIfNeeded()
+        await expect(image).toBeVisible()
+        await expect
+          .poll(() => image.evaluate((node: HTMLImageElement) => node.naturalWidth))
+          .toBeGreaterThan(0)
+      }
+    })
+  }
+
+  for (const width of [390, 430]) {
+    test(`affected routes remain overflow-free at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 })
+      for (const path of ['/', '/standard', '/studio', '/evaluation', '/verify', '/gallery']) {
+        await page.goto(path)
+        const dimensions = await page.evaluate(() => ({
+          content: document.documentElement.scrollWidth,
+          viewport: document.documentElement.clientWidth,
+        }))
+        expect(dimensions.content).toBe(dimensions.viewport)
+      }
+    })
+  }
+})
+
 test.describe('copy-to-clipboard (/agents)', () => {
   test('explains eleven API tools versus thirteen marketplace offers', async ({ page }) => {
     await page.goto('/agents')

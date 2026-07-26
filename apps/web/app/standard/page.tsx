@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { STANDARD } from '../../lib/standard.generated'
 import { GuillocheBand, RegCorners } from '../../components/Guilloche'
+import { EditorialImage } from '../../components/EditorialImage'
+import { Reveal } from '../../components/Reveal'
 
 export const metadata: Metadata = {
   title: 'The Assay Standard',
@@ -78,6 +80,17 @@ export default function StandardPage() {
           </p>
         </div>
       </section>
+
+      <Reveal className="container editorial-break editorial-standard-break">
+        <p className="overline">The Standard in practice</p>
+        <EditorialImage
+          src="/media/editorial/assay/the-standard-in-practice.webp"
+          alt="Three reviewers independently applying a professional evidence standard."
+          variant="standard-strip"
+          sizes="(max-width: 720px) 100vw, 1200px"
+          objectPosition="50% 48%"
+        />
+      </Reveal>
 
       <GuillocheBand height={20} opacity={0.4} />
 

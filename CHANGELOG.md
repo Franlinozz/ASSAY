@@ -6,6 +6,12 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Added
 
+- Added a coherent eight-image editorial photography system across the Claim Gate, recruiter
+  portal, closing CTA, Standard, Studio onboarding, Tribunal, Verify, and Gallery surfaces. Each
+  placement has its own theme-aware mask, crop, and mobile composition, with meaningful alt text
+  and reduced-motion-safe loading.
+- Added browser regression coverage proving every editorial image loads in both themes and all
+  affected routes remain free of horizontal overflow at 390px and 430px.
 - Added the operator-supplied horizontal Assay mark and custom wordmark as transparent,
   theme-aware lockups in the web and docs chrome, plus a matching browser/app icon and the
   evidence-flow brand banner in the GitHub exhibit. The high-resolution originals remain
