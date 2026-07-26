@@ -216,6 +216,62 @@ describe('HTTP surface', () => {
     expect(rig.store.getOrderByIdempotencyKey('idem-dup')).toBeTruthy()
   })
 
+  it('recovers a completed paid result with the same key and body but no payment proof', async () => {
+    const { rig, base } = startApp()
+    const paid = await mcpPost(base, atsCall, {
+      'PAYMENT-SIG': 'signed-proof-recovery-123',
+      'Idempotency-Key': 'idem-recovery',
+    })
+    expect(paid.status).toBe(200)
+    const original = (await paid.json()) as { result: unknown }
+
+    const recovered = await mcpPost(base, atsCall, { 'Idempotency-Key': 'idem-recovery' })
+    expect(recovered.status).toBe(200)
+    expect(recovered.headers.get('PAYMENT-REQUIRED')).toBeNull()
+    expect((await recovered.json()) as { result: unknown }).toEqual(original)
+    expect(rig.store.orderCount()).toBe(1)
+  })
+
+  it('rejects reusing an idempotency key with different arguments', async () => {
+    const { base } = startApp()
+    await mcpPost(base, atsCall, {
+      'PAYMENT-SIG': 'signed-proof-conflict-123',
+      'Idempotency-Key': 'idem-conflict',
+    })
+    const changed = {
+      ...atsCall,
+      params: {
+        ...atsCall.params,
+        arguments: { resumeText: 'A DIFFERENT RESUME\nEXPERIENCE\nOther role' },
+      },
+    }
+    const conflict = await mcpPost(base, changed, { 'Idempotency-Key': 'idem-conflict' })
+    expect(conflict.status).toBe(409)
+    expect(await conflict.json()).toMatchObject({ error: 'idempotency_conflict' })
+  })
+
+  it('offers concrete per-service x402 routes while keeping free tools directly callable', async () => {
+    const { base } = startApp()
+    const paid = await fetch(`${base}/x402/asy_story_bank`)
+    expect(paid.status).toBe(402)
+    const challenge = JSON.parse(
+      Buffer.from(paid.headers.get('PAYMENT-REQUIRED')!, 'base64').toString(),
+    ) as { resource: { url: string }; accepts: Array<{ amount: string }> }
+    expect(challenge.resource.url).toContain('/x402/asy_story_bank')
+    expect(challenge.accepts[0]!.amount).toBe('200000')
+
+    const promotion = await fetch(`${base}/x402/asy_promotion_dossier`)
+    expect(promotion.status).toBe(402)
+    const promotionChallenge = JSON.parse(
+      Buffer.from(promotion.headers.get('PAYMENT-REQUIRED')!, 'base64').toString(),
+    ) as { accepts: Array<{ amount: string }> }
+    expect(promotionChallenge.accepts[0]!.amount).toBe('2000000')
+
+    const free = await fetch(`${base}/x402/asy_job_status?jobId=missing-job`)
+    expect(free.status).toBe(200)
+    expect(free.headers.get('PAYMENT-REQUIRED')).toBeNull()
+  })
+
   it('refuses a policy-violating paid call without charging (no 402)', async () => {
     const { base } = startApp()
     const bad = {

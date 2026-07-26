@@ -21,12 +21,27 @@ to authorize a paid replay.
 5. **200 + PAYMENT-RESPONSE** — the facilitator verifies and settles on-chain; the response
    carries the settlement proof and your result.
 
+## Marketplace resources
+
+The generic `/mcp` endpoint must keep negotiation free. OKX.AI service cards therefore point to
+concrete resources such as `/x402/asy_story_bank` and `/x402/asy_interview_prep`. An unpaid GET or
+POST to one of those paid resources returns its own 402 immediately; the paid replay returns the
+service result directly. Promotion and freelancer cards use
+`/x402/asy_promotion_dossier` and `/x402/asy_freelancer_proof_pack`, which server-bind the correct
+`asy_create_dossier_job` variant. Free job status, job result, and seal verification resources
+return 200 without x402.
+
+The complete live route map is published under `marketplaceResources` at
+[`/.well-known/assay.json`](https://api.assayed.xyz/.well-known/assay.json).
+
 ## Guarantees
 
 - **PolicyGate before payment.** A request Assay refuses on policy is refused politely — and never
   charged.
-- **Idempotent replay.** A settled call is cached against its `Idempotency-Key` (or the payment
-  signature hash). Replays return the original result verbatim — never re-charged, never re-run.
+- **Body-bound idempotent recovery.** A settled call is cached against its `Idempotency-Key` (or
+  the payment signature hash). A retry with the same key and canonical arguments recovers the
+  original result even if the payment header was lost. Reusing the key for different input returns
+  `409 idempotency_conflict` — never another charge and never another person’s result.
 - **Free means free.** `asy_verify`, `asy_job_status`, and `asy_job_result` are never gated.
 - **No charge before tool invocation.** `GET`, malformed transport requests, `initialize`,
   `tools/list`, and notifications never enter payment handling. Only `tools/call` for a paid tool

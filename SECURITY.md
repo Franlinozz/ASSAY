@@ -92,8 +92,10 @@ Tribunal report.
 ### Payments and secrets
 
 - Policy checks run before payment handling, so refused requests are not charged.
-- Paid MCP calls use the OKX x402 facilitator on X Layer. Successful calls are idempotent by the
-  provided idempotency key or payment-proof hash.
+- Paid MCP and concrete marketplace-resource calls use the OKX x402 facilitator on X Layer.
+  Successful calls are idempotent by the provided key or payment-proof hash. Explicit keys are
+  bound to the canonical tool arguments: identical retries can recover a cached result without
+  resending the payment header, while different input under the same key is rejected with 409.
 - Provider keys, payment credentials, the sealer key, signing secrets, and database paths are read
   from environment variables. Production loads them from a permission-restricted systemd
   `EnvironmentFile`; no secret belongs in the repository.

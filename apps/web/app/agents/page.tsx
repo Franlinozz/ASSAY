@@ -7,7 +7,7 @@ import { GuillocheBand } from '../../components/Guilloche'
 export const metadata: Metadata = {
   title: 'For Agents',
   description:
-    'Call Assay over A2MCP: one endpoint, eleven tools and thirteen marketplace offers, with x402 payment in USDT on X Layer.',
+    'Call Assay over A2MCP: one protocol, eleven tools and thirteen marketplace offers, with x402 payment in USDT on X Layer.',
   openGraph: { images: ['/og/agents.png'] },
 }
 
@@ -52,7 +52,7 @@ export default function AgentsPage() {
     <>
       <div className="container page-head">
         <p className="overline">For agents · A2MCP · agent #{SITE.agentId}</p>
-        <h1>Eleven tools. Thirteen offers. One endpoint.</h1>
+        <h1>Eleven tools. Thirteen offers. One protocol.</h1>
         <p className="lede">
           Assay is an Agent Service Provider on OKX.AI: any agent can commission proof-grade career
           artifacts over MCP and settle in USDT via x402 — the same pipeline humans use in the
@@ -63,6 +63,11 @@ export default function AgentsPage() {
           <span className="mono">asy_create_dossier_job</span> tool has three discoverable
           marketplace modes—Career Dossier, Promotion Dossier, and Freelancer Proof Pack—so buyers
           can find the right outcome without adding duplicate API methods.
+        </p>
+        <p className="caption" style={{ marginTop: '0.7rem' }}>
+          MCP clients negotiate and discover tools at <span className="mono">/mcp</span>. OKX.AI
+          offer cards use concrete <span className="mono">/x402/&lt;service&gt;</span> resources so
+          an unpaid marketplace probe receives its service-specific 402 immediately.
         </p>
       </div>
 

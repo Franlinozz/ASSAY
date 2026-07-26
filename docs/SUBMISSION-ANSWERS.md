@@ -60,8 +60,8 @@ modes without duplicating the API contract.
 
 The product is live at `https://assayed.xyz`, its generated documentation is at
 `https://assayed.xyz/docs`, and its public source is at
-`https://github.com/Franlinozz/ASSAY`. The repository is itself a verifiable exhibit: **341 passing
-tests** (284 Vitest, 53 Playwright, 4 Foundry), clean-checkout CI, a published security model,
+`https://github.com/Franlinozz/ASSAY`. The repository is itself a verifiable exhibit: **344 passing
+tests** (287 Vitest, 53 Playwright, 4 Foundry), clean-checkout CI, a published security model,
 failure drills, generated tool documentation, a real X Layer registry, real sealed demonstration
 dossiers, and a free public verifier. The Gallery personas are explicitly fictional; their
 pipeline runs, Chromium PDF generation, parse-back reports, and mainnet seals are real.

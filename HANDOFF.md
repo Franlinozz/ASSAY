@@ -8,7 +8,7 @@ Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is t
 
 - **Release:** every workspace and the production health default are **v1.1.0**; the published
   grader remains **AS-1.1.0**. Resolve the final tagged commit with `git rev-list -n1 v1.1.0`.
-- **Release matrix:** 284 Vitest + 4 Foundry + 51 Playwright e2e = **339 tests**. Production builds,
+- **Release matrix:** 287 Vitest + 4 Foundry + 53 Playwright e2e = **344 tests**. Production builds,
   full typecheck, judged-artifact, generated-doc, marketplace-consistency, npm audit, secret scan,
   and dead-link gates are green.
 - **Hosted CI:** use the `v1.1.0` tag / latest `main` run as the clean-runner record. Do not rely on
@@ -75,8 +75,8 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 | `npm run seal:personas`                 | Anchor persona leaves on X Layer mainnet (needs `ASY_SEALER_KEY`).                                                                                      |
 | `npm run regrade:personas`              | Re-grade the sealed persona artifact sets against the current Standard using Chromium screenshot sampling.                                              |
 | `npm run sweep` (repo root)             | Route sweep: hits every route + validates a real PDF download + forged-token 403.                                                                       |
-| `npm test` (repo root)                  | 284 Vitest.                                                                                                                                             |
-| `npm run test:e2e` (repo root)          | 51 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400).                                                                                 |
+| `npm test` (repo root)                  | 287 Vitest.                                                                                                                                             |
+| `npm run test:e2e` (repo root)          | 53 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400).                                                                                 |
 | `npm run check:marketplace` (repo root) | Regenerates and proves machine manifest = docs = pricing for all 11 tools.                                                                              |
 | `npm run check:judge` (repo root)       | Regenerates public facts, verifies README/test counts, and checks local + public links.                                                                 |
 | `npm run dossier` (repo root)           | Runs a deterministic dossier through real Chromium render + parse-back; no provider key required.                                                       |
@@ -90,7 +90,7 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 - **Surfacing audit:** findings table in `FEATURES.md`; `/docs/api` documents machine endpoints; `scripts/route-sweep.mjs` guards against invisible capabilities; bug-taxonomy defenses in `packages/mcp-server/src/taxonomy.test.ts`.
 - **P12 apex:** `packages/renderers/src/interview.ts`, variant writers in `forge.ts`, Studio Interview tab + Brief modes, and `asy_interview_prep`.
 - **P13 trust:** additive SQLite tables `dossier_versions`, `evidence_redactions`, `share_views`; owner controls in Studio Ledger/Report/Share; version-aware `asy_verify`; AS profile router in `packages/tribunal/src/hard/index.ts`; gallery re-grade script/data.
-- **ASP #8599 payment boundary:** `/mcp` serves GET discovery, `initialize`, and `tools/list` without payment. Only a paid JSON-RPC `tools/call` may return the x402 challenge; malformed transport requests fail normally. Paid tools keep their table prices; `asy_verify`, `asy_job_status`, and `asy_job_result` remain free. Re-run the platform payment checks and explicit initialize/list/call probes after every payment-layer deploy.
+- **ASP #8599 payment boundary:** `/mcp` serves GET discovery, `initialize`, and `tools/list` without payment. Only a paid JSON-RPC `tools/call` may return the x402 challenge there. Thirteen concrete `/x402/:service` resources exist for OKX.AI offer cards; paid routes challenge immediately and free status/result/verify routes return 200. Completed explicit idempotency keys recover their body-bound cached response even without the original payment header. Re-run the platform payment checks, concrete-route probes, and explicit initialize/list/call probes after every payment-layer deploy.
 - **P14 listing refresh:** ten services added successfully in tx `0xcf0a3f61e15e142d63e9931be3e27c8a48f32bf1e95af93588ee8f3c66e9e423`. The three original services remain unchanged because the platform blocks full-record changes once a service is in use. The two-page public capture proved all 13 names/prices before the later avatar refresh; `node scripts/capture-marketplace.mjs` fails closed unless that public state is available.
 - **P17 avatar refresh:** the approved 768×768 derivative is live on Agent #8599’s identity in tx
   `0x46b94488ce8b5e7435229d22a0cab33559f8833dc92c571714ef6a065e30b4b8`. The identity API

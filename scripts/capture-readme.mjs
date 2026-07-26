@@ -22,11 +22,19 @@ try {
   await page.screenshot({ path: `${out}/product-hero.png` })
 
   await page.goto(`${base}/gallery`, { waitUntil: 'domcontentloaded' })
+  await page.evaluate(() => {
+    localStorage.setItem('assay-theme', 'dark')
+    document.documentElement.setAttribute('data-theme', 'dark')
+  })
   await page.locator('[data-testid^="persona-card-"]').first().waitFor()
   await page.waitForTimeout(400)
   await page.screenshot({ path: `${out}/sealed-gallery.png` })
 
   await page.goto(`${base}/judge`, { waitUntil: 'domcontentloaded' })
+  await page.evaluate(() => {
+    localStorage.setItem('assay-theme', 'dark')
+    document.documentElement.setAttribute('data-theme', 'dark')
+  })
   await page.getByTestId('judge-tour').waitFor()
   for (let i = 0; i < 12; i++) {
     const beat = await page.getByTestId('judge-tour').getAttribute('data-beat')
@@ -39,6 +47,10 @@ try {
 
   await page.goto(`${base}/verify?dossierId=DSR-WC0Q7NZ7`, {
     waitUntil: 'domcontentloaded',
+  })
+  await page.evaluate(() => {
+    localStorage.setItem('assay-theme', 'light')
+    document.documentElement.setAttribute('data-theme', 'light')
   })
   await page.getByTestId('verify-result').waitFor({ timeout: 30_000 })
   await page.waitForTimeout(300)

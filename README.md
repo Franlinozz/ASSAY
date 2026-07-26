@@ -17,7 +17,7 @@ other agents can hire by the call.
 [![X Layer registry](https://img.shields.io/badge/X_Layer_registry-196-C63D21)](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
 [![Assay Standard](https://img.shields.io/badge/Assay_Standard-AS--1.1.0-205C4C)](https://assayed.xyz/standard)
 [![Release](https://img.shields.io/badge/release-v1.1.0-1B1F2A)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-341_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-344_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
 
 **[Open the Studio](https://assayed.xyz/studio)** ·
 **[Watch the 90-second judged run](https://assayed.xyz/judge)** ·
@@ -90,22 +90,24 @@ on X Layer; source documents, career prose, contact data, and salts stay off-cha
 
 ## MCP tools and prices
 
-One stateless Streamable HTTP endpoint: `https://api.assayed.xyz/mcp`. Prices are USDT-denominated
-per call and settle through x402 on X Layer (`eip155:196`).
+MCP negotiation and discovery use the stateless Streamable HTTP endpoint
+`https://api.assayed.xyz/mcp`. OKX.AI cards use concrete `/x402/<service>` resources so every paid
+offer returns its own immediate 402 challenge. Prices are USDT-denominated per call and settle
+through x402 on X Layer (`eip155:196`).
 
-| Tool                                                                              | What it does                                                               |            Price |
-| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------: |
-| [`asy_ats_scan`](https://assayed.xyz/docs/tools/asy_ats_scan)                     | Re-parse a résumé, flag format-law failures, and report honest JD coverage |        0.05 USDT |
-| [`asy_claim_audit`](https://assayed.xyz/docs/tools/asy_claim_audit)               | Classify supported, vague, and unsupported-number claims                   |        0.05 USDT |
-| [`asy_fit_brief`](https://assayed.xyz/docs/tools/asy_fit_brief)                   | Map brief requirements to confirmed evidence and visible gaps              |        0.10 USDT |
-| [`asy_cover_letter`](https://assayed.xyz/docs/tools/asy_cover_letter)             | Draft a target-specific, evidence-cited letter                             |        0.15 USDT |
-| [`asy_story_bank`](https://assayed.xyz/docs/tools/asy_story_bank)                 | Build Tribunal-graded STAR stories from confirmed claims                   |        0.20 USDT |
-| [`asy_interview_prep`](https://assayed.xyz/docs/tools/asy_interview_prep)         | Generate questions and grade typed answers against STAR and the ledger     |        0.20 USDT |
-| [`asy_tailor_resume`](https://assayed.xyz/docs/tools/asy_tailor_resume)           | Tailor achievement bullets without exceeding the evidence                  |        0.30 USDT |
-| [`asy_create_dossier_job`](https://assayed.xyz/docs/tools/asy_create_dossier_job) | Run the complete job, promotion, or freelance dossier asynchronously       |        2.00 USDT |
-| [`asy_job_status`](https://assayed.xyz/docs/tools/asy_job_status)                 | Poll a dossier job                                                         |             free |
-| [`asy_job_result`](https://assayed.xyz/docs/tools/asy_job_result)                 | Fetch the paid job’s artifacts, reports, portfolio, and seal               |             free |
-| [`asy_verify`](https://assayed.xyz/docs/tools/asy_verify)                         | Verify a dossier version or raw commitment leaf                            | **free forever** |
+| Tool                                                                              | What it does                                                                |            Price |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------: |
+| [`asy_ats_scan`](https://assayed.xyz/docs/tools/asy_ats_scan)                     | Re-parse a résumé, flag format-law failures, and report JD keyword presence |        0.05 USDT |
+| [`asy_claim_audit`](https://assayed.xyz/docs/tools/asy_claim_audit)               | Classify supported, vague, and unsupported-number claims                    |        0.05 USDT |
+| [`asy_fit_brief`](https://assayed.xyz/docs/tools/asy_fit_brief)                   | Map brief requirements to confirmed evidence and visible gaps               |        0.10 USDT |
+| [`asy_cover_letter`](https://assayed.xyz/docs/tools/asy_cover_letter)             | Draft a target-specific, evidence-cited letter                              |        0.15 USDT |
+| [`asy_story_bank`](https://assayed.xyz/docs/tools/asy_story_bank)                 | Build Tribunal-graded STAR stories from confirmed claims                    |        0.20 USDT |
+| [`asy_interview_prep`](https://assayed.xyz/docs/tools/asy_interview_prep)         | Generate questions and grade typed answers against STAR and the ledger      |        0.20 USDT |
+| [`asy_tailor_resume`](https://assayed.xyz/docs/tools/asy_tailor_resume)           | Tailor achievement bullets without exceeding the evidence                   |        0.30 USDT |
+| [`asy_create_dossier_job`](https://assayed.xyz/docs/tools/asy_create_dossier_job) | Run the complete job, promotion, or freelance dossier asynchronously        |        2.00 USDT |
+| [`asy_job_status`](https://assayed.xyz/docs/tools/asy_job_status)                 | Poll a dossier job                                                          |             free |
+| [`asy_job_result`](https://assayed.xyz/docs/tools/asy_job_result)                 | Fetch the paid job’s artifacts, reports, portfolio, and seal                |             free |
+| [`asy_verify`](https://assayed.xyz/docs/tools/asy_verify)                         | Verify a dossier version or raw commitment leaf                             | **free forever** |
 
 Tool names, schemas, descriptions, and prices originate in
 [`toolspec.ts`](packages/mcp-server/src/toolspec.ts); the server, pricing page, generated docs, and
@@ -184,7 +186,7 @@ curl -sS https://api.assayed.xyz/mcp \
 
 ## Test evidence
 
-The release gate runs **341 tests**: **284 Vitest + 53 Playwright end-to-end + 4 Foundry**. It also
+The release gate runs **344 tests**: **287 Vitest + 53 Playwright end-to-end + 4 Foundry**. It also
 typechecks every workspace, regenerates the published Standard and 11 tool pages, proves
 manifest/docs/pricing consistency, and runs the repository dead-link gauntlet. See
 [CI](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml) and the

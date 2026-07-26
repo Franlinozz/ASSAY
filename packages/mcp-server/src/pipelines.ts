@@ -208,8 +208,16 @@ export async function atsScan(
     }
   }
 
-  // JD keyword coverage (informational — we report coverage, we never stuff keywords).
-  let jdCoverage: { must: number; nice: number; requirements: number } | undefined
+  // Keyword presence is an ATS signal, not proof of fit. Keep it explicitly distinct from the
+  // Fit Brief's evidence-backed strong/partial/confirm/missing coverage map.
+  let jdKeywordPresence:
+    | {
+        mustMentioned: number
+        niceMentioned: number
+        requirements: number
+        metric: 'keyword_presence'
+      }
+    | undefined
   if (args.jd && args.jd.trim()) {
     const { requirements } = await decomposeJd({ jdText: args.jd, router: ctx.router })
     const body = ing.text.toLowerCase()
@@ -219,7 +227,12 @@ export async function atsScan(
       const covered = reqs.filter((r) => r.keywords.some((k) => body.includes(k.toLowerCase())))
       return Math.round((covered.length / reqs.length) * 100)
     }
-    jdCoverage = { must: tally('must'), nice: tally('nice'), requirements: requirements.length }
+    jdKeywordPresence = {
+      mustMentioned: tally('must'),
+      niceMentioned: tally('nice'),
+      requirements: requirements.length,
+      metric: 'keyword_presence',
+    }
   }
 
   const parts = [`${format.findings.length} format finding(s)`]
@@ -227,14 +240,23 @@ export async function atsScan(
     parts.push(
       `parse-back read name="${parseBack.name || '—'}", email="${parseBack.email || '—'}", ${parseBack.experiences} role(s)`,
     )
-  if (jdCoverage) parts.push(`JD coverage: ${jdCoverage.must}% must / ${jdCoverage.nice}% nice`)
+  if (jdKeywordPresence)
+    parts.push(
+      `JD keyword presence (not evidence-backed fit): ${jdKeywordPresence.mustMentioned}% must / ${jdKeywordPresence.niceMentioned}% nice`,
+    )
   return {
     summary: `ATS scan complete — ${parts.join('; ')}.`,
     data: {
       ok: true,
       format,
       ...(parseBack ? { parseBack } : {}),
-      ...(jdCoverage ? { jdCoverage } : {}),
+      ...(jdKeywordPresence
+        ? {
+            jdKeywordPresence,
+            interpretation:
+              'This measures words present in the résumé. Use asy_fit_brief for evidence-backed requirement coverage.',
+          }
+        : {}),
     },
   }
 }
@@ -311,8 +333,15 @@ export async function fitBrief(
   for (const c of coverage) counts[c.status] += 1
   ctx.store.recordEvent('fit_brief', counts)
   return {
-    summary: `Fit brief: ${counts.strong} strong · ${counts.partial} partial · ${counts.confirm} to confirm · ${counts.missing} missing (of ${requirements.length}).`,
-    data: { ok: true, coverage: map, counts },
+    summary: `Evidence-backed fit brief: ${counts.strong} strong · ${counts.partial} partial · ${counts.confirm} to confirm · ${counts.missing} missing (of ${requirements.length}).`,
+    data: {
+      ok: true,
+      coverage: map,
+      counts,
+      metric: 'evidence_backed_requirement_coverage',
+      interpretation:
+        'This is stricter than ATS keyword presence: a mention without a confirmed claim is not evidence of fit.',
+    },
   }
 }
 

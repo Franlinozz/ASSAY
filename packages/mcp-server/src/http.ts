@@ -2,14 +2,14 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import type { Dossier } from '@xyndicate/assay-core'
-import { policyGate } from '@xyndicate/assay-core'
+import { canonicalize, policyGate } from '@xyndicate/assay-core'
 import type { ModelRouter, Fetcher } from '@xyndicate/providers'
 import type { ServerConfig } from './config'
-import { isPaid, priceOf, TOOL_NAMES, PRICES } from './config'
+import { A2MCP_ROUTE_TARGETS, isPaid, priceOf, TOOL_NAMES, PRICES } from './config'
 import type { Store } from './store'
 import type { PaymentGate } from './gate'
 import { readPaymentSig } from './gate'
-import { buildServer } from './server'
+import { buildServer, executeTool } from './server'
 import { buildStudioRouter } from './studioHttp'
 import { devPdf } from './jobs'
 import { TokenBucket, verifyFileToken, sha256Hex, toJson, freeDiskBytes } from './util'
@@ -55,6 +55,27 @@ function jsonRpcResult(
   result: unknown,
 ): { jsonrpc: '2.0'; id: unknown; result: unknown } {
   return { jsonrpc: '2.0', id: id ?? null, result }
+}
+
+function paidRequestHash(
+  surface: 'mcp' | 'x402',
+  tool: string,
+  args: Record<string, unknown> | undefined,
+): string {
+  return sha256Hex(canonicalize({ surface, tool, arguments: args ?? {} }))
+}
+
+function idempotencyConflict(res: Response, message: string): void {
+  res.status(409).json({
+    error: 'idempotency_conflict',
+    message,
+  })
+}
+
+function restoreSettlement(res: Response, settlement: string | null): void {
+  if (!settlement) return
+  for (const [key, value] of Object.entries(JSON.parse(settlement) as Record<string, string>))
+    res.setHeader(key, value)
 }
 
 export function buildApp(rt: AppRuntime): Express {
@@ -113,6 +134,14 @@ export function buildApp(rt: AppRuntime): Express {
       },
       prices: PRICES,
       tools: TOOL_NAMES.map((t) => ({ name: t, priceUsdt: priceOf(t), free: !isPaid(t) })),
+      marketplaceResources: Object.entries(A2MCP_ROUTE_TARGETS).map(([slug, target]) => ({
+        slug,
+        tool: target.tool,
+        endpoint: `${cfg.baseUrl}/x402/${slug}`,
+        priceUsdt: priceOf(target.tool),
+        free: !isPaid(target.tool),
+        ...(target.defaults ? { defaults: target.defaults } : {}),
+      })),
       seal: {
         registry: cfg.registry,
         chainId: cfg.chainId,
@@ -247,7 +276,34 @@ export function buildApp(rt: AppRuntime): Express {
 
           const billableTool = tool
           const price = priceOf(tool)
+          const requestHash = paidRequestHash('mcp', billableTool, args)
+          const explicitIdem = req.header('Idempotency-Key')?.slice(0, 80)
           const paymentSig = readPaymentSig(req)
+
+          // Response recovery is checked before demanding a fresh credential. The key is bound to
+          // the tool + canonical arguments, so it cannot be used to retrieve a different purchase.
+          if (explicitIdem) {
+            const recovered = store.getOrderByIdempotencyKey(explicitIdem)
+            if (recovered) {
+              if (
+                recovered.tool !== billableTool ||
+                (recovered.requestHash !== null && recovered.requestHash !== requestHash)
+              )
+                return void idempotencyConflict(
+                  res,
+                  'That Idempotency-Key is already bound to a different paid request.',
+                )
+              restoreSettlement(res, recovered.settlement)
+              if (recovered.result)
+                return void res.json(jsonRpcResult(body.id, JSON.parse(recovered.result)))
+              if (!paymentSig)
+                return void res.status(409).json({
+                  error: 'paid_request_incomplete',
+                  message:
+                    'Payment settled but the result is not cached yet; retry with the original payment proof.',
+                })
+            }
+          }
 
           if (!paymentSig) {
             const decision = await gate.check(req, { tool: billableTool, priceUsdt: price })
@@ -259,15 +315,19 @@ export function buildApp(rt: AppRuntime): Express {
             return void res.status(402).json({ error: 'payment required' })
           }
 
-          const idemKey = (req.header('Idempotency-Key') ?? sha256Hex(paymentSig)).slice(0, 80)
+          const idemKey = (explicitIdem ?? sha256Hex(paymentSig)).slice(0, 80)
           const existing = store.getOrderByIdempotencyKey(idemKey)
           if (existing) {
+            if (
+              existing.tool !== billableTool ||
+              (existing.requestHash !== null && existing.requestHash !== requestHash)
+            )
+              return void idempotencyConflict(
+                res,
+                'That Idempotency-Key is already bound to a different paid request.',
+              )
             // Already paid — never charge twice.
-            if (existing.settlement)
-              for (const [k, v] of Object.entries(
-                JSON.parse(existing.settlement) as Record<string, string>,
-              ))
-                res.setHeader(k, v)
+            restoreSettlement(res, existing.settlement)
             if (existing.result)
               return void res.json(jsonRpcResult(body.id, JSON.parse(existing.result)))
             // Paid but never completed (crash) — re-run without re-charging.
@@ -290,6 +350,7 @@ export function buildApp(rt: AppRuntime): Express {
             tool: billableTool,
             priceUsdt: price,
             idempotencyKey: idemKey,
+            requestHash,
             status: 'settled',
             settlement: JSON.stringify(decision.settlement),
             ...(decision.payerRef ? { payerRef: decision.payerRef } : {}),
@@ -307,6 +368,128 @@ export function buildApp(rt: AppRuntime): Express {
       }
     },
   )
+
+  // Validator-friendly A2MCP resources. MCP discovery stays free at /mcp; each marketplace
+  // service can point at its own concrete route, where a direct unpaid probe receives the standard
+  // 402 immediately. Free tools return their result directly.
+  const directTool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!bucket.take(clientIp(req)))
+        return void res.status(429).json({ error: 'rate limit exceeded (60/min)' })
+      const slug = String(req.params['tool'] ?? '')
+      const target = A2MCP_ROUTE_TARGETS[slug]
+      if (!target) return void res.status(404).json({ error: 'unknown Assay service' })
+      const tool = target.tool
+
+      const raw =
+        req.method === 'GET'
+          ? req.query
+          : ((req.body as { arguments?: unknown; params?: { arguments?: unknown } } | undefined)
+              ?.arguments ??
+            (req.body as { params?: { arguments?: unknown } } | undefined)?.params?.arguments ??
+            req.body)
+      const suppliedArgs =
+        raw && typeof raw === 'object' && !Array.isArray(raw)
+          ? (raw as Record<string, unknown>)
+          : {}
+      const args = { ...suppliedArgs, ...(target.defaults ?? {}) }
+      const policy = policyGate({ text: argsText(args) })
+      if (!policy.allowed) return void res.status(422).json({ ok: false, error: policy.reason })
+
+      if (!isPaid(tool)) {
+        const result = await executeTool(
+          { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg: rt.cfg },
+          tool,
+          args,
+        )
+        return void res.json(result)
+      }
+
+      const price = priceOf(tool)
+      const resourcePath = `/x402/${slug}`
+      const requestHash = paidRequestHash('x402', tool, args)
+      const explicitIdem = req.header('Idempotency-Key')?.slice(0, 80)
+      const paymentSig = readPaymentSig(req)
+
+      if (explicitIdem) {
+        const recovered = store.getOrderByIdempotencyKey(explicitIdem)
+        if (recovered) {
+          if (
+            recovered.tool !== tool ||
+            (recovered.requestHash !== null && recovered.requestHash !== requestHash)
+          )
+            return void idempotencyConflict(
+              res,
+              'That Idempotency-Key is already bound to a different paid request.',
+            )
+          restoreSettlement(res, recovered.settlement)
+          if (recovered.result) return void res.json(JSON.parse(recovered.result))
+          if (!paymentSig)
+            return void res.status(409).json({
+              error: 'paid_request_incomplete',
+              message:
+                'Payment settled but the result is not cached yet; retry with the original payment proof.',
+            })
+        }
+      }
+
+      if (!paymentSig) {
+        const decision = await gate.check(req, { tool, priceUsdt: price, resourcePath })
+        if (decision.kind === 'challenge') {
+          for (const [key, value] of Object.entries(decision.headers)) res.setHeader(key, value)
+          return void res.status(402).json(decision.body)
+        }
+        return void res.status(402).json({ error: 'payment required' })
+      }
+
+      const idemKey = (explicitIdem ?? sha256Hex(paymentSig)).slice(0, 80)
+      const existing = store.getOrderByIdempotencyKey(idemKey)
+      if (existing) {
+        if (
+          existing.tool !== tool ||
+          (existing.requestHash !== null && existing.requestHash !== requestHash)
+        )
+          return void idempotencyConflict(
+            res,
+            'That Idempotency-Key is already bound to a different paid request.',
+          )
+        restoreSettlement(res, existing.settlement)
+        if (existing.result) return void res.json(JSON.parse(existing.result))
+      } else {
+        const decision = await gate.check(req, { tool, priceUsdt: price, resourcePath })
+        if (decision.kind === 'challenge') {
+          for (const [key, value] of Object.entries(decision.headers)) res.setHeader(key, value)
+          return void res.status(402).json(decision.body)
+        }
+        if (decision.kind === 'error') {
+          for (const [key, value] of Object.entries(decision.headers)) res.setHeader(key, value)
+          return void res.status(decision.status).json(decision.body)
+        }
+        store.createOrder({
+          tool,
+          priceUsdt: price,
+          idempotencyKey: idemKey,
+          requestHash,
+          status: 'settled',
+          settlement: JSON.stringify(decision.settlement),
+          ...(decision.payerRef ? { payerRef: decision.payerRef } : {}),
+        })
+        for (const [key, value] of Object.entries(decision.settlement)) res.setHeader(key, value)
+      }
+
+      const result = await executeTool(
+        { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg: rt.cfg },
+        tool,
+        args,
+      )
+      store.attachOrderResult(idemKey, toJson(result))
+      return void res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  }
+  app.get('/x402/:tool', directTool)
+  app.post('/x402/:tool', express.json({ limit: cfg.maxBodyBytes }), directTool)
 
   // ── Error mapping: malformed → 400, oversize → 413, everything else sanitized 5xx. ──
   app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {

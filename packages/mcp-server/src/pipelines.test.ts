@@ -35,14 +35,20 @@ describe('asy_ats_scan (the traction wedge)', () => {
     expect(codes.some((c) => c === 'FORMAT_TABLE' || c === 'FORMAT_NO_CONTACT')).toBe(true)
   })
 
-  it('reports honest JD keyword coverage when a JD is supplied', async () => {
+  it('labels JD keyword presence distinctly from evidence-backed fit', async () => {
     const r = await atsScan(ctx(), {
       resumeText: SAMPLE_RESUME_TEXT,
       jd: 'Must have PostgreSQL experience\nKubernetes required\nStrong TypeScript',
     })
-    const cov = r.data['jdCoverage'] as { must: number; nice: number }
-    expect(cov.must).toBeGreaterThanOrEqual(0)
-    expect(cov.must).toBeLessThanOrEqual(100)
+    const presence = r.data['jdKeywordPresence'] as {
+      mustMentioned: number
+      niceMentioned: number
+      metric: string
+    }
+    expect(presence.mustMentioned).toBeGreaterThanOrEqual(0)
+    expect(presence.mustMentioned).toBeLessThanOrEqual(100)
+    expect(presence.metric).toBe('keyword_presence')
+    expect(r.summary).toContain('not evidence-backed fit')
   })
 })
 
@@ -55,6 +61,7 @@ describe('asy_fit_brief', () => {
     expect(r.data['ok']).toBe(true)
     const counts = r.data['counts'] as Record<string, number>
     expect(counts['missing']).toBeGreaterThan(0)
+    expect(r.data['metric']).toBe('evidence_backed_requirement_coverage')
   })
 })
 

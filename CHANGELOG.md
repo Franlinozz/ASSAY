@@ -17,6 +17,11 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Changed
 
+- Made the site header substantially more transparent with stronger glass blur, replaced the
+  conventional sun/moon toggle with a quieter dawn/orbit control, and made desktop Studio a
+  viewport workspace with independently scrolling dossier-flow, stage, and run-monitor panes.
+- README capture automation now renders the Tribunal and Gallery exhibits in dark mode while
+  retaining the landing and verification exhibits in light mode.
 - Rebuilt the Studio around a three-column working desk: persistent vertical dossier flow,
   focused stage workspace, and a sticky run monitor with artifact progress, current role/action,
   elapsed time, retained event history, and safe-return guidance.
@@ -31,6 +36,17 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Fixed
 
+- Added 13 concrete OKX.AI service resources under `/x402/<service>`. Paid offer probes now receive
+  their service-specific 402 immediately without breaking free `/mcp` negotiation; promotion and
+  freelancer routes server-bind the correct dossier variant, and the three free follow-up tools
+  return results without payment.
+- Fixed paid-response recovery: the server now checks a completed, body-bound
+  `Idempotency-Key` before asking for another credential. An identical retry without its payment
+  header returns the cached result; reuse with different arguments returns
+  `409 idempotency_conflict`.
+- Renamed ATS “JD coverage” to **JD keyword presence** and labels it as distinct from the Fit
+  Brief’s stricter evidence-backed requirement coverage, removing the misleading appearance that
+  keywords alone prove candidate fit.
 - Corrected the MCP x402 boundary after OKX review: `GET /mcp`, `initialize`, `tools/list`,
   notifications, and invalid transport requests no longer initiate payment. A 402 challenge is now
   possible only at JSON-RPC `tools/call` for a paid Assay service; free tools remain free.

@@ -49,13 +49,13 @@ export const TOOL_SPECS: ToolSpec[] = [
     name: 'asy_ats_scan',
     title: 'ATS scan',
     marketplaceSummary:
-      'Re-parse an existing résumé, flag ATS format-law failures, and report honest job-description coverage.',
-    description: `Scan an existing résumé the way an applicant-tracking system would: re-parse it, flag format-law violations that scramble in ATS software, and (with a job description) report honest must/nice keyword coverage. ${priceTag('asy_ats_scan')} Example: {resumeText:"…", jd:"Senior Backend Engineer…"} → format findings + parse-back + coverage. Proof promise: findings come from Assay's deterministic parser and the published Standard's format law — not a guess. ${BACKGROUND_JOB}`,
+      'Re-parse a résumé, flag ATS format-law failures, and report JD keyword presence without pretending it proves fit.',
+    description: `Scan an existing résumé the way an applicant-tracking system would: re-parse it, flag format-law violations that scramble in ATS software, and (with a job description) report must/nice keyword presence. Keyword presence is not evidence-backed fit; use asy_fit_brief for that stricter map. ${priceTag('asy_ats_scan')} Example: {resumeText:"…", jd:"Senior Backend Engineer…"} → format findings + parse-back + keyword presence. Proof promise: findings come from Assay's deterministic parser and the published Standard's format law — not a guess. ${BACKGROUND_JOB}`,
     inputSchema: {
       ...uploadShape,
       jd: z
         .string()
-        .describe('Optional job description to score keyword coverage against.')
+        .describe('Optional job description to measure keyword presence against.')
         .optional(),
     },
   },

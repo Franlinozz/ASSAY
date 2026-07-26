@@ -27,7 +27,7 @@ export interface McpRuntime {
   capture?: (mcpResult: unknown) => void
 }
 
-function toMcp(r: ToolResult): {
+export function toMcp(r: ToolResult): {
   content: Array<{ type: 'text'; text: string }>
   isError?: boolean
 } {
@@ -54,6 +54,16 @@ const HANDLERS: Record<string, Handler> = {
   asy_verify: verify,
 }
 
+export async function executeTool(
+  pipe: PipelineCtx,
+  name: string,
+  args: Record<string, unknown>,
+): Promise<ToolResult> {
+  const handler = HANDLERS[name]
+  if (!handler) throw new Error(`no handler for tool ${name}`)
+  return handler(pipe, args)
+}
+
 export function buildServer(rt: McpRuntime): McpServer {
   const server = new McpServer({
     name: 'assay',
@@ -69,7 +79,7 @@ export function buildServer(rt: McpRuntime): McpServer {
       spec.name,
       { title: spec.title, description: spec.description, inputSchema: spec.inputSchema },
       async (args: Record<string, unknown>) => {
-        const result = await handler(pipe, args)
+        const result = await executeTool(pipe, spec.name, args)
         const mcp = toMcp(result)
         rt.capture?.(mcp)
         return mcp

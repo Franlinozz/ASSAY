@@ -96,7 +96,7 @@ test.describe('copy-to-clipboard (/agents)', () => {
   test('explains eleven API tools versus thirteen marketplace offers', async ({ page }) => {
     await page.goto('/agents')
     await expect(
-      page.getByRole('heading', { name: 'Eleven tools. Thirteen offers. One endpoint.' }),
+      page.getByRole('heading', { name: 'Eleven tools. Thirteen offers. One protocol.' }),
     ).toBeVisible()
     await expect(page.getByText('Why 13 on OKX.AI?')).toBeVisible()
     await expect(page.getByText('asy_create_dossier_job', { exact: true }).first()).toBeVisible()

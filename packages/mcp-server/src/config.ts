@@ -116,6 +116,33 @@ export const TOOL_NAMES: ToolName[] = [
   'asy_verify',
 ]
 
+// Concrete marketplace resources. Promotion and freelance are offers of the same paid dossier
+// tool with a server-enforced variant; the remaining entries map one-to-one to MCP tools.
+export const A2MCP_ROUTE_TARGETS: Record<
+  string,
+  { tool: ToolName; defaults?: Record<string, unknown> }
+> = {
+  asy_ats_scan: { tool: 'asy_ats_scan' },
+  asy_fit_brief: { tool: 'asy_fit_brief' },
+  asy_create_dossier_job: { tool: 'asy_create_dossier_job', defaults: { variant: 'job' } },
+  asy_interview_prep: { tool: 'asy_interview_prep' },
+  asy_promotion_dossier: {
+    tool: 'asy_create_dossier_job',
+    defaults: { variant: 'promotion' },
+  },
+  asy_freelancer_proof_pack: {
+    tool: 'asy_create_dossier_job',
+    defaults: { variant: 'freelance' },
+  },
+  asy_claim_audit: { tool: 'asy_claim_audit' },
+  asy_cover_letter: { tool: 'asy_cover_letter' },
+  asy_story_bank: { tool: 'asy_story_bank' },
+  asy_tailor_resume: { tool: 'asy_tailor_resume' },
+  asy_verify: { tool: 'asy_verify' },
+  asy_job_status: { tool: 'asy_job_status' },
+  asy_job_result: { tool: 'asy_job_result' },
+}
+
 export const FREE_TOOLS = new Set<string>(['asy_job_status', 'asy_job_result', 'asy_verify'])
 
 export function priceOf(tool: string): number {

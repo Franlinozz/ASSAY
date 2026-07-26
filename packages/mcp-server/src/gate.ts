@@ -6,7 +6,7 @@ import { x402HTTPResourceServer } from '@okxweb3/x402-core/server'
 import { registerExactEvmScheme } from '@okxweb3/x402-evm/exact/server'
 import { ExpressAdapter } from '@okxweb3/x402-express'
 import type { ServerConfig } from './config'
-import { priceOf } from './config'
+import { A2MCP_ROUTE_TARGETS, isPaid, priceOf } from './config'
 import { priceString, sha256Hex } from './util'
 
 // PaymentGate — the x402 settlement boundary. It only ever sees PAID tools: http.ts runs the
@@ -27,6 +27,7 @@ export type GateDecision =
 export interface GateOpts {
   tool: string
   priceUsdt: number
+  resourcePath?: string
 }
 
 export interface PaymentGate {
@@ -76,7 +77,7 @@ export class DevGate implements PaymentGate {
         x402Version: 2,
         error: 'Payment required',
         resource: {
-          url: `${this.cfg.baseUrl}/mcp`,
+          url: `${this.cfg.baseUrl}${opts.resourcePath ?? '/mcp'}`,
           description: 'Assay evidence-backed career intelligence',
           mimeType: 'application/json',
         },
@@ -141,23 +142,28 @@ export class OkxGate implements PaymentGate {
     const resourceServer = new x402ResourceServer(facilitator)
     registerExactEvmScheme(resourceServer, { networks: [cfg.network] })
 
-    // Per-tool dynamic price: read the MCP tool name off the request body, map to the fixed table.
-    const route = {
+    const routeFor = (resourcePath: string, boundTool?: string) => ({
       accepts: {
         scheme: 'exact',
         network: cfg.network,
         payTo: cfg.payTo,
         price: (context: HTTPRequestContext) => {
-          const toolPrice = priceOf(toolFromContext(context))
+          const toolPrice = priceOf(boundTool ?? toolFromContext(context))
           return priceString(toolPrice > 0 ? toolPrice : priceOf('asy_ats_scan'))
         },
       },
-      resource: `${cfg.baseUrl}/mcp`,
+      resource: `${cfg.baseUrl}${resourcePath}`,
       description: 'Assay evidence-backed career intelligence',
       mimeType: 'application/json',
-    }
+    })
     const routes: RoutesConfig = {
-      'POST /mcp': route,
+      'POST /mcp': routeFor('/mcp'),
+    }
+    for (const [slug, target] of Object.entries(A2MCP_ROUTE_TARGETS)) {
+      if (!isPaid(target.tool)) continue
+      const path = `/x402/${slug}`
+      routes[`GET ${path}`] = routeFor(path, target.tool)
+      routes[`POST ${path}`] = routeFor(path, target.tool)
     }
     this.httpServer = new x402HTTPResourceServer(resourceServer, routes)
   }
@@ -171,7 +177,7 @@ export class OkxGate implements PaymentGate {
     await this.init()
     const context: HTTPRequestContext = {
       adapter: new ExpressAdapter(req),
-      path: '/mcp',
+      path: opts.resourcePath ?? '/mcp',
       method: req.method,
     }
     const result = await this.httpServer.processHTTPRequest(context)
@@ -208,7 +214,7 @@ export class OkxGate implements PaymentGate {
 // Best-effort extraction of the MCP tool name from an already-parsed express body.
 function toolFromContext(context: HTTPRequestContext): string {
   const body = context.adapter.getBody?.() as { params?: { name?: string } } | undefined
-  return body?.params?.name ?? ''
+  return body?.params?.name ?? context.path.split('/').at(-1) ?? ''
 }
 
 export function createGate(cfg: ServerConfig): PaymentGate {

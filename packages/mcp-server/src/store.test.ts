@@ -28,6 +28,7 @@ describe('Store', () => {
       tool: 'asy_ats_scan',
       priceUsdt: 0.05,
       idempotencyKey: 'k1',
+      requestHash: 'hash-one',
       status: 'settled',
     })
     expect(() =>
@@ -39,6 +40,7 @@ describe('Store', () => {
       }),
     ).toThrow()
     expect(store.getOrderByIdempotencyKey('k1')?.tool).toBe('asy_ats_scan')
+    expect(store.getOrderByIdempotencyKey('k1')?.requestHash).toBe('hash-one')
   })
 
   it('runs a job through queued → running → done and claims it once', () => {

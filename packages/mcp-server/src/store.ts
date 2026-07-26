@@ -30,6 +30,7 @@ export interface OrderRow {
   priceUsdt: number
   payerRef: string | null
   idempotencyKey: string
+  requestHash: string | null
   status: OrderStatus
   result: string | null
   settlement: string | null
@@ -179,6 +180,9 @@ export class Store {
     this.ensureColumn('shares', 'config', 'TEXT')
     this.ensureColumn('shares', 'revoked', 'INTEGER NOT NULL DEFAULT 0')
     this.ensureColumn('shares', 'expires_at', 'TEXT')
+    // Bind an idempotency key to the exact paid operation. A completed response may be recovered
+    // without resending a payment proof, but the same key can never be reused for different input.
+    this.ensureColumn('orders', 'request_hash', 'TEXT')
   }
 
   private ensureColumn(table: string, column: string, decl: string): void {
@@ -339,6 +343,7 @@ export class Store {
           price_usdt: number
           payer_ref: string | null
           idempotency_key: string
+          request_hash: string | null
           status: OrderStatus
           result: string | null
           settlement: string | null
@@ -352,6 +357,7 @@ export class Store {
       priceUsdt: r.price_usdt,
       payerRef: r.payer_ref,
       idempotencyKey: r.idempotency_key,
+      requestHash: r.request_hash,
       status: r.status,
       result: r.result,
       settlement: r.settlement,
@@ -369,6 +375,7 @@ export class Store {
     idempotencyKey: string
     status: OrderStatus
     payerRef?: string
+    requestHash?: string
     settlement?: string
     result?: string
   }): OrderRow {
@@ -378,6 +385,7 @@ export class Store {
       priceUsdt: input.priceUsdt,
       payerRef: input.payerRef ?? null,
       idempotencyKey: input.idempotencyKey,
+      requestHash: input.requestHash ?? null,
       status: input.status,
       result: input.result ?? null,
       settlement: input.settlement ?? null,
@@ -385,8 +393,8 @@ export class Store {
     }
     this.db
       .prepare(
-        `INSERT INTO orders (id, tool, price_usdt, payer_ref, idempotency_key, status, result, settlement, created_at)
-         VALUES (@id, @tool, @priceUsdt, @payerRef, @idempotencyKey, @status, @result, @settlement, @createdAt)`,
+        `INSERT INTO orders (id, tool, price_usdt, payer_ref, idempotency_key, request_hash, status, result, settlement, created_at)
+         VALUES (@id, @tool, @priceUsdt, @payerRef, @idempotencyKey, @requestHash, @status, @result, @settlement, @createdAt)`,
       )
       .run(row)
     return row

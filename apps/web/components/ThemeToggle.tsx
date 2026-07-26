@@ -36,36 +36,54 @@ export function ThemeToggle() {
       <span className="theme-toggle-disc" aria-hidden="true">
         {theme === 'dark' ? (
           <svg
-            className="theme-toggle-icon theme-toggle-sun"
-            width="18"
-            height="18"
+            className="theme-toggle-icon theme-toggle-dawn"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
+            fill="none"
           >
-            <circle cx="12" cy="12" r="3.75" fill="currentColor" />
-            <g stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <path d="M12 2.5v2.25M12 19.25v2.25M2.5 12h2.25M19.25 12h2.25" />
-              <path d="m5.28 5.28 1.6 1.6m10.24 10.24 1.6 1.6M18.72 5.28l-1.6 1.6M6.88 17.12l-1.6 1.6" />
-            </g>
+            <path d="M4 16.5h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M7.25 16.5a4.75 4.75 0 0 1 9.5 0"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M12 4.25v2M5.9 7.1l1.4 1.4M18.1 7.1l-1.4 1.4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M7 19.5h10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              opacity=".45"
+            />
           </svg>
         ) : (
           <svg
-            className="theme-toggle-icon theme-toggle-moon"
-            width="18"
-            height="18"
+            className="theme-toggle-icon theme-toggle-orbit"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
+            fill="none"
           >
             <path
-              d="M18.7 15.28A7.6 7.6 0 0 1 8.72 5.3 7.6 7.6 0 1 0 18.7 15.28Z"
-              fill="currentColor"
-            />
-            <circle cx="17.7" cy="6.4" r="1.15" fill="currentColor" opacity="0.72" />
-            <path
-              d="M15.1 3.3v1.8M14.2 4.2H16"
+              d="M16.9 16.45A7 7 0 0 1 8.55 7.1a7.25 7.25 0 1 0 8.35 9.35Z"
               stroke="currentColor"
-              strokeWidth="1"
-              strokeLinecap="round"
-              opacity="0.58"
+              strokeWidth="1.55"
+              strokeLinejoin="round"
             />
+            <path
+              d="M15.8 5.2h2.6M17.1 3.9v2.6"
+              stroke="currentColor"
+              strokeWidth="1.35"
+              strokeLinecap="round"
+            />
+            <circle cx="18.7" cy="9.2" r=".85" fill="currentColor" opacity=".55" />
           </svg>
         )}
       </span>

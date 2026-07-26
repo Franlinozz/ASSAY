@@ -57,6 +57,27 @@ test.describe('the full dossier flow', () => {
     test.setTimeout(240_000)
     await createDossier(page)
 
+    // Desktop workspace uses three independent scroll regions. The dossier flow and run monitor
+    // stay in place while the center stage moves; scrollbars are visually hidden.
+    const workspace = await page.evaluate(() => {
+      const shell = getComputedStyle(document.querySelector('.studio')!)
+      const main = getComputedStyle(document.querySelector('.studio-main')!)
+      const rail = getComputedStyle(document.querySelector('.studio-nav-panel')!)
+      const monitor = getComputedStyle(document.querySelector('.studio-side')!)
+      return {
+        shellOverflow: shell.overflow,
+        mainOverflowY: main.overflowY,
+        railOverflowY: rail.overflowY,
+        monitorOverflowY: monitor.overflowY,
+      }
+    })
+    expect(workspace).toEqual({
+      shellOverflow: 'hidden',
+      mainOverflowY: 'auto',
+      railOverflowY: 'auto',
+      monitorOverflowY: 'auto',
+    })
+
     // ── LEDGER: ingest the fixture résumé ──
     await page.getByRole('tab', { name: 'Paste text' }).click()
     await page.getByTestId('intake-text').fill(FIXTURE_RESUME)
