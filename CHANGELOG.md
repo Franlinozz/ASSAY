@@ -6,9 +6,10 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Added
 
-- Added theme-aware Assay folder/seal marks to the navbar and footer, a matching browser/app icon,
-  and the operator-supplied evidence-flow brand banner to the GitHub exhibit. Runtime derivatives
-  are 4.7–43 KB; the uploaded high-resolution originals remain untouched.
+- Added the operator-supplied horizontal Assay mark and custom wordmark as transparent,
+  theme-aware lockups in the web and docs chrome, plus a matching browser/app icon and the
+  evidence-flow brand banner in the GitHub exhibit. The high-resolution originals remain
+  untouched.
 - Added four current product captures to the README: the interactive proof hero, fictional sealed
   gallery, honest Tribunal repair loop, and live X Layer verification.
 - Added paste-ready, judge-optimized OKX.AI Genesis submission answers with a shorter fallback,
@@ -25,6 +26,8 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - Strengthened visible motion on the landing proof graph and active Forge/Tribunal states while
   preserving the existing reduced-motion fallback and server-rendered landing budget.
 - Reordered primary navigation to lead with Gallery and end with Verify then Docs.
+- Removed the vertical green scan overlay from the landing proof card; its evidence interaction
+  now carries the motion without an ornamental glow sweep.
 
 ### Fixed
 
@@ -39,6 +42,9 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - Rechecked Agent #8599 without another mutation: all 13 service records remain intact and the
   x402 validator reports `valid:true`; the public identity currently reads “not listed · Listing
   under review” with “AI quality review suggested pass” after the avatar-triggered re-review.
+- Fixed mobile chrome alignment so the theme and menu controls stay anchored to the right of the
+  supplied Assay lockup, and clipped Studio-only horizontal paint overflow so sticky navigation
+  cannot drift sideways while scrolling.
 
 ## [1.1.0] — 2026-07-25
 

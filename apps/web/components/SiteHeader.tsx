@@ -22,12 +22,23 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="container site-header-row">
-        <Link href="/" className="wordmark-sm brand-lockup" aria-label="Assay — home">
-          <span className="brand-mark" aria-hidden="true">
-            <img className="brand-mark-light" src="/brand/mark-light.webp" alt="" />
-            <img className="brand-mark-dark" src="/brand/mark-dark.webp" alt="" />
+        <Link href="/" className="brand-lockup" aria-label="Assay — home">
+          <span className="brand-lockup-art" aria-hidden="true">
+            <img
+              className="brand-lockup-light"
+              src="/brand/lockup-light.webp"
+              width="720"
+              height="270"
+              alt=""
+            />
+            <img
+              className="brand-lockup-dark"
+              src="/brand/lockup-dark.webp"
+              width="720"
+              height="270"
+              alt=""
+            />
           </span>
-          <span>ASSAY</span>
         </Link>
 
         <nav className="site-nav" aria-label="Primary">

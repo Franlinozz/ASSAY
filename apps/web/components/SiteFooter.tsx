@@ -8,16 +8,23 @@ export function SiteFooter() {
       <GuillocheBand height={22} opacity={0.4} />
       <div className="container site-footer-grid">
         <div>
-          <Link
-            href="/"
-            className="wordmark-sm brand-lockup brand-lockup-footer"
-            aria-label="Assay — home"
-          >
-            <span className="brand-mark" aria-hidden="true">
-              <img className="brand-mark-light" src="/brand/mark-light.webp" alt="" />
-              <img className="brand-mark-dark" src="/brand/mark-dark.webp" alt="" />
+          <Link href="/" className="brand-lockup brand-lockup-footer" aria-label="Assay — home">
+            <span className="brand-lockup-art" aria-hidden="true">
+              <img
+                className="brand-lockup-light"
+                src="/brand/lockup-light.webp"
+                width="720"
+                height="270"
+                alt=""
+              />
+              <img
+                className="brand-lockup-dark"
+                src="/brand/lockup-dark.webp"
+                width="720"
+                height="270"
+                alt=""
+              />
             </span>
-            <span>ASSAY</span>
           </Link>
           <p className="caption" style={{ maxWidth: '26rem' }}>
             {SITE.tagline} An evidence-backed career studio by {SITE.studio} — every claim traced to

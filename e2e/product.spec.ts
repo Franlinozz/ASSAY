@@ -35,6 +35,33 @@ test.describe('theme', () => {
 
 test.describe('mobile navigation', () => {
   test.use({ viewport: { width: 390, height: 780 } })
+
+  test('the supplied lockup and controls hold opposite edges while the header sticks', async ({
+    page,
+  }) => {
+    await page.goto('/studio')
+    await expect(page.locator('.site-header .brand-lockup-light')).toHaveAttribute(
+      'src',
+      '/brand/lockup-light.webp',
+    )
+
+    const before = await page.evaluate(() => {
+      const actions = document.querySelector('.site-header-actions')?.getBoundingClientRect()
+      return {
+        scrollWidth: document.documentElement.scrollWidth,
+        viewport: window.innerWidth,
+        actionsRight: actions?.right ?? 0,
+      }
+    })
+    expect(before.scrollWidth).toBe(before.viewport)
+    expect(before.viewport - before.actionsRight).toBeLessThanOrEqual(21)
+
+    await page.evaluate(() => window.scrollTo(0, 500))
+    const header = await page.locator('.site-header').boundingBox()
+    expect(header?.x).toBe(0)
+    expect(header?.width).toBe(390)
+  })
+
   test('the menu opens and a link navigates', async ({ page }) => {
     await page.goto('/')
     const menuBtn = page.getByRole('button', { name: /open menu/i })
@@ -55,6 +82,14 @@ test.describe('mobile navigation', () => {
       '/docs',
     )
   })
+})
+
+test('landing proof interaction has no ornamental vertical scan overlay', async ({ page }) => {
+  await page.goto('/')
+  const scanContent = await page
+    .locator('.hero-proof')
+    .evaluate((element) => getComputedStyle(element, '::after').getPropertyValue('content'))
+  expect(scanContent).toBe('none')
 })
 
 test.describe('copy-to-clipboard (/agents)', () => {

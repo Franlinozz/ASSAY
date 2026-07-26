@@ -14,25 +14,23 @@
 .docs-brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.3rem;
   font-weight: 650;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.02em;
 }
-.docs-brand-mark {
+.docs-brand-lockup-art {
   position: relative;
-  width: 30px;
-  height: 30px;
+  width: 120px;
+  height: 45px;
   flex: none;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  border-radius: 8px;
 }
-.docs-brand-mark img {
+.docs-brand-lockup-art img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: left center;
 }
 .docs-brand-dark {
   display: none;
@@ -42,4 +40,11 @@
 }
 .dark .docs-brand-dark {
   display: block;
+}
+.docs-brand-suffix {
+  margin-left: -0.18rem;
+  color: color-mix(in srgb, currentColor 62%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
 }

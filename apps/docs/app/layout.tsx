@@ -23,12 +23,26 @@ export default function Layout({ children }: { children: ReactNode }) {
             tree={source.pageTree}
             nav={{
               title: (
-                <span className="docs-brand">
-                  <span className="docs-brand-mark" aria-hidden="true">
-                    <img className="docs-brand-light" src="/brand/mark-light.webp" alt="" />
-                    <img className="docs-brand-dark" src="/brand/mark-dark.webp" alt="" />
+                <span className="docs-brand" aria-label="Assay Docs">
+                  <span className="docs-brand-lockup-art" aria-hidden="true">
+                    <img
+                      className="docs-brand-light"
+                      src="/docs/brand/lockup-light.webp"
+                      width="720"
+                      height="270"
+                      alt=""
+                    />
+                    <img
+                      className="docs-brand-dark"
+                      src="/docs/brand/lockup-dark.webp"
+                      width="720"
+                      height="270"
+                      alt=""
+                    />
                   </span>
-                  <span>ASSAY&thinsp;/docs</span>
+                  <span className="docs-brand-suffix" aria-hidden="true">
+                    /docs
+                  </span>
                 </span>
               ),
               url: 'https://assayed.xyz',
