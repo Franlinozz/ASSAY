@@ -65,9 +65,9 @@ export default function AgentsPage() {
           can find the right outcome without adding duplicate API methods.
         </p>
         <p className="caption" style={{ marginTop: '0.7rem' }}>
-          MCP clients negotiate and discover tools at <span className="mono">/mcp</span>. OKX.AI
-          offer cards use concrete <span className="mono">/x402/&lt;service&gt;</span> resources so
-          an unpaid marketplace probe receives its service-specific 402 immediately.
+          MCP clients negotiate and discover tools at <span className="mono">/mcp</span>. Assay
+          publishes concrete <span className="mono">/x402/&lt;service&gt;</span> resources so an
+          unpaid marketplace probe can receive its service-specific 402 immediately.
         </p>
       </div>
 

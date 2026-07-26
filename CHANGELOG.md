@@ -61,6 +61,11 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - Rechecked Agent #8599 without another mutation: all 13 service records remain intact and the
   x402 validator reports `valid:true`; the public identity currently reads “not listed · Listing
   under review” with “AI quality review suggested pass” after the avatar-triggered re-review.
+- Migrated the ten mutable Agent #8599 service records from the generic MCP URL to their concrete
+  `/x402/<service>` resources in identity transaction `0x037d27b6…e6df17`. OKX rejected endpoint
+  edits for the three original, already-used records (ATS Resume Scan, Job Fit Brief, Career
+  Dossier) with `service in use, only name/description can be modified`; those require an
+  OKX-support migration rather than duplicate replacement services.
 - Fixed mobile chrome alignment so the theme and menu controls stay anchored to the right of the
   supplied Assay lockup, and clipped Studio-only horizontal paint overflow so sticky navigation
   cannot drift sideways while scrolling.

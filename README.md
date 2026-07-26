@@ -91,9 +91,9 @@ on X Layer; source documents, career prose, contact data, and salts stay off-cha
 ## MCP tools and prices
 
 MCP negotiation and discovery use the stateless Streamable HTTP endpoint
-`https://api.assayed.xyz/mcp`. OKX.AI cards use concrete `/x402/<service>` resources so every paid
-offer returns its own immediate 402 challenge. Prices are USDT-denominated per call and settle
-through x402 on X Layer (`eip155:196`).
+`https://api.assayed.xyz/mcp`. Assay also publishes concrete `/x402/<service>` resources so a
+marketplace offer can return its own immediate 402 challenge. Prices are USDT-denominated per call
+and settle through x402 on X Layer (`eip155:196`).
 
 | Tool                                                                              | What it does                                                                |            Price |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------: |
