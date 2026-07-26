@@ -31,6 +31,9 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Fixed
 
+- Corrected the MCP x402 boundary after OKX review: `GET /mcp`, `initialize`, `tools/list`,
+  notifications, and invalid transport requests no longer initiate payment. A 402 challenge is now
+  possible only at JSON-RPC `tools/call` for a paid Assay service; free tools remain free.
 - Fixed a real long-run reconciliation bug: the browser stopped polling after four minutes, so a
   completed Forge could remain visually stuck until reload. Studio now follows the canonical
   server stage for up to 30 minutes, refreshes on completion events, and advances to Report.

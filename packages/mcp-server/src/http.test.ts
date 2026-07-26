@@ -91,52 +91,36 @@ describe('HTTP surface', () => {
     expect(m.prices['asy_ats_scan']).toBe(0.05)
   })
 
-  it('GET /mcp advertises the generic 0.05 USD₮0 challenge; DELETE stays 405', async () => {
+  it('GET /mcp is free discovery with no payment challenge; DELETE stays 405', async () => {
     const { base } = startApp()
     const get = await fetch(`${base}/mcp`)
-    expect(get.status).toBe(402)
-    const encoded = get.headers.get('PAYMENT-REQUIRED')
-    expect(encoded).toBeTruthy()
-    const challenge = JSON.parse(Buffer.from(encoded!, 'base64').toString()) as {
-      x402Version: number
-      resource: { url: string }
-      accepts: Array<{ amount: string; asset: string; network: string; payTo: string }>
-    }
-    expect(challenge.x402Version).toBe(2)
-    expect(challenge.resource.url).toBe('http://localhost/mcp')
-    expect(challenge.accepts[0]).toMatchObject({
-      amount: '50000',
-      asset: '0x779ded0c9e1022225f8e0630b35a9b54be713736',
-      network: 'eip155:196',
-      payTo: '0x1111111111111111111111111111111111111111',
-    })
+    expect(get.status).toBe(200)
+    expect(get.headers.get('PAYMENT-REQUIRED')).toBeNull()
+    expect(await get.json()).toMatchObject({ ok: true, service: 'Assay' })
     expect((await fetch(`${base}/mcp`, { method: 'DELETE' })).status).toBe(405)
   })
 
-  it('a paid GET replay settles once and returns discovery JSON', async () => {
+  it('GET /mcp ignores payment headers and never creates an order', async () => {
     const { rig, base } = startApp()
     const headers = {
       'PAYMENT-SIG': 'signed-get-discovery',
       'Idempotency-Key': 'get-discovery',
     }
-    const first = await fetch(`${base}/mcp`, { headers })
-    const second = await fetch(`${base}/mcp`, { headers })
-    expect(first.status).toBe(200)
-    expect(second.status).toBe(200)
-    expect(first.headers.get('PAYMENT-RESPONSE')).toBeTruthy()
-    expect(await first.json()).toMatchObject({ ok: true, service: 'Assay' })
-    expect(rig.store.getOrderByIdempotencyKey('get-discovery')).toBeTruthy()
+    const response = await fetch(`${base}/mcp`, { headers })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('PAYMENT-RESPONSE')).toBeNull()
+    expect(rig.store.getOrderByIdempotencyKey('get-discovery')).toBeUndefined()
   })
 
-  it('challenges an unpaid bare POST before content negotiation', async () => {
+  it('rejects an unpaid bare POST without initiating a charge', async () => {
     const { base } = startApp()
     const res = await fetch(`${base}/mcp`, {
       method: 'POST',
       headers: { 'content-type': 'text/plain' },
       body: 'hi',
     })
-    expect(res.status).toBe(402)
-    expect(res.headers.get('PAYMENT-REQUIRED')).toBeTruthy()
+    expect(res.status).toBe(415)
+    expect(res.headers.get('PAYMENT-REQUIRED')).toBeNull()
   })
 
   it('rejects a paid replay with a non-JSON content type', async () => {
@@ -159,30 +143,29 @@ describe('HTTP surface', () => {
     expect(res.status).toBe(400)
   })
 
-  it('challenges tools/list without requiring an SSE Accept header', async () => {
+  it('serves tools/list free without requiring an SSE Accept header', async () => {
     const { base } = startApp()
     const res = await fetch(`${base}/mcp`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(toolsList),
     })
-    expect(res.status).toBe(402)
-    expect(res.headers.get('PAYMENT-REQUIRED')).toBeTruthy()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('PAYMENT-REQUIRED')).toBeNull()
+    const body = (await res.json()) as { result: { tools: unknown[] } }
+    expect(body.result.tools).toHaveLength(TOOL_NAMES.length)
   })
 
-  it('a signed initialize replay succeeds as JSON without an SSE Accept header', async () => {
+  it('serves initialize free as JSON without an SSE Accept header', async () => {
     const { base } = startApp()
     const res = await fetch(`${base}/mcp`, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'PAYMENT-SIG': 'signed-discovery-proof',
-        'Idempotency-Key': 'discovery-init',
-      },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify(initialize),
     })
     expect(res.status).toBe(200)
-    expect(res.headers.get('PAYMENT-RESPONSE')).toBeTruthy()
+    expect(res.headers.get('PAYMENT-REQUIRED')).toBeNull()
+    expect(res.headers.get('PAYMENT-RESPONSE')).toBeNull()
     const body = (await res.json()) as { result: { serverInfo: { name: string } } }
     expect(body.result.serverInfo.name).toBe('assay')
   })

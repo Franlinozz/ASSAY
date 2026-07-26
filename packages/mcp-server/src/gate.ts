@@ -12,10 +12,12 @@ import { priceString, sha256Hex } from './util'
 // PaymentGate — the x402 settlement boundary. It only ever sees PAID tools: http.ts runs the
 // PolicyGate and the free-tool bypass BEFORE calling check() (guardrail #6, per-tool free forever).
 //
-// Wire shape implemented to the OKX seller-SDK docs re-fetched 2026-07-23 (AGENTS.md gotcha 8):
+// Wire shape implemented to the OKX seller-SDK docs re-fetched 2026-07-26 (AGENTS.md gotcha 8):
 //   • first call (no PAYMENT-SIG)  → HTTP 402 + header PAYMENT-REQUIRED: base64(JSON challenge)
 //                                     advertising { scheme:'exact', network:'eip155:196', asset:USDT }
 //   • replay  (PAYMENT-SIG present)→ verify+settle → 200 + header PAYMENT-RESPONSE (settlement proof)
+// http.ts invokes this gate only for JSON-RPC tools/call on a paid tool. MCP initialization and
+// discovery never enter the SDK payment route.
 
 export type GateDecision =
   | { kind: 'challenge'; status: 402; headers: Record<string, string>; body: unknown }
@@ -155,7 +157,6 @@ export class OkxGate implements PaymentGate {
       mimeType: 'application/json',
     }
     const routes: RoutesConfig = {
-      'GET /mcp': route,
       'POST /mcp': route,
     }
     this.httpServer = new x402HTTPResourceServer(resourceServer, routes)

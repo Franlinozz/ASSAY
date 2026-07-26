@@ -180,52 +180,10 @@ export function buildApp(rt: AppRuntime): Express {
     })
   })
 
-  // ── /mcp — the stateless paywall + MCP endpoint. ──
-  app.get('/mcp', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const opts = { tool: 'mcp_discovery', priceUsdt: priceOf('asy_ats_scan') }
-      const paymentSig = readPaymentSig(req)
-      if (paymentSig) {
-        const idemKey = (req.header('Idempotency-Key') ?? sha256Hex(paymentSig)).slice(0, 80)
-        const existing = store.getOrderByIdempotencyKey(idemKey)
-        if (existing) {
-          if (existing.settlement)
-            for (const [key, value] of Object.entries(
-              JSON.parse(existing.settlement) as Record<string, string>,
-            ))
-              res.setHeader(key, value)
-          return void res.json(existing.result ? JSON.parse(existing.result) : discoveryResult(cfg))
-        }
-        const paid = await gate.check(req, opts)
-        if (paid.kind === 'error' || paid.kind === 'challenge') {
-          for (const [key, value] of Object.entries(paid.headers)) res.setHeader(key, value)
-          return void res.status(paid.kind === 'challenge' ? 402 : paid.status).json(paid.body)
-        }
-        const result = discoveryResult(cfg)
-        store.createOrder({
-          tool: opts.tool,
-          priceUsdt: opts.priceUsdt,
-          idempotencyKey: idemKey,
-          status: 'settled',
-          settlement: JSON.stringify(paid.settlement),
-          ...(paid.payerRef ? { payerRef: paid.payerRef } : {}),
-        })
-        store.attachOrderResult(idemKey, JSON.stringify(result))
-        for (const [key, value] of Object.entries(paid.settlement)) res.setHeader(key, value)
-        return void res.json(result)
-      }
-      const decision = await gate.check(req, opts)
-      if (decision.kind === 'challenge' || decision.kind === 'error') {
-        for (const [key, value] of Object.entries(decision.headers)) res.setHeader(key, value)
-        return void res
-          .status(decision.kind === 'challenge' ? 402 : decision.status)
-          .json(decision.body)
-      }
-      return void res.status(402).json({ error: 'payment required' })
-    } catch (error) {
-      next(error)
-    }
-  })
+  // ── /mcp — stateless MCP transport. Discovery/negotiation is always free; the x402 boundary
+  // is reached only by a JSON-RPC tools/call targeting a paid tool. This ordering matters:
+  // initialize and tools/list must complete before a buyer can select a tool to purchase.
+  app.get('/mcp', (_req: Request, res: Response) => void res.json(discoveryResult(cfg)))
   app.delete(
     '/mcp',
     (_req: Request, res: Response) => void res.status(405).json({ error: 'method not allowed' }),
@@ -239,18 +197,6 @@ export function buildApp(rt: AppRuntime): Express {
         if (!bucket.take(clientIp(req)))
           return void res.status(429).json({ error: 'rate limit exceeded (60/min)' })
         if (!req.is('application/json')) {
-          if (!readPaymentSig(req)) {
-            const decision = await gate.check(req, {
-              tool: 'mcp_discovery',
-              priceUsdt: priceOf('asy_ats_scan'),
-            })
-            if (decision.kind === 'challenge' || decision.kind === 'error') {
-              for (const [key, value] of Object.entries(decision.headers)) res.setHeader(key, value)
-              return void res
-                .status(decision.kind === 'challenge' ? 402 : decision.status)
-                .json(decision.body)
-            }
-          }
           return void res
             .status(415)
             .json({ error: 'unsupported media type; send application/json' })
@@ -284,9 +230,10 @@ export function buildApp(rt: AppRuntime): Express {
           )
         }
 
-        // Discovery/transport requests carry the 0.05 endpoint challenge expected by OKX.AI.
-        // Paid tools keep their own prices; the three explicitly free tools remain free forever.
-        if (!isToolCall || isPaid(tool)) {
+        // Charge only at the tool/call stage. initialize, tools/list, notifications and transport
+        // negotiation are free; paid tools keep their own prices and the three explicit free tools
+        // remain free forever.
+        if (isToolCall && isPaid(tool)) {
           // PolicyGate BEFORE any payment semantics (guardrail #6): refuse politely, never charge.
           const policy = policyGate({ text: argsText(body.params?.arguments) })
           if (!policy.allowed) {
@@ -298,8 +245,8 @@ export function buildApp(rt: AppRuntime): Express {
             )
           }
 
-          const billableTool = isToolCall ? tool : `mcp_${body.method ?? 'request'}`
-          const price = isToolCall ? priceOf(tool) : priceOf('asy_ats_scan')
+          const billableTool = tool
+          const price = priceOf(tool)
           const paymentSig = readPaymentSig(req)
 
           if (!paymentSig) {

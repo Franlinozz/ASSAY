@@ -9,14 +9,16 @@ to authorize a paid replay.
 
 ## The flow
 
-1. **POST /mcp** — call a paid tool with plain JSON-RPC.
-2. **HTTP 402** — the `PAYMENT-REQUIRED` header carries a base64 JSON challenge: `x402Version: 2`,
+1. **Negotiate for free** — `GET /mcp`, `initialize`, and `tools/list` complete without a payment
+   challenge. This lets the client establish MCP and choose a service before any billing begins.
+2. **POST /mcp · tools/call** — invoke a paid tool with plain JSON-RPC.
+3. **HTTP 402** — the `PAYMENT-REQUIRED` header carries a base64 JSON challenge: `x402Version: 2`,
    an `accepts` entry using scheme `exact`, network `eip155:196`, the USD₮0 asset
    `0x779ded0c9e1022225f8e0630b35a9b54be713736`, atomic amount, and pay-to address.
-3. **Sign** — the client signs an EIP-3009 exact-scheme authorization for the amount and retries
+4. **Sign** — the client signs an EIP-3009 exact-scheme authorization for the amount and retries
    the _same_ request with the `PAYMENT-SIG` header (also accepted: `X-PAYMENT`,
    `PAYMENT-SIGNATURE`).
-4. **200 + PAYMENT-RESPONSE** — the facilitator verifies and settles on-chain; the response
+5. **200 + PAYMENT-RESPONSE** — the facilitator verifies and settles on-chain; the response
    carries the settlement proof and your result.
 
 ## Guarantees
@@ -26,9 +28,9 @@ to authorize a paid replay.
 - **Idempotent replay.** A settled call is cached against its `Idempotency-Key` (or the payment
   signature hash). Replays return the original result verbatim — never re-charged, never re-run.
 - **Free means free.** `asy_verify`, `asy_job_status`, and `asy_job_result` are never gated.
-- **Discovery is probeable.** An unpaid generic `GET`, `initialize`, or `tools/list` reaches the
-  same valid 0.05 USD₮0 challenge before MCP content negotiation; buyers can discover payment
-  terms without first constructing an SSE request.
+- **No charge before tool invocation.** `GET`, malformed transport requests, `initialize`,
+  `tools/list`, and notifications never enter payment handling. Only `tools/call` for a paid tool
+  can return a 402.
 - **Fixed prices.** The table in [pricing](https://assayed.xyz/pricing) is the table the paywall
   enforces, published machine-readably at
   [`/.well-known/assay.json`](https://api.assayed.xyz/.well-known/assay.json).

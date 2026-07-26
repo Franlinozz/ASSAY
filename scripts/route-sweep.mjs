@@ -32,15 +32,21 @@ function bodyClean(body, path) {
 
 const failures = []
 
-async function hit(base, path, { expect = [200], allowRawGap = false, method = 'GET', body } = {}) {
+async function hit(
+  base,
+  path,
+  { expect = [200], allowRawGap = false, method = 'GET', body, headers = {} } = {},
+) {
   const url = `${base}${path}`
   let res
   try {
     res = await fetch(url, {
       method,
-      ...(body
-        ? { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
-        : {}),
+      headers: {
+        ...headers,
+        ...(body ? { 'content-type': 'application/json' } : {}),
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
     })
   } catch (e) {
     failures.push(`${method} ${path} → threw ${e.message}`)
@@ -101,10 +107,51 @@ async function main() {
     await hit(api, '/d-api', { expect: [200] })
     await hit(api, `/d-api/${seeded.dossierId}`, { expect: [200] })
     await hit(api, '/d-api/DSR-NOPE', { expect: [404], allowRawGap: true })
-    const unpaidMcp = await hit(api, '/mcp', { expect: [402], allowRawGap: true })
+    const getMcp = await hit(api, '/mcp', { expect: [200], allowRawGap: true })
+    if (getMcp?.res.headers.get('PAYMENT-REQUIRED'))
+      failures.push('GET /mcp initiated an x402 charge outside tools/call')
+    const initializeMcp = await hit(api, '/mcp', {
+      method: 'POST',
+      body: {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-03-26',
+          capabilities: {},
+          clientInfo: { name: 'route-sweep', version: '1' },
+        },
+      },
+      expect: [200],
+      allowRawGap: true,
+    })
+    if (initializeMcp?.res.headers.get('PAYMENT-REQUIRED'))
+      failures.push('initialize initiated an x402 charge outside tools/call')
+    const listMcp = await hit(api, '/mcp', {
+      method: 'POST',
+      body: { jsonrpc: '2.0', id: 2, method: 'tools/list' },
+      expect: [200],
+      allowRawGap: true,
+    })
+    if (listMcp?.res.headers.get('PAYMENT-REQUIRED'))
+      failures.push('tools/list initiated an x402 charge outside tools/call')
+    const unpaidMcp = await hit(api, '/mcp', {
+      method: 'POST',
+      body: {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'asy_ats_scan',
+          arguments: { resumeText: 'JANE DOE\nEXPERIENCE\nAcme — Engineer' },
+        },
+      },
+      expect: [402],
+      allowRawGap: true,
+    })
     const paymentRequired = unpaidMcp?.res.headers.get('PAYMENT-REQUIRED')
     if (!paymentRequired) {
-      failures.push('GET /mcp → 402 without PAYMENT-REQUIRED challenge')
+      failures.push('paid tools/call → 402 without PAYMENT-REQUIRED challenge')
     } else {
       try {
         const challenge = JSON.parse(Buffer.from(paymentRequired, 'base64').toString())
@@ -114,10 +161,10 @@ async function main() {
           accepted?.network !== 'eip155:196' ||
           accepted?.amount !== '50000'
         ) {
-          failures.push('GET /mcp → malformed generic x402 challenge')
+          failures.push('paid tools/call → malformed x402 challenge')
         }
       } catch {
-        failures.push('GET /mcp → PAYMENT-REQUIRED is not valid base64 JSON')
+        failures.push('paid tools/call → PAYMENT-REQUIRED is not valid base64 JSON')
       }
     }
     // The seeded dossier's portfolio share slug (agent-facing /p/:slug), if present.
