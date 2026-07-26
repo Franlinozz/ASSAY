@@ -6,6 +6,7 @@ import {
   fitBrief,
   coverLetter,
   storyBank,
+  interviewPrep,
   makeCtx,
   type PipelineCtx,
 } from './pipelines'
@@ -88,5 +89,24 @@ describe('evidence-constrained writers', () => {
     })
     expect(r.data['ok']).toBe(true)
     expect(r.data).toHaveProperty('tribunal')
+  })
+})
+
+describe('asy_interview_prep', () => {
+  it('returns a structured ledger contradiction for agent-supplied numeric claims', async () => {
+    const r = await interviewPrep(ctx(), {
+      profile: { fullName: 'Nora Platform', timezone: 'UTC' },
+      claims: ['Led a platform team of 8 engineers across Berlin and Lisbon for 2 years.'],
+      evidence: 'Q2 operating review confirms a team of 8 engineers across Berlin and Lisbon.',
+      answer:
+        'The situation was a platform incident. My task was recovery. I led a team of 12 engineers and the result was a stable release.',
+    })
+    const evaluation = r.data['evaluation'] as {
+      contradictions: Array<{ answerValue: number; ledgerValue: number; detail: string }>
+    }
+    expect(evaluation.contradictions).toEqual([
+      expect.objectContaining({ answerValue: 12, ledgerValue: 8 }),
+    ])
+    expect(evaluation.contradictions[0]?.detail).toContain('Correct the ledger with evidence')
   })
 })

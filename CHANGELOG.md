@@ -42,6 +42,9 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Fixed
 
+- Fixed `asy_interview_prep` for direct agent-supplied claims: literal numbers now become ledger
+  numeric facts before evaluation, so a typed “team of 12” answer against a confirmed “team of 8”
+  claim populates the structured `contradictions[]` verdict as well as the human feedback.
 - Stopped the web app from prefetching the separately deployed Docs Next.js application as if it
   were a web-app route. Docs links now perform a clean document navigation, eliminating background
   wrong-build chunk requests and their strict-MIME console errors.

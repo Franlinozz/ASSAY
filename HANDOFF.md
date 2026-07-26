@@ -8,7 +8,7 @@ Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is t
 
 - **Release:** every workspace and the production health default are **v1.1.0**; the published
   grader remains **AS-1.1.0**. Resolve the final tagged commit with `git rev-list -n1 v1.1.0`.
-- **Release matrix:** 287 Vitest + 4 Foundry + 53 Playwright e2e = **344 tests**. Production builds,
+- **Release matrix:** 288 Vitest + 4 Foundry + 53 Playwright e2e = **345 tests**. Production builds,
   full typecheck, judged-artifact, generated-doc, marketplace-consistency, npm audit, secret scan,
   and dead-link gates are green.
 - **Hosted CI:** use the `v1.1.0` tag / latest `main` run as the clean-runner record. Do not rely on
@@ -77,7 +77,7 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 | `npm run seal:personas`                 | Anchor persona leaves on X Layer mainnet (needs `ASY_SEALER_KEY`).                                                                                      |
 | `npm run regrade:personas`              | Re-grade the sealed persona artifact sets against the current Standard using Chromium screenshot sampling.                                              |
 | `npm run sweep` (repo root)             | Route sweep: hits every route + validates a real PDF download + forged-token 403.                                                                       |
-| `npm test` (repo root)                  | 287 Vitest.                                                                                                                                             |
+| `npm test` (repo root)                  | 288 Vitest.                                                                                                                                             |
 | `npm run test:e2e` (repo root)          | 53 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400).                                                                                 |
 | `npm run check:marketplace` (repo root) | Regenerates and proves machine manifest = docs = pricing for all 11 tools.                                                                              |
 | `npm run check:judge` (repo root)       | Regenerates public facts, verifies README/test counts, and checks local + public links.                                                                 |

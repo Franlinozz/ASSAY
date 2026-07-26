@@ -9,6 +9,7 @@ import type {
 import {
   DossierSchema,
   ProfileSchema,
+  extractNumbers,
   newClaimId,
   newEvidenceId,
   policyGate,
@@ -91,7 +92,15 @@ function claimsFromStrings(texts: string[], evidence: EvidenceItem): Claim[] {
         evidenceIds: [evidence.id],
         strength: 'attested',
         status: 'confirmed',
-        numericFacts: [],
+        // Direct A2MCP callers supply claims as text rather than a pre-built ledger.
+        // Preserve every literal number as a fact here, so the claim gate and the
+        // Interview Room can deterministically compare "8" in the ledger to "12"
+        // in a typed answer instead of leaving that contradiction to critic prose.
+        numericFacts: extractNumbers(text).map((number) => ({
+          value: number.value,
+          ...(number.unit ? { unit: number.unit } : {}),
+          context: text,
+        })),
         tags: [],
       }
       return { ...base, strength: computeStrength(base, [evidence]) }
