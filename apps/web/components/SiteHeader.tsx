@@ -42,16 +42,22 @@ export function SiteHeader() {
         </Link>
 
         <nav className="site-nav" aria-label="Primary">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="site-nav-link"
-              aria-current={pathname === item.href ? 'page' : undefined}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV.map((item) =>
+            item.href === '/docs' ? (
+              <a key={item.href} href={item.href} className="site-nav-link">
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="site-nav-link"
+                aria-current={pathname === item.href ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            ),
+          )}
         </nav>
 
         <div className="site-header-actions">
@@ -87,17 +93,23 @@ export function SiteHeader() {
 
       {open && (
         <nav id="mobile-nav" className="mobile-nav" aria-label="Primary, mobile">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="mobile-nav-link"
-              aria-current={pathname === item.href ? 'page' : undefined}
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {NAV.map((item) =>
+            item.href === '/docs' ? (
+              <a key={item.href} href={item.href} className="mobile-nav-link">
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="mobile-nav-link"
+                aria-current={pathname === item.href ? 'page' : undefined}
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ),
+          )}
           <Link
             href="/studio"
             className="mobile-nav-link mobile-nav-cta"

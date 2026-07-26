@@ -51,7 +51,7 @@ export function SiteFooter() {
               <Link href="/gallery">Gallery</Link>
             </li>
             <li>
-              <Link href="/docs">Documentation</Link>
+              <a href="/docs">Documentation</a>
             </li>
           </ul>
         </nav>

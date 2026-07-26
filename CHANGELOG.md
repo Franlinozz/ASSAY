@@ -42,6 +42,9 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Fixed
 
+- Stopped the web app from prefetching the separately deployed Docs Next.js application as if it
+  were a web-app route. Docs links now perform a clean document navigation, eliminating background
+  wrong-build chunk requests and their strict-MIME console errors.
 - Added 13 concrete OKX.AI service resources under `/x402/<service>`. Paid offer probes now receive
   their service-specific 402 immediately without breaking free `/mcp` negotiation; promotion and
   freelancer routes server-bind the correct dossier variant, and the three free follow-up tools
