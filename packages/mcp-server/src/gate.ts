@@ -135,6 +135,41 @@ export class DevGate implements PaymentGate {
   }
 }
 
+// The paid-route map handed to the OKX seller SDK. Exported so its shape is testable: no
+// facilitator is reachable in dev or CI, so a missing row here is otherwise invisible until it
+// reaches production (DevGate challenges unconditionally and hides the gap).
+export function buildRoutes(cfg: ServerConfig): RoutesConfig {
+  const routeFor = (resourcePath: string, boundTool?: string) => ({
+    accepts: {
+      scheme: 'exact',
+      network: cfg.network,
+      payTo: cfg.payTo,
+      price: (context: HTTPRequestContext) => {
+        const toolPrice = priceOf(boundTool ?? toolFromContext(context))
+        return priceString(toolPrice > 0 ? toolPrice : priceOf('asy_ats_scan'))
+      },
+    },
+    resource: `${cfg.baseUrl}${resourcePath}`,
+    description: resourceDescription(boundTool),
+    mimeType: 'application/json',
+  })
+  const routes: RoutesConfig = {
+    'POST /mcp': routeFor('/mcp'),
+    // A marketplace buyer validates a service endpoint with a GET before it will purchase, and
+    // /mcp is the registered endpoint of the ATS scan — so the challenge has to exist on GET too,
+    // bound to that tool's price. Without this row the SDK reports "no payment required" and the
+    // route falls through to a 200, which a buyer's client reads as "not an x402 service".
+    'GET /mcp': routeFor('/mcp', 'asy_ats_scan'),
+  }
+  for (const [slug, target] of Object.entries(A2MCP_ROUTE_TARGETS)) {
+    if (!isPaid(target.tool)) continue
+    const path = `/x402/${slug}`
+    routes[`GET ${path}`] = routeFor(path, target.tool)
+    routes[`POST ${path}`] = routeFor(path, target.tool)
+  }
+  return routes
+}
+
 // ── OkxGate — the real settlement path via the OKX x402 seller SDK + Facilitator. Structurally
 // wired to the installed @okxweb3/x402-* SDK; funds/settlement are verified LIVE in Phase 7 against
 // the production facilitator (no facilitator is reachable in dev/CI). ──
@@ -156,30 +191,7 @@ export class OkxGate implements PaymentGate {
     const resourceServer = new x402ResourceServer(facilitator)
     registerExactEvmScheme(resourceServer, { networks: [cfg.network] })
 
-    const routeFor = (resourcePath: string, boundTool?: string) => ({
-      accepts: {
-        scheme: 'exact',
-        network: cfg.network,
-        payTo: cfg.payTo,
-        price: (context: HTTPRequestContext) => {
-          const toolPrice = priceOf(boundTool ?? toolFromContext(context))
-          return priceString(toolPrice > 0 ? toolPrice : priceOf('asy_ats_scan'))
-        },
-      },
-      resource: `${cfg.baseUrl}${resourcePath}`,
-      description: resourceDescription(boundTool),
-      mimeType: 'application/json',
-    })
-    const routes: RoutesConfig = {
-      'POST /mcp': routeFor('/mcp'),
-    }
-    for (const [slug, target] of Object.entries(A2MCP_ROUTE_TARGETS)) {
-      if (!isPaid(target.tool)) continue
-      const path = `/x402/${slug}`
-      routes[`GET ${path}`] = routeFor(path, target.tool)
-      routes[`POST ${path}`] = routeFor(path, target.tool)
-    }
-    this.httpServer = new x402HTTPResourceServer(resourceServer, routes)
+    this.httpServer = new x402HTTPResourceServer(resourceServer, buildRoutes(cfg))
   }
 
   private init(): Promise<void> {

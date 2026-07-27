@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { DevGate } from './gate'
+import { DevGate, buildRoutes } from './gate'
+import { A2MCP_ROUTE_TARGETS, isPaid } from './config'
 import { testRuntime, fakeReq } from './testutil'
 
 describe('DevGate (documented x402 shape, no facilitator)', () => {
@@ -46,5 +47,26 @@ describe('DevGate (documented x402 shape, no facilitator)', () => {
       priceUsdt: 0.1,
     })
     expect(decision.kind).toBe('error')
+  })
+})
+
+describe('OkxGate paid-route map (prod-only config, unreachable in CI)', () => {
+  it('challenges on GET /mcp — the probe a marketplace buyer validates an endpoint with', () => {
+    const { cfg } = testRuntime()
+    const routes = buildRoutes(cfg)
+    // Registered endpoint of the ATS Resume Scan service: without this row the SDK answers
+    // "no payment required", the route returns 200, and the buyer refuses to purchase.
+    expect(Object.keys(routes)).toContain('GET /mcp')
+    expect(Object.keys(routes)).toContain('POST /mcp')
+  })
+
+  it('covers both methods of every paid marketplace resource', () => {
+    const { cfg } = testRuntime()
+    const routes = buildRoutes(cfg)
+    for (const [slug, target] of Object.entries(A2MCP_ROUTE_TARGETS)) {
+      if (!isPaid(target.tool)) continue
+      expect(Object.keys(routes), slug).toContain(`GET /x402/${slug}`)
+      expect(Object.keys(routes), slug).toContain(`POST /x402/${slug}`)
+    }
   })
 })
