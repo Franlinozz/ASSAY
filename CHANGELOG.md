@@ -36,8 +36,8 @@ review"` → `variant: "promotion"`). A canonical key always beats a synonym, an
   response as the deliverable, but `asy_create_dossier_job` returned only a `jobId` — so a paid
   Career Dossier looked like a non-delivery to any caller that does not poll, and the six test
   dossiers commissioned on 2026-07-26 then failed in the background on an empty ingest. The paid
-  dossier call now waits a bounded moment (`ASY_INLINE_JOB_WAIT_MS`, default 60s; a production
-  dossier completes in ~21s, well inside the x402 challenge's 300s `maxTimeout`) and returns the
+  dossier call now waits a bounded moment (`ASY_INLINE_JOB_WAIT_MS`, default 240s, inside the 300s
+  `maxTimeout` every challenge advertises; a measured live-provider dossier takes ~112–117s) and returns the
   finished dossier — artifacts, tribunal, seal, portfolio — in the response, flagged
   `deliveredInline`. A run that outlasts the budget falls back to the documented `jobId` contract
   unchanged, and a run that fails inside the budget reports the failure instead of handing back a

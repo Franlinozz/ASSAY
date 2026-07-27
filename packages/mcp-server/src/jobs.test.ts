@@ -3,6 +3,7 @@ import { SAMPLE_RESUME_TEXT } from '@xyndicate/providers'
 import { buildVerifyBundle } from '@xyndicate/receipts'
 import type { Address, Hex } from 'viem'
 import { JobRunner, devPdf, type JobDeps } from './jobs'
+import { MAX_TIMEOUT_SECONDS } from './gate'
 import { AnchorWorker } from './anchor'
 import { createDossierJob, verify, makeCtx, type PipelineCtx } from './pipelines'
 import { testRuntime, type TestRig } from './testutil'
@@ -129,5 +130,14 @@ describe('paid dossier delivery', () => {
     expect(queued.data['jobId']).toBeTruthy()
     expect(queued.data['poll']).toBe('asy_job_status')
     expect(queued.data['deliveredInline']).toBeUndefined()
+  })
+
+  it('keeps the in-band wait inside the payment window every challenge advertises', () => {
+    // A buyer's payment authorization is only valid for maxTimeoutSeconds. Waiting longer than
+    // that in-band would hold a request open past the window it was paid under.
+    const { r } = { r: testRuntime() }
+    expect(r.cfg.inlineJobWaitMs).toBeLessThan(MAX_TIMEOUT_SECONDS * 1000)
+    // ...and long enough to actually cover a live dossier (measured ~117s in production).
+    expect(r.cfg.inlineJobWaitMs).toBeGreaterThan(120_000)
   })
 })

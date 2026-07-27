@@ -41,8 +41,8 @@ production order table identifies the tester's wallet (`0xbc59eb75…`) and both
 
 The remaining delivery gap is now closed too: a paid Career Dossier used to hand back only a
 `jobId`, which reads as a non-delivery to any caller that treats the HTTP response as the
-deliverable. The paid call now waits up to 60 seconds (a production dossier completes in ~21s) and
-returns the finished dossier — artifacts, tribunal grades, seal, portfolio — in the response itself,
+deliverable. The paid call now waits up to 240 seconds — inside the 300s window every payment challenge
+advertises — and returns the finished dossier — artifacts, tribunal grades, seal, portfolio — in the response itself,
 falling back to the documented `jobId` contract only when a run genuinely outlasts the budget.
 
 Note on the flow: for x402/A2MCP the ASP has **no on-chain action** — `next-action` returns "no

@@ -39,6 +39,10 @@ export interface PaymentGate {
 const PAYMENT_SIG_HEADER = 'payment-sig'
 const XLAYER_USDT0 = '0x779ded0c9e1022225f8e0630b35a9b54be713736'
 
+// The window a buyer's payment authorization stays valid, advertised in every challenge. Any
+// in-band work (see config.inlineJobWaitMs) must finish inside it.
+export const MAX_TIMEOUT_SECONDS = 300
+
 // The challenge advertises the capability the buyer is about to pay for, not a house slogan — a
 // generic description on a specific service reads as a mismatch to anyone auditing the listing.
 export function resourceDescription(tool?: string): string {
@@ -66,7 +70,7 @@ function buildAccepts(cfg: ServerConfig, priceUsdt: number) {
       payTo: cfg.payTo,
       asset: cfg.asset === 'USDT' ? XLAYER_USDT0 : cfg.asset,
       amount: String(Math.round(priceUsdt * 1_000_000)),
-      maxTimeoutSeconds: 300,
+      maxTimeoutSeconds: MAX_TIMEOUT_SECONDS,
       extra: { name: 'USD₮0', version: '1' },
     },
   ]

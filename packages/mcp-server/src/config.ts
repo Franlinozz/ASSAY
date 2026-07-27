@@ -76,7 +76,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     signingSecret: env['ASY_SIGNING_SECRET'] ?? randomBytes(32).toString('hex'),
     fileTtlMs: num(env['ASY_FILE_TTL_HOURS'], 24) * 3_600_000,
     rateLimitPerMin: num(env['ASY_RATE_LIMIT'], 60),
-    inlineJobWaitMs: num(env['ASY_INLINE_JOB_WAIT_MS'], 60_000),
+    // A live-provider dossier measures ~117s end to end (extract → grade → repair → render →
+    // parse-back → seal). The budget must clear that comfortably while staying inside the 300s
+    // payment window every challenge advertises, so a marketplace caller that treats the response
+    // as the deliverable actually receives one.
+    inlineJobWaitMs: num(env['ASY_INLINE_JOB_WAIT_MS'], 240_000),
     maxBodyBytes: num(env['ASY_MAX_BODY_BYTES'], 2 * 1024 * 1024),
     modelTimeoutMs: num(env['ASY_MODEL_TIMEOUT_MS'], 28_000),
     minFreeDiskBytes: num(env['ASY_MIN_FREE_DISK_MB'], 256) * 1024 * 1024,
