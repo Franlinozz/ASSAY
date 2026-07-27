@@ -7,6 +7,7 @@ import { registerExactEvmScheme } from '@okxweb3/x402-evm/exact/server'
 import { ExpressAdapter } from '@okxweb3/x402-express'
 import type { ServerConfig } from './config'
 import { A2MCP_ROUTE_TARGETS, isPaid, priceOf } from './config'
+import { TOOL_SPECS } from './toolspec'
 import { priceString, sha256Hex } from './util'
 
 // PaymentGate — the x402 settlement boundary. It only ever sees PAID tools: http.ts runs the
@@ -37,6 +38,15 @@ export interface PaymentGate {
 
 const PAYMENT_SIG_HEADER = 'payment-sig'
 const XLAYER_USDT0 = '0x779ded0c9e1022225f8e0630b35a9b54be713736'
+
+// The challenge advertises the capability the buyer is about to pay for, not a house slogan — a
+// generic description on a specific service reads as a mismatch to anyone auditing the listing.
+export function resourceDescription(tool?: string): string {
+  const spec = TOOL_SPECS.find((s) => s.name === tool)
+  return spec
+    ? `Assay — ${spec.title}: ${spec.marketplaceSummary}`
+    : 'Assay evidence-backed career intelligence'
+}
 
 function readPaymentSig(req: Request): string | undefined {
   return (
@@ -78,7 +88,7 @@ export class DevGate implements PaymentGate {
         error: 'Payment required',
         resource: {
           url: `${this.cfg.baseUrl}${opts.resourcePath ?? '/mcp'}`,
-          description: 'Assay evidence-backed career intelligence',
+          description: resourceDescription(opts.tool),
           mimeType: 'application/json',
         },
         accepts,
@@ -153,7 +163,7 @@ export class OkxGate implements PaymentGate {
         },
       },
       resource: `${cfg.baseUrl}${resourcePath}`,
-      description: 'Assay evidence-backed career intelligence',
+      description: resourceDescription(boundTool),
       mimeType: 'application/json',
     })
     const routes: RoutesConfig = {

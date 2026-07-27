@@ -7,16 +7,40 @@
 **Payment:** x402 on X Layer (`eip155:196`), USDT
 **Standard:** AS-1.1.0 · **Registry:** `0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4` (X Layer mainnet)
 
-## Current review state — 2026-07-26
+## Current review state — 2026-07-27 (rejection answered)
 
-- Agent #8599 currently reads **not listed · Listing under review** after the avatar update. The
-  platform remark is “AI quality review suggested pass.”
-- All 13 registered service records, prices, and `https://api.assayed.xyz/mcp` endpoints remain
-  intact.
-- The public endpoint independently passes the current validation: `valid:true`, x402 v2, 0.05
-  USDT generic challenge, `eip155:196`, and the configured treasury.
-- Do not submit the hackathon form until the identity readback returns listed and the public
-  marketplace page resolves again. No further identity/avatar mutation should be made meanwhile.
+OKX rejected the #8599 listing: _"the results returned by your service in actual calls don't match
+the capabilities stated in your service description."_ The cause was reproduced against the live
+server and fixed in the service, not in the copy — the descriptions below stand as written.
+
+**What a platform tester hit.** A paid call carrying an under-specified payload settled and then
+returned a refusal instead of the advertised capability:
+
+| Call                                                   | Before                                                 | Now                                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------- |
+| ATS Resume Scan, empty or chat-style payload           | paid 0.05 → "Could not read that résumé"               | `400 invalid_request` naming `resumeText`/`resumeB64`, **not charged** |
+| Career Dossier, no résumé                              | paid 2.00 → job queued → `ingest failed: INGEST_EMPTY` | `400` before settlement, with a runnable example                       |
+| Cover Letter / Story Bank / Tailor Resume, no evidence | paid → "I won't write from thin air"                   | `400 EVIDENCE_REQUIRED`, **not charged**                               |
+| Payload using `resume` / `jobDescription`              | refused as unreadable                                  | mapped onto `resumeText` / `jd` — the service runs                     |
+| Claim Audit with `claims` as a string                  | raw provider error                                     | coerced to the declared array; verdicts + repair brief delivered       |
+| `tools/call { name: "ATS Resume Scan" }`               | `Tool not found`                                       | resolves to `asy_ats_scan`                                             |
+
+**What is unchanged and must stay so:** an _unpaid_ probe of a paid resource still returns the
+standard x402 v2 402 first (`eip155:196`, USD₮0, configured treasury) — validators check for it, so
+preflight only pre-empts a caller that is presenting payment. All 13 service records, prices, and
+endpoints are untouched; no identity or avatar mutation was made.
+
+**New, free, no payment:** `GET /x402/:service/schema` and `GET /x402` publish each service's
+arguments, price, defaults, and a working example, so a buyer can learn the exact payload before
+spending anything.
+
+**Resubmission note to OKX (paste with the resubmission):**
+
+> The service now rejects an under-specified request with HTTP 400 before any payment is taken, and
+> accepts the common argument spellings (`resume`/`jobDescription` as well as `resumeText`/`jd`).
+> A test call that previously paid and received a refusal now either receives the described result
+> or a free, itemised 400 explaining exactly what to send. `GET /x402/:service/schema` publishes the
+> input contract for every service, and unpaid probes still return the standard x402 402 challenge.
 
 ## Description
 

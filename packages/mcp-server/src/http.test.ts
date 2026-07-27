@@ -272,6 +272,113 @@ describe('HTTP surface', () => {
     expect(free.headers.get('PAYMENT-REQUIRED')).toBeNull()
   })
 
+  // ── Intake: the marketplace-review defences ──────────────────────────────
+  // A buyer must never pay and receive a refusal, and a payload that guesses one key name wrong
+  // must still get the advertised service.
+
+  it('rejects an under-specified paid call before settling, and charges nothing', async () => {
+    const { rig, base } = startApp()
+    const res = await fetch(`${base}/x402/asy_ats_scan`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'PAYMENT-SIG': 'signed-proof-empty-args' },
+      body: JSON.stringify({}),
+    })
+    expect(res.status).toBe(400)
+    const body = (await res.json()) as {
+      code: string
+      charged: boolean
+      provideAnyOf: string[]
+      example: Record<string, unknown>
+    }
+    expect(body.code).toBe('RESUME_REQUIRED')
+    expect(body.charged).toBe(false)
+    expect(body.provideAnyOf).toContain('resumeText')
+    expect(body.example['resumeText']).toBeTruthy()
+    expect(rig.store.orderCount()).toBe(0)
+  })
+
+  it('never charges a paid MCP tool call that cannot produce its capability', async () => {
+    const { rig, base } = startApp()
+    const res = await mcpPost(
+      base,
+      {
+        jsonrpc: '2.0',
+        id: 7,
+        method: 'tools/call',
+        params: { name: 'asy_cover_letter', arguments: { query: 'write me a cover letter' } },
+      },
+      { 'PAYMENT-SIG': 'signed-proof-thin-air-123' },
+    )
+    expect(res.status).toBe(200)
+    expect(res.headers.get('PAYMENT-RESPONSE')).toBeNull()
+    const body = (await res.json()) as { result: { isError: boolean; content: Array<{ text: string }> } }
+    expect(body.result.isError).toBe(true)
+    expect(body.result.content[0]!.text).toContain('EVIDENCE_REQUIRED')
+    expect(rig.store.orderCount()).toBe(0)
+  })
+
+  it('keeps the standard 402 for an unpaid probe even when arguments are missing', async () => {
+    const { base } = startApp()
+    const probe = await fetch(`${base}/x402/asy_ats_scan`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    expect(probe.status).toBe(402)
+    expect(probe.headers.get('PAYMENT-REQUIRED')).toBeTruthy()
+  })
+
+  it('serves the paid capability when the caller uses obvious synonyms', async () => {
+    const { base } = startApp()
+    const res = await fetch(`${base}/x402/ats-resume-scan`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'PAYMENT-SIG': 'signed-proof-alias-123' },
+      body: JSON.stringify({
+        resume: 'JANE DOE — jane@example.com\nEXPERIENCE\nAcme — Product Manager, shipped billing v2\nSKILLS\nSQL',
+        jobDescription: 'Senior Product Manager — billing roadmap, 5+ years B2B SaaS',
+      }),
+    })
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { summary: string; data: { ok: boolean } }
+    expect(body.data.ok).toBe(true)
+    expect(body.summary).toContain('ATS scan complete')
+  })
+
+  it('accepts the marketplace service name as an MCP tool name', async () => {
+    const { base } = startApp()
+    const res = await mcpPost(base, {
+      jsonrpc: '2.0',
+      id: 8,
+      method: 'tools/call',
+      params: { name: 'Verify Seal', arguments: { dossierId: 'DSR-UNKNOWN' } },
+    })
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { result: { content: Array<{ text: string }> } }
+    expect(body.result.content[0]!.text).not.toContain('not found')
+  })
+
+  it('publishes a free input contract per service', async () => {
+    const { base } = startApp()
+    const res = await fetch(`${base}/x402/Career%20Dossier/schema`)
+    expect(res.status).toBe(200)
+    const schema = (await res.json()) as {
+      tool: string
+      priceUsdt: number
+      example: Record<string, unknown>
+    }
+    expect(schema.tool).toBe('asy_create_dossier_job')
+    expect(schema.priceUsdt).toBe(2)
+    expect(schema.example['resumeText']).toBeTruthy()
+
+    const unknown = await fetch(`${base}/x402/not-a-service`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    expect(unknown.status).toBe(404)
+    expect((await unknown.json()) as { services: string[] }).toHaveProperty('services')
+  })
+
   it('refuses a policy-violating paid call without charging (no 402)', async () => {
     const { base } = startApp()
     const bad = {

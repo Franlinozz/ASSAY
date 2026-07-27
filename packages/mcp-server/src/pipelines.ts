@@ -276,6 +276,7 @@ export async function claimAudit(
   args: UploadArgs & { claims?: string[] | undefined },
 ): Promise<ToolResult> {
   let text = ''
+  let hasSourceDocument = false
   if (args.claims && args.claims.length) text = args.claims.join('\n')
   else {
     const ing = await ingestUpload(args)
@@ -286,30 +287,53 @@ export async function claimAudit(
         refused: true,
       }
     text = ing.text
+    hasSourceDocument = true
   }
-  const { claims } = await extractProfile({
+  const extracted = await extractProfile({
     documents: [{ label: 'audit-input', contentText: text }],
     router: ctx.router,
   })
+  // A caller who hands us explicit claims has told us exactly what to audit. If extraction returns
+  // nothing for them (short, fragmentary bullets are legitimately hard to segment), audit the
+  // supplied statements directly — an empty audit on a paid call is not the advertised service.
+  // Verdicts stay honest: with no source document behind a bare claim, a figure in it is
+  // unverified by definition.
+  const fallback =
+    !extracted.claims.length && args.claims?.length && !hasSourceDocument
+      ? args.claims.map((line) => {
+          const numbers = extractNumbers(line)
+          const status = numbers.length ? 'UNSUPPORTED_NUMBER' : 'VAGUE'
+          return {
+            text: line,
+            status,
+            issue: numbers.length
+              ? 'cites a figure with no source behind it — supply the résumé or evidence it came from, or drop the number'
+              : 'no quantified outcome — add a metric an interviewer can probe',
+          }
+        })
+      : undefined
 
-  const audited = claims.map((c) => {
-    const numberUnverified = c.status === 'needs_confirmation'
-    const vague = c.numericFacts.length === 0 && !/\b\d/.test(c.text)
-    const status = numberUnverified ? 'UNSUPPORTED_NUMBER' : vague ? 'VAGUE' : 'SUPPORTED'
-    const issue = numberUnverified
-      ? 'cites a figure that does not appear in the source — confirm it or drop the number'
-      : vague
-        ? 'no quantified outcome — add a metric an interviewer can probe'
-        : 'traces to the source text'
-    return { text: c.text, status, issue }
-  })
+  const claims = extracted.claims
+  const audited =
+    fallback ??
+    claims.map((c) => {
+      const numberUnverified = c.status === 'needs_confirmation'
+      const vague = c.numericFacts.length === 0 && !/\b\d/.test(c.text)
+      const status = numberUnverified ? 'UNSUPPORTED_NUMBER' : vague ? 'VAGUE' : 'SUPPORTED'
+      const issue = numberUnverified
+        ? 'cites a figure that does not appear in the source — confirm it or drop the number'
+        : vague
+          ? 'no quantified outcome — add a metric an interviewer can probe'
+          : 'traces to the source text'
+      return { text: c.text, status, issue }
+    })
   const weak = audited.filter((a) => a.status !== 'SUPPORTED')
   const repairBrief = weak.length
     ? `Tighten ${weak.length} claim(s): ${weak.map((w) => `“${w.text.slice(0, 60)}…” (${w.status})`).join('; ')}`
     : 'Every claim traces to the source — nothing to repair.'
-  ctx.store.recordEvent('claim_audit', { claims: claims.length, weak: weak.length })
+  ctx.store.recordEvent('claim_audit', { claims: audited.length, weak: weak.length })
   return {
-    summary: `Audited ${claims.length} claim(s): ${weak.length} need work.`,
+    summary: `Audited ${audited.length} claim(s): ${weak.length} need work.`,
     data: { ok: true, audited, repairBrief },
   }
 }

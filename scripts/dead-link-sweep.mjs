@@ -48,6 +48,9 @@ function validateInternal(raw, source) {
     return
   }
   if (target.startsWith('/')) {
+    // A path that resolves to a file under apps/web/public is a real static asset (editorial
+    // imagery, brand marks, icons), not a route — check the file, not the route table.
+    if (existsSync(resolve(root, 'apps/web/public', target.slice(1)))) return
     if (!siteRoutes.has(target) && !target.startsWith('/fixtures/'))
       failures.push(`${source}: unknown site route ${target}`)
     return

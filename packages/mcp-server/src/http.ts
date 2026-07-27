@@ -10,6 +10,15 @@ import type { Store } from './store'
 import type { PaymentGate } from './gate'
 import { readPaymentSig } from './gate'
 import { buildServer, executeTool } from './server'
+import {
+  normalizeArgs,
+  preflight,
+  resolveServiceSlug,
+  resolveToolName,
+  serviceSchema,
+  SERVICE_SLUGS,
+  type IntakeProblem,
+} from './intake'
 import { buildStudioRouter } from './studioHttp'
 import { devPdf } from './jobs'
 import { TokenBucket, verifyFileToken, sha256Hex, toJson, freeDiskBytes } from './util'
@@ -55,6 +64,22 @@ function jsonRpcResult(
   result: unknown,
 ): { jsonrpc: '2.0'; id: unknown; result: unknown } {
   return { jsonrpc: '2.0', id: id ?? null, result }
+}
+
+// The machine-readable half of an intake rejection: what was missing, what satisfies it, and a
+// payload that works. Always accompanied by the plain-language message.
+function intakeBody(tool: string, problem: IntakeProblem): Record<string, unknown> {
+  return {
+    ok: false,
+    error: 'invalid_request',
+    code: problem.code,
+    tool,
+    message: problem.message,
+    provideAnyOf: problem.accepts,
+    example: problem.example,
+    charged: false,
+    note: 'No payment was taken — this request was rejected before the x402 gate.',
+  }
 }
 
 function paidRequestHash(
@@ -235,6 +260,16 @@ export function buildApp(rt: AppRuntime): Express {
           return void res.status(400).json({ error: 'malformed JSON-RPC body' })
 
         const isToolCall = body.method === 'tools/call'
+        // Intake tolerance (guardrail: a marketplace caller that guesses a synonym still gets the
+        // service it paid for). The canonical name + arguments are written back onto the body, so
+        // the MCP SDK, the price lookup, and the idempotency hash all see one canonical request.
+        if (isToolCall && body.params) {
+          const resolved = resolveToolName(body.params.name)
+          if (resolved) {
+            body.params.name = resolved
+            body.params.arguments = normalizeArgs(resolved, body.params.arguments)
+          }
+        }
         const tool = isToolCall ? (body.params?.name ?? '') : ''
         const args = body.params?.arguments
         const carriesUpload =
@@ -257,6 +292,26 @@ export function buildApp(rt: AppRuntime): Express {
               isError: true,
             }),
           )
+        }
+
+        // PREFLIGHT BEFORE SETTLEMENT. A request that cannot produce the advertised capability is
+        // answered with the exact payload to send, and is never charged for. Order matters twice
+        // over: an UNPAID probe must still receive the standard 402 (validators depend on it), so
+        // this only pre-empts a call that is actually presenting payment — or a free tool, where
+        // there is no challenge to preserve.
+        const known = isToolCall && TOOL_NAMES.includes(tool as (typeof TOOL_NAMES)[number])
+        if (known && (!isPaid(tool) || readPaymentSig(req))) {
+          const check = preflight(tool, args ?? {})
+          if (!check.ok) {
+            return void res.json(
+              jsonRpcResult(body.id, {
+                content: [
+                  { type: 'text', text: `${check.message}\n\n${toJson(intakeBody(tool, check))}` },
+                ],
+                isError: true,
+              }),
+            )
+          }
         }
 
         // Charge only at the tool/call stage. initialize, tools/list, notifications and transport
@@ -376,9 +431,15 @@ export function buildApp(rt: AppRuntime): Express {
     try {
       if (!bucket.take(clientIp(req)))
         return void res.status(429).json({ error: 'rate limit exceeded (60/min)' })
-      const slug = String(req.params['tool'] ?? '')
-      const target = A2MCP_ROUTE_TARGETS[slug]
-      if (!target) return void res.status(404).json({ error: 'unknown Assay service' })
+      const slug = resolveServiceSlug(req.params['tool'])
+      const target = slug ? A2MCP_ROUTE_TARGETS[slug] : undefined
+      if (!slug || !target)
+        return void res.status(404).json({
+          error: 'unknown Assay service',
+          service: String(req.params['tool'] ?? ''),
+          services: SERVICE_SLUGS,
+          discovery: `${cfg.baseUrl}/.well-known/assay.json`,
+        })
       const tool = target.tool
 
       const raw =
@@ -388,14 +449,25 @@ export function buildApp(rt: AppRuntime): Express {
               ?.arguments ??
             (req.body as { params?: { arguments?: unknown } } | undefined)?.params?.arguments ??
             req.body)
-      const suppliedArgs =
-        raw && typeof raw === 'object' && !Array.isArray(raw)
-          ? (raw as Record<string, unknown>)
-          : {}
-      const args = { ...suppliedArgs, ...(target.defaults ?? {}) }
+      // Tolerant intake: synonyms map onto the published schema before anything else looks at the
+      // arguments, so the price, the policy gate and the pipeline all see one canonical request.
+      const args = { ...normalizeArgs(tool, raw), ...(target.defaults ?? {}) }
       const policy = policyGate({ text: argsText(args) })
       if (!policy.allowed) return void res.status(422).json({ ok: false, error: policy.reason })
 
+      // Preflight before settlement — an under-specified request costs nothing and is told exactly
+      // what to send. An UNPAID probe of a paid service still falls through to the standard 402
+      // below (marketplace validators check for it); only a caller presenting payment, or a free
+      // tool, is short-circuited here.
+      if (!isPaid(tool) || readPaymentSig(req)) {
+        const check = preflight(tool, args)
+        if (!check.ok)
+          return void res.status(400).json({
+            ...intakeBody(tool, check),
+            service: slug,
+            schema: `${cfg.baseUrl}/x402/${slug}/schema`,
+          })
+      }
       if (!isPaid(tool)) {
         const result = await executeTool(
           { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg: rt.cfg },
@@ -477,17 +549,45 @@ export function buildApp(rt: AppRuntime): Express {
         for (const [key, value] of Object.entries(decision.settlement)) res.setHeader(key, value)
       }
 
-      const result = await executeTool(
-        { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg: rt.cfg },
-        tool,
-        args,
-      )
+      let result
+      try {
+        result = await executeTool(
+          { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg: rt.cfg },
+          tool,
+          args,
+        )
+      } catch {
+        // Settled but the run failed. The result is deliberately NOT cached, so replaying the same
+        // payment proof re-runs the work for free rather than leaving the buyer with nothing.
+        return void res.status(502).json({
+          ok: false,
+          error: 'execution_failed',
+          tool,
+          message:
+            'Payment settled but the run did not complete. Retry this request with the same payment proof (or Idempotency-Key) — it will not be charged again.',
+          idempotencyKey: idemKey,
+        })
+      }
       store.attachOrderResult(idemKey, toJson(result))
       return void res.json(result)
     } catch (error) {
       next(error)
     }
   }
+  // Free input contract for every marketplace service: a buyer can learn the exact payload before
+  // spending anything. Registered ahead of the paid routes so it is never swallowed by them.
+  app.get('/x402/:tool/schema', (req: Request, res: Response) => {
+    const slug = resolveServiceSlug(req.params['tool'])
+    const schema = slug ? serviceSchema(slug, cfg.baseUrl) : undefined
+    if (!schema)
+      return void res.status(404).json({ error: 'unknown Assay service', services: SERVICE_SLUGS })
+    return void res.json(schema)
+  })
+  app.get('/x402', (_req: Request, res: Response) => {
+    res.json({
+      services: SERVICE_SLUGS.map((slug) => serviceSchema(slug, cfg.baseUrl)).filter(Boolean),
+    })
+  })
   app.get('/x402/:tool', directTool)
   app.post('/x402/:tool', express.json({ limit: cfg.maxBodyBytes }), directTool)
 

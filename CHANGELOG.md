@@ -4,7 +4,41 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+### Fixed
+
+- **Marketplace intake (OKX.AI listing review).** A paid call could previously settle and then
+  return a refusal — an ATS scan with no résumé, a cover letter with no evidence, a 2.00 USDT
+  dossier job whose background run then failed on an empty ingest — and a payload that named a key
+  `resume` instead of `resumeText` was refused outright. Both read, correctly, as a service whose
+  results do not match its description. Two defences now stand in front of every capability:
+  - **Preflight before settlement.** A deterministic, model-free check runs ahead of the x402 gate.
+    A request that cannot produce the advertised capability gets `400 invalid_request` naming what
+    is missing, which keys satisfy it, and a runnable example — and is never charged (`charged:
+false`). An _unpaid_ probe of a paid resource still receives the standard 402 first, so
+    marketplace validators see the challenge they expect.
+  - **Tolerant intake.** Obvious synonyms map onto the published schema before anything else reads
+    the request (`resume`/`cv`/`documentText` → `resumeText`, `jobDescription`/`role` → `jd`, a
+    single claims string → the declared array, a `data:` URI → raw base64, `type: "promotion
+review"` → `variant: "promotion"`). A canonical key always beats a synonym, and a chat-style
+    message is never mistaken for a résumé. Marketplace service names resolve wherever a tool name
+    or route slug is expected (`/x402/ats-resume-scan`, `tools/call { name: "ATS Resume Scan" }`).
+- `asy_claim_audit` no longer returns an empty audit when a caller supplies short claim strings the
+  extractor cannot segment: the supplied statements are audited directly, and with no source
+  document behind a bare claim a figure in it is reported `UNSUPPORTED_NUMBER` rather than waved
+  through.
+- A paid run that throws after settlement now returns a sanitized `502` telling the buyer to retry
+  with the same payment proof (the result is deliberately not cached, so the retry re-runs free)
+  instead of an opaque provider error.
+- The dead-link sweep resolves static assets under `apps/web/public`, so the editorial imagery no
+  longer fails the gate as unknown site routes.
+
 ### Added
+
+- `GET /x402/:service/schema` and `GET /x402` — the free, unauthenticated input contract for every
+  marketplace service: tool, price, arguments generated from the shipped zod schemas, server-bound
+  defaults, and a working example. A buyer can learn exactly what to send before spending anything.
+- The x402 payment challenge now describes the specific capability being sold rather than a generic
+  house line, so a service card and its 402 agree.
 
 - Added a coherent eight-image editorial photography system across the Claim Gate, recruiter
   portal, closing CTA, Standard, Studio onboarding, Tribunal, Verify, and Gallery surfaces. Each

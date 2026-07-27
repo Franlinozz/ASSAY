@@ -21,6 +21,14 @@ The **agent discovery manifest** — machine-readable service metadata (name, to
 registry, endpoint). This is how an agent finds Assay's capabilities without reading the docs. No
 auth; safe to cache.
 
+## `GET /x402` and `GET /x402/:service/schema`
+
+The **free input contract** for the marketplace resources. `/x402` lists every registered service;
+`/x402/:service/schema` returns one service's tool name, price, argument list (generated from the
+same zod schemas the server registers), server-bound defaults, and a runnable example payload. No
+payment, no auth — a buyer can learn exactly what to send before spending anything. The service
+segment accepts the canonical slug, a dashed variant, or the marketplace service name.
+
 ## `GET /d-api`
 
 The **anonymized recent-seals feed** that powers the landing page's live strip. Returns at most 8
@@ -46,7 +54,7 @@ unshared slug.
 
 **Signed file download.** Every generated artifact (ATS PDF, designed résumé, DOCX, cover letter,
 …) is fetched here with a short-lived HMAC token (`tok`) minted by the Studio or the dossier-job
-result. A missing or expired token returns `403`; an unknown id returns `404`. The token *is* the
+result. A missing or expired token returns `403`; an unknown id returns `404`. The token _is_ the
 credential — no accounts.
 
 ---

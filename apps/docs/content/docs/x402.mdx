@@ -34,10 +34,36 @@ return 200 without x402.
 The complete live route map is published under `marketplaceResources` at
 [`/.well-known/assay.json`](https://api.assayed.xyz/.well-known/assay.json).
 
+## Intake: tolerant input, and no charge for a request we cannot serve
+
+Two rules protect a buyer who is calling Assay for the first time.
+
+**Synonyms are accepted.** The published schema is canonical, but the obvious guesses are mapped
+onto it before anything else looks at the request: `resume` / `cv` / `documentText` → `resumeText`,
+`jobDescription` / `jobPosting` / `role` → `jd`, a single `claims` string → the array the schema
+declares, a base64 `data:` URI → raw base64, `type: "promotion review"` → `variant: "promotion"`.
+A canonical key you supply always wins over a synonym, and a chat-style message
+(“can you scan my resume?”) is never mistaken for the résumé itself. Marketplace service names work
+wherever a tool name or route slug is expected — `/x402/ats-resume-scan` and
+`tools/call { name: "ATS Resume Scan" }` both resolve.
+
+**Preflight runs before settlement.** If a request cannot produce the advertised capability — an
+ATS scan with no résumé, a cover letter with no evidence, a dossier job with an attachment that
+cannot decode — Assay answers with `400 invalid_request` naming the missing input, the keys that
+would satisfy it, and a runnable example. **No payment is taken:** the check runs ahead of the x402
+gate, so `charged: false` is a fact about the rail, not a promise. An _unpaid_ probe of a paid
+resource still receives the standard 402 first, so marketplace validators see the challenge they
+expect.
+
+`GET /x402/:service/schema` (free, no payment) publishes one service's input contract — arguments,
+price, and a working example — and `GET /x402` lists them all.
+
 ## Guarantees
 
 - **PolicyGate before payment.** A request Assay refuses on policy is refused politely — and never
   charged.
+- **A refusal never costs money.** Assay refuses to write what it cannot trace; that refusal is
+  the product, so it is delivered before the paywall, not after it.
 - **Body-bound idempotent recovery.** A settled call is cached against its `Idempotency-Key` (or
   the payment signature hash). A retry with the same key and canonical arguments recovers the
   original result even if the payment header was lost. Reusing the key for different input returns

@@ -8,7 +8,7 @@ Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is t
 
 - **Release:** every workspace and the production health default are **v1.1.0**; the published
   grader remains **AS-1.1.0**. Resolve the final tagged commit with `git rev-list -n1 v1.1.0`.
-- **Release matrix:** 288 Vitest + 4 Foundry + 53 Playwright e2e = **345 tests**. Production builds,
+- **Release matrix:** 309 Vitest + 4 Foundry + 57 Playwright e2e = **370 tests**. Production builds,
   full typecheck, judged-artifact, generated-doc, marketplace-consistency, npm audit, secret scan,
   and dead-link gates are green.
 - **Hosted CI:** use the `v1.1.0` tag / latest `main` run as the clean-runner record. Do not rely on
@@ -21,6 +21,12 @@ Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is t
   original in-use records remain locked to `/mcp` and require OKX support to migrate. The
   post-update readback is **not listed · Listing under review**, with “AI quality review suggested
   pass.” Concrete `x402-check` reports `valid:true`.
+- **Listing review:** the first OKX review REJECTED #8599 ("results don't match the description").
+  Root cause and fix are logged in `AGENTS.md` (POST-REVIEW 2026-07-27) and `LISTING.md`: paid calls
+  used to settle and then refuse an under-specified payload, and rigid argument names refused
+  reasonable ones. `packages/mcp-server/src/intake.ts` now preflights before settlement (free 400
+  with the exact payload to send) and maps synonyms onto the published schema. Unpaid probes still
+  get the standard 402 first — do not reorder that. Resubmission copy is at the top of `LISTING.md`.
 - **Phases done:** P0–P17. After v1.1.0 this branch is fixes-only. Operator-only work that cannot be
   fabricated by code remains: record/upload the real video, publish the X thread, paste its URL
   into `SUBMISSION.md`, and submit the organizer form.
