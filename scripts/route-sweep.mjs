@@ -107,9 +107,14 @@ async function main() {
     await hit(api, '/d-api', { expect: [200] })
     await hit(api, `/d-api/${seeded.dossierId}`, { expect: [200] })
     await hit(api, '/d-api/DSR-NOPE', { expect: [404], allowRawGap: true })
-    const getMcp = await hit(api, '/mcp', { expect: [200], allowRawGap: true })
-    if (getMcp?.res.headers.get('PAYMENT-REQUIRED'))
-      failures.push('GET /mcp initiated an x402 charge outside tools/call')
+    // GET /mcp answers the marketplace buyer's endpoint probe with the standard x402 challenge —
+    // advertising a price is not charging for one. The invariant that still holds absolutely:
+    // a GET never settles a payment and never runs a capability.
+    const getMcp = await hit(api, '/mcp', { expect: [402], allowRawGap: true })
+    if (!getMcp?.res.headers.get('PAYMENT-REQUIRED'))
+      failures.push('GET /mcp no longer advertises the x402 challenge buyers probe for')
+    if (getMcp?.res.headers.get('PAYMENT-RESPONSE'))
+      failures.push('GET /mcp settled a payment — a GET must never charge')
     const initializeMcp = await hit(api, '/mcp', {
       method: 'POST',
       body: {

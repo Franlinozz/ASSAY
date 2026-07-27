@@ -43,6 +43,15 @@ review"` → `variant: "promotion"`). A canonical key always beats a synonym, an
   unchanged, and a run that fails inside the budget reports the failure instead of handing back a
   job id that will never produce anything.
 
+- **`GET /mcp` now answers with the standard x402 challenge instead of a 200 document.** A
+  marketplace buyer's client validates a service endpoint by probing it, and a 200 reads as "not an
+  x402 service" — the purchase is refused before any payment. `/mcp` is the registered endpoint of
+  the 0.05 USDT ATS scan, and the challenge is priced at exactly that service. **MCP negotiation is
+  unaffected**: `initialize`, `tools/list` and notifications are POSTs and remain free, verified
+  with a real MCP SDK client that connects and lists every tool against this build. Free
+  machine-readable discovery remains at `/.well-known/assay.json`. A GET still never settles a
+  payment and never runs a capability — both pinned by tests and by the route sweep.
+
 ### Added
 
 - **Capability access log.** Every `/mcp` and `/x402` request records surface, tool, method, status,

@@ -60,4 +60,7 @@ credential — no accounts.
 ---
 
 > These endpoints are stable and safe to depend on. Payment-gated capability lives only behind
-> `POST /mcp` (see [x402](/docs/x402)); everything documented here is free to read.
+> `POST /mcp` and the `POST /x402/:service` routes (see [x402](/docs/x402)); everything documented
+> here is free to read. Note that a **GET** to `/mcp` returns the 402 challenge rather than a
+> document — it is a registered marketplace endpoint and buyers probe it for one. Use
+> `/.well-known/assay.json` for free discovery.

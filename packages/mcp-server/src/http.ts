@@ -267,7 +267,31 @@ export function buildApp(rt: AppRuntime): Express {
   // ── /mcp — stateless MCP transport. Discovery/negotiation is always free; the x402 boundary
   // is reached only by a JSON-RPC tools/call targeting a paid tool. This ordering matters:
   // initialize and tools/list must complete before a buyer can select a tool to purchase.
-  app.get('/mcp', (_req: Request, res: Response) => void res.json(discoveryResult(cfg)))
+  // GET /mcp answers with the standard x402 challenge rather than a 200 discovery document.
+  //
+  // Why: /mcp is the registered marketplace endpoint for "ATS Resume Scan", and a buyer's client
+  // validates an endpoint by probing it — a 200 there reads as "not an x402 service" and the
+  // purchase is refused before any payment. The challenge is priced at asy_ats_scan (0.05 USDT),
+  // which is exactly that service's listed price; every other service now points at its own
+  // /x402/:service route, so nothing else is mis-priced by this.
+  //
+  // What this does NOT change: MCP negotiation stays free. `initialize`, `tools/list` and
+  // notifications are POSTs and never enter payment handling — verified with a real MCP SDK client,
+  // which connects and lists every tool against this build. Free machine-readable discovery lives
+  // at /.well-known/assay.json, which remains unauthenticated.
+  app.get('/mcp', async (req: Request, res: Response) => {
+    const decision = await gate.check(req, {
+      tool: 'asy_ats_scan',
+      priceUsdt: priceOf('asy_ats_scan'),
+    })
+    if (decision.kind === 'challenge') {
+      for (const [k, v] of Object.entries(decision.headers)) res.setHeader(k, v)
+      return void res.status(402).json(decision.body)
+    }
+    // A caller that already carries valid payment gets the discovery document, not a paid tool —
+    // GET has never executed a capability and must not start now.
+    return void res.json(discoveryResult(cfg))
+  })
   app.delete(
     '/mcp',
     (_req: Request, res: Response) => void res.status(405).json({ error: 'method not allowed' }),

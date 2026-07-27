@@ -91,16 +91,33 @@ describe('HTTP surface', () => {
     expect(m.prices['asy_ats_scan']).toBe(0.05)
   })
 
-  it('GET /mcp is free discovery with no payment challenge; DELETE stays 405', async () => {
+  it('GET /mcp advertises the x402 challenge a marketplace buyer probes for; DELETE stays 405', async () => {
+    // /mcp is the registered endpoint of the 0.05 USDT ATS scan service, and a buyer's client
+    // refuses to purchase from an endpoint that answers a probe with 200. The challenge is priced
+    // at that service exactly. Free negotiation is unaffected — it happens over POST (below).
     const { base } = startApp()
     const get = await fetch(`${base}/mcp`)
-    expect(get.status).toBe(200)
-    expect(get.headers.get('PAYMENT-REQUIRED')).toBeNull()
-    expect(await get.json()).toMatchObject({ ok: true, service: 'Assay' })
+    expect(get.status).toBe(402)
+    const challenge = JSON.parse(
+      Buffer.from(get.headers.get('PAYMENT-REQUIRED')!, 'base64').toString(),
+    ) as { accepts: Array<{ amount: string; network: string }> }
+    expect(challenge.accepts[0]!.amount).toBe('50000')
+    expect(challenge.accepts[0]!.network).toBe('eip155:196')
     expect((await fetch(`${base}/mcp`, { method: 'DELETE' })).status).toBe(405)
   })
 
-  it('GET /mcp ignores payment headers and never creates an order', async () => {
+  it('keeps MCP negotiation free over POST even though GET now challenges', async () => {
+    const { rig, base } = startApp()
+    const init = await mcpPost(base, initialize)
+    expect(init.status).toBe(200)
+    expect(init.headers.get('PAYMENT-REQUIRED')).toBeNull()
+    const list = await mcpPost(base, toolsList)
+    expect(list.status).toBe(200)
+    expect(list.headers.get('PAYMENT-REQUIRED')).toBeNull()
+    expect(rig.store.orderCount()).toBe(0)
+  })
+
+  it('GET /mcp never executes a capability or records an order, even when paid', async () => {
     const { rig, base } = startApp()
     const headers = {
       'PAYMENT-SIG': 'signed-get-discovery',
@@ -108,8 +125,9 @@ describe('HTTP surface', () => {
     }
     const response = await fetch(`${base}/mcp`, { headers })
     expect(response.status).toBe(200)
-    expect(response.headers.get('PAYMENT-RESPONSE')).toBeNull()
+    expect(await response.json()).toMatchObject({ ok: true, service: 'Assay' })
     expect(rig.store.getOrderByIdempotencyKey('get-discovery')).toBeUndefined()
+    expect(rig.store.orderCount()).toBe(0)
   })
 
   it('rejects an unpaid bare POST without initiating a charge', async () => {

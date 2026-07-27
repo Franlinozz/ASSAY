@@ -9,8 +9,13 @@ to authorize a paid replay.
 
 ## The flow
 
-1. **Negotiate for free** — `GET /mcp`, `initialize`, and `tools/list` complete without a payment
-   challenge. This lets the client establish MCP and choose a service before any billing begins.
+1. **Negotiate for free** — `initialize`, `tools/list` and notifications are POSTs and complete
+   without a payment challenge. This lets the client establish MCP and choose a service before any
+   billing begins. A **GET** to `/mcp` instead returns the standard 402 challenge: `/mcp` is the
+   registered marketplace endpoint for the 0.05 USDT ATS scan, and a buyer's client validates an
+   endpoint by probing it, so a 200 there would read as "not an x402 service" and refuse the
+   purchase. Free machine-readable discovery lives at
+   [`/.well-known/assay.json`](https://api.assayed.xyz/.well-known/assay.json).
 2. **POST /mcp · tools/call** — invoke a paid tool with plain JSON-RPC.
 3. **HTTP 402** — the `PAYMENT-REQUIRED` header carries a base64 JSON challenge: `x402Version: 2`,
    an `accepts` entry using scheme `exact`, network `eip155:196`, the USD₮0 asset
