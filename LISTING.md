@@ -30,6 +30,26 @@ standard x402 v2 402 first (`eip155:196`, USD₮0, configured treasury) — vali
 preflight only pre-empts a caller that is presenting payment. All 13 service records, prices, and
 endpoints are untouched; no identity or avatar mutation was made.
 
+**Second review message — "did not deliver within the 30-minute test window" (2026-07-27).** The
+production order table identifies the tester's wallet (`0xbc59eb75…`) and both runs:
+
+- **2026-07-26 19:02–19:03 UTC** — 60 paid calls: 16 returned refusals, and all 6 paid Career
+  Dossier calls queued background jobs that then failed on an empty ingest. Nothing was ever
+  delivered for those six; a 30-minute wait would indeed have expired.
+- **2026-07-27 08:45–08:46 UTC**, nine minutes after the intake fix deployed — the same wallet's
+  next run **delivered 4 of 4** (three ATS scans and a fit brief, real results, `success:true`).
+
+The remaining delivery gap is now closed too: a paid Career Dossier used to hand back only a
+`jobId`, which reads as a non-delivery to any caller that treats the HTTP response as the
+deliverable. The paid call now waits up to 60 seconds (a production dossier completes in ~21s) and
+returns the finished dossier — artifacts, tribunal grades, seal, portfolio — in the response itself,
+falling back to the documented `jobId` contract only when a run genuinely outlasts the budget.
+
+Note on the flow: for x402/A2MCP the ASP has **no on-chain action** — `next-action` returns "no
+ASP-side action" and the endpoint response _is_ the delivery. Agent #8599 is online, and every call
+is now recorded (`capability_call`: surface, tool, status, duration — no personal data), so a future
+test can be diagnosed in minutes rather than reconstructed.
+
 **New, free, no payment:** `GET /x402/:service/schema` and `GET /x402` publish each service's
 arguments, price, defaults, and a working example, so a buyer can learn the exact payload before
 spending anything.

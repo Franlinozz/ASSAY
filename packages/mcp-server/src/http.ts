@@ -122,6 +122,36 @@ export function buildApp(rt: AppRuntime): Express {
     }),
   )
 
+  // ── Capability access log. The marketplace review turned on questions nobody could answer from
+  // this box — which tool a buyer called, what shape the answer was, how long it took — because
+  // nothing recorded a request. This records exactly that and nothing more: no bodies, no résumé
+  // text, no headers, no payment proofs, no IPs (guardrails #3/#9 — never personal data). It is the
+  // difference between diagnosing a failed review in minutes and guessing.
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (!req.path.startsWith('/x402') && req.path !== '/mcp') return next()
+    const started = Date.now()
+    res.on('finish', () => {
+      const body = req.body as JsonRpcBody | undefined
+      const tool =
+        req.path === '/mcp'
+          ? ((body?.method === 'tools/call' ? body.params?.name : body?.method) ?? 'unknown')
+          : String(req.params['tool'] ?? req.path.split('/')[2] ?? 'unknown')
+      try {
+        store.recordEvent('capability_call', {
+          surface: req.path === '/mcp' ? 'mcp' : 'x402',
+          tool,
+          method: req.method,
+          status: res.statusCode,
+          paid: !!readPaymentSig(req),
+          ms: Date.now() - started,
+        })
+      } catch {
+        // Observability must never break a paid call.
+      }
+    })
+    next()
+  })
+
   // ── GET /health — zero model calls, <100ms. Surfaces the anchor-queue age as an alert. ──
   app.get('/health', (_req: Request, res: Response) => {
     const oldest = store.oldestSealAgeMs()

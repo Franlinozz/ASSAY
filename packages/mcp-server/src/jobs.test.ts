@@ -8,7 +8,9 @@ import { createDossierJob, verify, makeCtx, type PipelineCtx } from './pipelines
 import { testRuntime, type TestRig } from './testutil'
 
 function rig(): { r: TestRig; deps: JobDeps; pipe: PipelineCtx } {
-  const r = testRuntime()
+  // These tests drive the JobRunner by hand, so the paid call must hand back its jobId immediately
+  // instead of waiting in-band for a worker that only ticks when the test says so.
+  const r = testRuntime({ ASY_INLINE_JOB_WAIT_MS: '0' })
   const deps: JobDeps = {
     store: r.store,
     router: r.router,
@@ -25,7 +27,7 @@ function rig(): { r: TestRig; deps: JobDeps; pipe: PipelineCtx } {
 describe('dossier job pipeline', () => {
   it('runs queued → done and produces a tribunal summary, artifacts and a seal', async () => {
     const { r, deps, pipe } = rig()
-    const created = createDossierJob(pipe, {
+    const created = await createDossierJob(pipe, {
       resumeText: SAMPLE_RESUME_TEXT,
       jd: 'Must have PostgreSQL\nStrong TypeScript',
     })
@@ -54,7 +56,7 @@ describe('dossier job pipeline', () => {
 
   it('verify round-trips a sealed fixture: the leaf recomputes from the stored salt', async () => {
     const { r, deps, pipe } = rig()
-    const created = createDossierJob(pipe, { resumeText: SAMPLE_RESUME_TEXT })
+    const created = await createDossierJob(pipe, { resumeText: SAMPLE_RESUME_TEXT })
     await new JobRunner(deps, 10).tick()
     const jobId = created.data['jobId'] as string
     const dossierId = JSON.parse(r.store.getJob(jobId)!.result!).dossierId as string
@@ -71,7 +73,7 @@ describe('dossier job pipeline', () => {
 
   it('asy_verify reports pending seal status for an un-anchored dossier without a live chain', async () => {
     const { r, deps, pipe } = rig()
-    const created = createDossierJob(pipe, { resumeText: SAMPLE_RESUME_TEXT })
+    const created = await createDossierJob(pipe, { resumeText: SAMPLE_RESUME_TEXT })
     await new JobRunner(deps, 10).tick()
     const dossierId = JSON.parse(r.store.getJob(created.data['jobId'] as string)!.result!)
       .dossierId as string
@@ -83,12 +85,49 @@ describe('dossier job pipeline', () => {
 describe('anchor worker', () => {
   it('skips draining when no sealer key is configured (dev), leaving seals pending', async () => {
     const { r, deps, pipe } = rig()
-    createDossierJob(pipe, { resumeText: SAMPLE_RESUME_TEXT })
+    await createDossierJob(pipe, { resumeText: SAMPLE_RESUME_TEXT })
     await new JobRunner(deps, 10).tick()
     expect(r.store.pendingSealCount()).toBe(1)
     const anchor = new AnchorWorker(r.store, r.cfg)
     const result = await anchor.drainOnce()
     expect(result.skipped).toBe(true)
     expect(r.store.pendingSealCount()).toBe(1)
+  })
+})
+
+describe('paid dossier delivery', () => {
+  it('returns the finished dossier in-band when the pipeline lands inside the wait budget', async () => {
+    const r = testRuntime({ ASY_INLINE_JOB_WAIT_MS: '20000' })
+    const deps: JobDeps = {
+      store: r.store,
+      router: r.router,
+      fetcher: r.fetcher,
+      cfg: r.cfg,
+      toPdf: devPdf,
+      realPdf: false,
+      sampleContrast: async () => 12.4,
+    }
+    const pipe = makeCtx(r.store, r.router, r.cfg, r.fetcher)
+    // The worker runs alongside the paid call, exactly as it does in production.
+    const runner = new JobRunner(deps, 10)
+    const ticking = setInterval(() => void runner.tick(), 50)
+    try {
+      const delivered = await createDossierJob(pipe, { resumeText: SAMPLE_RESUME_TEXT })
+      expect(delivered.data['deliveredInline']).toBe(true)
+      expect(delivered.data['dossierId']).toBeTruthy()
+      expect((delivered.data['artifacts'] as unknown[]).length).toBeGreaterThan(0)
+      expect(delivered.refused).toBeUndefined()
+    } finally {
+      clearInterval(ticking)
+    }
+  })
+
+  it('falls back to the documented jobId contract when the run outlasts the budget', async () => {
+    const r = testRuntime({ ASY_INLINE_JOB_WAIT_MS: '0' })
+    const pipe = makeCtx(r.store, r.router, r.cfg, r.fetcher)
+    const queued = await createDossierJob(pipe, { resumeText: SAMPLE_RESUME_TEXT })
+    expect(queued.data['jobId']).toBeTruthy()
+    expect(queued.data['poll']).toBe('asy_job_status')
+    expect(queued.data['deliveredInline']).toBeUndefined()
   })
 })

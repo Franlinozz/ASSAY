@@ -32,8 +32,23 @@ review"` → `variant: "promotion"`). A canonical key always beats a synonym, an
 - The dead-link sweep resolves static assets under `apps/web/public`, so the editorial imagery no
   longer fails the gate as unknown site routes.
 
+- **Delivery within the test window (OKX automated re-test).** The platform's tester treats the HTTP
+  response as the deliverable, but `asy_create_dossier_job` returned only a `jobId` — so a paid
+  Career Dossier looked like a non-delivery to any caller that does not poll, and the six test
+  dossiers commissioned on 2026-07-26 then failed in the background on an empty ingest. The paid
+  dossier call now waits a bounded moment (`ASY_INLINE_JOB_WAIT_MS`, default 60s; a production
+  dossier completes in ~21s, well inside the x402 challenge's 300s `maxTimeout`) and returns the
+  finished dossier — artifacts, tribunal, seal, portfolio — in the response, flagged
+  `deliveredInline`. A run that outlasts the budget falls back to the documented `jobId` contract
+  unchanged, and a run that fails inside the budget reports the failure instead of handing back a
+  job id that will never produce anything.
+
 ### Added
 
+- **Capability access log.** Every `/mcp` and `/x402` request records surface, tool, method, status,
+  paid-or-not, and duration as a `capability_call` event — no bodies, no résumé text, no headers, no
+  payment proofs, no IPs. The review could not be diagnosed from this box because nothing recorded a
+  request; now it can be, without holding any personal data.
 - `GET /x402/:service/schema` and `GET /x402` — the free, unauthenticated input contract for every
   marketplace service: tool, price, arguments generated from the shipped zod schemas, server-bound
   defaults, and a working example. A buyer can learn exactly what to send before spending anything.

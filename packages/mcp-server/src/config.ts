@@ -41,6 +41,8 @@ export interface ServerConfig {
   // limits
   rateLimitPerMin: number
   maxBodyBytes: number
+  /** How long a paid dossier call waits in-band for its background job before handing back a jobId. */
+  inlineJobWaitMs: number
   modelTimeoutMs: number
   minFreeDiskBytes: number
 }
@@ -74,6 +76,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     signingSecret: env['ASY_SIGNING_SECRET'] ?? randomBytes(32).toString('hex'),
     fileTtlMs: num(env['ASY_FILE_TTL_HOURS'], 24) * 3_600_000,
     rateLimitPerMin: num(env['ASY_RATE_LIMIT'], 60),
+    inlineJobWaitMs: num(env['ASY_INLINE_JOB_WAIT_MS'], 60_000),
     maxBodyBytes: num(env['ASY_MAX_BODY_BYTES'], 2 * 1024 * 1024),
     modelTimeoutMs: num(env['ASY_MODEL_TIMEOUT_MS'], 28_000),
     minFreeDiskBytes: num(env['ASY_MIN_FREE_DISK_MB'], 256) * 1024 * 1024,

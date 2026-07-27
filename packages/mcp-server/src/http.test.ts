@@ -311,7 +311,9 @@ describe('HTTP surface', () => {
     )
     expect(res.status).toBe(200)
     expect(res.headers.get('PAYMENT-RESPONSE')).toBeNull()
-    const body = (await res.json()) as { result: { isError: boolean; content: Array<{ text: string }> } }
+    const body = (await res.json()) as {
+      result: { isError: boolean; content: Array<{ text: string }> }
+    }
     expect(body.result.isError).toBe(true)
     expect(body.result.content[0]!.text).toContain('EVIDENCE_REQUIRED')
     expect(rig.store.orderCount()).toBe(0)
@@ -334,7 +336,8 @@ describe('HTTP surface', () => {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'PAYMENT-SIG': 'signed-proof-alias-123' },
       body: JSON.stringify({
-        resume: 'JANE DOE — jane@example.com\nEXPERIENCE\nAcme — Product Manager, shipped billing v2\nSKILLS\nSQL',
+        resume:
+          'JANE DOE — jane@example.com\nEXPERIENCE\nAcme — Product Manager, shipped billing v2\nSKILLS\nSQL',
         jobDescription: 'Senior Product Manager — billing roadmap, 5+ years B2B SaaS',
       }),
     })

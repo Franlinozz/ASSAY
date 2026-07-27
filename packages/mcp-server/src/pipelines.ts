@@ -509,7 +509,7 @@ export async function interviewPrep(
 }
 
 // ── 7) asy_create_dossier_job ────────────────────────────────────────────────
-export function createDossierJob(
+export async function createDossierJob(
   ctx: PipelineCtx,
   args: UploadArgs & {
     jd?: string | undefined
@@ -518,7 +518,7 @@ export function createDossierJob(
     dateFrom?: string | undefined
     dateTo?: string | undefined
   },
-): ToolResult {
+): Promise<ToolResult> {
   const policy = policyGate({
     text: [args.resumeText ?? '', args.jd ?? '', args.answers ?? ''].join('\n'),
   })
@@ -526,15 +526,55 @@ export function createDossierJob(
     return { summary: policy.reason, data: { ok: false, code: policy.code }, refused: true }
   const job = ctx.store.createJob('dossier', args)
   ctx.store.recordEvent('dossier_job_created', { jobId: job.id })
+
+  // A marketplace caller treats the HTTP response as the deliverable — it has no reason to know
+  // that "dossier" is a background job, and a tester that never polls sees nothing delivered.
+  // So wait a bounded moment for the pipeline (a production dossier runs in ~20s, well inside the
+  // x402 challenge's 300s maxTimeout) and return the finished dossier in-band when it lands.
+  // Anything slower falls back to the documented async contract, unchanged.
+  const settled = await waitForJob(ctx, job.id, ctx.cfg.inlineJobWaitMs)
+  if (settled?.status === 'done') {
+    const done = jobResult(ctx, { jobId: job.id })
+    return { ...done, data: { ...done.data, jobId: job.id, deliveredInline: true } }
+  }
+  if (settled?.status === 'failed') {
+    return {
+      summary: `Dossier job ${job.id} could not be completed${settled.error ? ` — ${settled.error}` : ''}.`,
+      data: {
+        ok: false,
+        jobId: job.id,
+        status: settled.status,
+        ...(settled.error ? { error: settled.error } : {}),
+      },
+      refused: true,
+    }
+  }
   return {
     summary: `Dossier job queued (${job.id}). The full pipeline — extract → grade → seal — runs in the background. Poll asy_job_status, then asy_job_result.`,
     data: {
       ok: true,
       jobId: job.id,
-      status: job.status,
+      status: settled?.status ?? job.status,
       poll: 'asy_job_status',
       result: 'asy_job_result',
     },
+  }
+}
+
+/** Poll the store until the job leaves the running set, or the budget runs out. Zero model calls. */
+async function waitForJob(
+  ctx: PipelineCtx,
+  jobId: string,
+  budgetMs: number,
+): Promise<{ status: string; error?: string | null } | undefined> {
+  if (budgetMs <= 0) return ctx.store.getJob(jobId)
+  const deadline = Date.now() + budgetMs
+  for (;;) {
+    const job = ctx.store.getJob(jobId)
+    if (!job) return undefined
+    if (job.status === 'done' || job.status === 'failed') return job
+    if (Date.now() >= deadline) return job
+    await new Promise((r) => setTimeout(r, 500))
   }
 }
 
