@@ -19,18 +19,22 @@ Assay
 
 A2MCP
 
-## [OPERATOR] X Account Handle
+## [PASTE] X Account Handle
 
-@Franciscco1
+@AssayAgent
 
-## [OPERATOR] X Participation Post
+> Operator check: an earlier draft of this file carried **@Franciscco1**. The participation post
+> below is published from **@AssayAgent**, so that is the handle recorded here — the account named
+> in the form should be the one the organizers can find the post on. If the form was already
+> registered against @Franciscco1, use that instead and keep the two consistent.
 
-**PENDING — paste the public `x.com/.../status/...` URL after publishing.** Copy and media
-checklist: [`X-POST.md`](./X-POST.md).
+## [PASTE] X Participation Post
 
-## [OPERATOR] Telegram Handle
+https://x.com/AssayAgent/status/2081882453044498807
 
-**MUST FILL — the Telegram account the organizers can reliably reach.**
+## [PASTE] Telegram Handle
+
+@majesticfranc
 
 ---
 
@@ -233,8 +237,8 @@ field exists — they cost nothing and buy credibility.
    `paymentMode: okx`.
 2. Confirm all three systemd units are active (`assay-mcp`, `assay-web`, `assay-docs`).
 3. Confirm #8599 still reads **listed / active** in the marketplace.
-4. Publish the X post, paste its URL into the field above and into this file.
-5. Fill the Telegram handle.
-6. Record the ≤90-second video per [`DEMO-KIT.md`](./DEMO-KIT.md) — it is a real screen recording of
+4. Confirm the X post resolves publicly and the handle in the form matches the account that
+   published it (see the operator check above).
+5. Record the ≤90-second video per [`DEMO-KIT.md`](./DEMO-KIT.md) — it is a real screen recording of
    real pages, with no invented terminal output, fake reviews, or staged payments.
-7. Paste the **full** ASP description; fall back to the compact version only if the field truncates.
+6. Paste the **full** ASP description; fall back to the compact version only if the field truncates.
