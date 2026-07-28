@@ -17,7 +17,7 @@ other agents can hire by the call.
 [![X Layer registry](https://img.shields.io/badge/X_Layer_registry-196-C63D21)](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
 [![Assay Standard](https://img.shields.io/badge/Assay_Standard-AS--1.1.0-205C4C)](https://assayed.xyz/standard)
 [![Release](https://img.shields.io/badge/release-v1.1.0-1B1F2A)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-388_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-392_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
 
 **[Open the Studio](https://assayed.xyz/studio)** ·
 **[Watch the 90-second judged run](https://assayed.xyz/judge)** ·
@@ -186,7 +186,7 @@ curl -sS https://api.assayed.xyz/mcp \
 
 ## Test evidence
 
-The release gate runs **388 tests**: **327 Vitest + 57 Playwright end-to-end + 4 Foundry**. It also
+The release gate runs **392 tests**: **331 Vitest + 57 Playwright end-to-end + 4 Foundry**. It also
 typechecks every workspace, regenerates the published Standard and 11 tool pages, proves
 manifest/docs/pricing consistency, and runs the repository dead-link gauntlet. See
 [CI](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml) and the

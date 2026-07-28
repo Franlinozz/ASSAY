@@ -5,6 +5,8 @@ import { checksForArtifact } from './hard/index'
 import type { CheckDeps } from './hard/types'
 import {
   CRAFT_AXES,
+  CRAFT_AXIS_FLOOR,
+  CRAFT_PASS_MEAN,
   PROSE_ARTIFACT_KINDS,
   REPAIR_LIMIT,
   STANDARD_VERSION,
@@ -17,7 +19,11 @@ export interface GradeDeps extends CheckDeps {
   router: ModelRouter
 }
 
-function buildRepairBrief(hard: HardCheckReport[], craft: CraftGrade): string {
+function buildRepairBrief(
+  hard: HardCheckReport[],
+  craft: CraftGrade,
+  verdict?: { craftPass: boolean; weightedMean: number },
+): string {
   const parts: string[] = []
   for (const h of hard) {
     if (h.status === 'fail') {
@@ -26,6 +32,21 @@ function buildRepairBrief(hard: HardCheckReport[], craft: CraftGrade): string {
   }
   for (const f of craft.findings) parts.push(`[craft:${f.axis}] ${f.detail}`)
   if (craft.repairBrief) parts.push(craft.repairBrief)
+
+  // A failure must always state its reason. The critic can score an artifact below the bar without
+  // emitting a per-axis finding, which produced reports that failed with an empty findings list —
+  // unactionable for a human and indistinguishable from a broken grader for an agent. Derive the
+  // reason from the scores themselves.
+  if (verdict && !verdict.craftPass && parts.length === 0) {
+    const below = CRAFT_AXES.filter((a) => (craft.axes[a.id] ?? 0) < CRAFT_AXIS_FLOOR).map(
+      (a) => `${a.id} ${craft.axes[a.id] ?? 0} (floor ${CRAFT_AXIS_FLOOR})`,
+    )
+    parts.push(
+      below.length
+        ? `[craft] below the axis floor: ${below.join(', ')}.`
+        : `[craft] weighted mean ${verdict.weightedMean} is under the ${CRAFT_PASS_MEAN} pass mark.`,
+    )
+  }
   return parts.join('\n')
 }
 
@@ -118,7 +139,7 @@ export async function gradeArtifact(
     report.repairBrief =
       'Critic unavailable — artifact shipped UNGRADED. No PASS was inferred or fabricated.'
   } else if (!verdict.pass) {
-    report.repairBrief = buildRepairBrief(hard, craft)
+    report.repairBrief = buildRepairBrief(hard, craft, verdict)
   }
   return report
 }

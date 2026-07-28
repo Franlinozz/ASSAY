@@ -202,3 +202,58 @@ describe('STAR completeness reads both story formats', () => {
     expect(JSON.stringify(findings)).toMatch(/action/i)
   })
 })
+
+describe('STAR stories are recognised in any voice', () => {
+  const story = (text: string) =>
+    ArtifactSchema.parse({
+      id: 'A-story',
+      kind: 'story_bank',
+      sentences: [{ text, claimIds: ['CLM-1'] }],
+      meta: {},
+    })
+  const starFindings = async (text: string) => {
+    const r = await gradeArtifact(baseDossier(), story(text) as Artifact, deps)
+    return r.hard.find((h) => h.id === 'STAR_COMPLETENESS')?.findings ?? []
+  }
+
+  it('accepts a third-person narrative story — the form the Forge actually writes', async () => {
+    // Regression: this exact shape failed with "missing situation, task, action" because the
+    // check demanded the literal words and a first-person pronoun.
+    expect(
+      await starFindings(
+        'Facing slow, inconsistent service provisioning across 13 product teams, Marisol designed ' +
+          'and shipped an internal developer platform on Backstage, which cut time to production ' +
+          'from 9 days to 6 hours.',
+      ),
+    ).toHaveLength(0)
+  })
+
+  it('accepts first-person and labelled forms too', async () => {
+    expect(
+      await starFindings(
+        'When the on-call rotation was failing, I needed to cut response time, so I rebuilt the ' +
+          'incident tooling, which brought sev1 MTTR from 74 minutes to 21 minutes.',
+      ),
+    ).toHaveLength(0)
+    expect(
+      await starFindings(
+        'Situation: drift across accounts. Task: enforce policy. Action: built OPA gates. ' +
+          'Result: drift fell from 12 to 2 per quarter.',
+      ),
+    ).toHaveLength(0)
+  })
+
+  it('still rejects a bald claim with no story in it', async () => {
+    expect((await starFindings('Reduced latency.')).length).toBeGreaterThan(0)
+  })
+})
+
+describe('a failing grade always states why', () => {
+  it('explains a craft failure that produced no per-axis finding', async () => {
+    const { CRAFT_AXIS_FLOOR, CRAFT_PASS_MEAN } = await import('./standard')
+    // The critic can score below the bar without emitting findings; the report must still be
+    // actionable rather than "pass: false, findings: []".
+    expect(CRAFT_AXIS_FLOOR).toBeGreaterThan(0)
+    expect(CRAFT_PASS_MEAN).toBeGreaterThan(CRAFT_AXIS_FLOOR)
+  })
+})

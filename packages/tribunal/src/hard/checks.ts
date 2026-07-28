@@ -346,6 +346,40 @@ export function isUsableLink(link: string): boolean {
   return !!assumed && /^[^.]+\.[^.]+/.test(assumed.hostname)
 }
 
+// STAR detection has to survive every way a story is legitimately written: first person ("I built
+// ..."), third person ("Marisol designed and shipped ..."), and labelled form ("Action: built ...").
+// Matching on the literal words "situation"/"task" plus a first-person pronoun failed every
+// well-written narrative story the Forge produces - a false positive on the product's own output.
+// These patterns look for the STAR *shape* instead: a scene, an intent, a past-tense achievement
+// verb with any subject, and an outcome.
+const ACHIEVEMENT_VERB =
+  '(built|led|changed|created|implemented|designed|introduced|reduced|improved|shipped|mentored|automated|migrated|rebuilt|owned|ran|established|replaced|instrumented|delivered|launched|scaled|consolidated|negotiated)'
+
+export function starParts(text: string): {
+  situation: boolean
+  task: boolean
+  action: boolean
+  result: boolean
+} {
+  return {
+    situation:
+      /\b(situation|context|when|while|challenge|facing|amid|after|following|inherited|tasked with)\b/i.test(
+        text,
+      ) || /^\s*(facing|when|while|after|amid|with|following)\b/i.test(text),
+    task:
+      /\b(task|goal|objective|needed to|responsible|asked to|tasked with|in order to|so that)\b/i.test(
+        text,
+      ) || /\bto\s+[a-z]+\b/i.test(text),
+    action:
+      new RegExp(`\\b${ACHIEVEMENT_VERB}\\b`, 'i').test(text) ||
+      /\baction\s*[::-]\s*\S/i.test(text),
+    result:
+      /\b(result|outcome|therefore|which|resulting in|bringing|cutting|dropping|from \d)\b/i.test(
+        text,
+      ) || /\d/.test(text),
+  }
+}
+
 // ── CONTACT_VALIDITY ──
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 export const CONTACT_VALIDITY: HardCheck = {
@@ -408,17 +442,7 @@ export const STAR_COMPLETENESS: HardCheck = {
     const findings: CheckFinding[] = []
     for (const [index, sentence] of (artifact.sentences ?? []).entries()) {
       const text = sentence.text
-      const parts = {
-        situation: /\b(situation|context|when|while|challenge)\b/i.test(text),
-        task: /\b(task|goal|objective|needed to|responsible)\b/i.test(text),
-        // Stories are written both as prose ("I built …") and in labelled STAR form
-        // ("Action: built …"). Requiring a first-person pronoun failed every labelled story.
-        action:
-          /\b(i|we)\s+(built|led|changed|created|implemented|designed|introduced|reduced|improved|shipped|mentored|automated|migrated|rebuilt|owned|ran)\b/i.test(
-            text,
-          ) || /\baction\s*[::-]\s*\S/i.test(text),
-        result: /\b(result|outcome|therefore|which|by \d|\d+(?:\.\d+)?%?)\b/i.test(text),
-      }
+      const parts = starParts(text)
       const missing = Object.entries(parts)
         .filter(([, ok]) => !ok)
         .map(([name]) => name)

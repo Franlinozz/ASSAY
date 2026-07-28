@@ -21,6 +21,16 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
   Numbers are now compared only within the same unit, the contradiction names the fact that
   actually disagrees, and a figure the claim does not measure is left alone rather than
   misreported.
+- **STAR completeness recognises a story in any voice.** The check demanded the literal words
+  "situation"/"task" plus a first-person pronoun, so the third-person narrative the Forge actually
+  writes — _"Facing slow provisioning across 13 teams, Marisol designed and shipped …"_ — was
+  reported as missing its situation, task **and** action. Detection is now structural (a scene, an
+  intent, a past-tense achievement verb with any subject, an outcome) and covers first-person,
+  third-person and labelled forms. A bald claim with no story in it still fails.
+- **A failing grade always states why.** The critic can score an artifact under the bar without
+  emitting a per-axis finding, which produced reports that failed with an empty findings list —
+  unactionable for a human and indistinguishable from a broken grader for an agent. A craft failure
+  now names the axes below the floor, or the weighted mean against the pass mark.
 - **Requirement coverage reads the evidence behind a claim.** Scoring used only the claim sentence
   and its tags, so a requirement naming a toolchain was reported `missing` even when the cited
   evidence listed that exact stack. The claim remains the unit of coverage — status still depends on
