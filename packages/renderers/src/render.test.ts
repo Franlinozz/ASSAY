@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { DossierSchema, ClaimSchema, EvidenceItemSchema, ArtifactSchema } from '@xyndicate/assay-core'
+import {
+  DossierSchema,
+  ClaimSchema,
+  EvidenceItemSchema,
+  ArtifactSchema,
+} from '@xyndicate/assay-core'
 import type { Coverage, Dossier, Sentence } from '@xyndicate/assay-core'
 import { FakeFetcher } from '@xyndicate/providers'
 import { FORMAT_LAW, LINK_LIVENESS } from '@xyndicate/tribunal'
@@ -19,11 +24,30 @@ function dossier(): Dossier {
       headline: 'Senior Backend Engineer',
       timezone: 'UTC',
       contact: { email: 'chidinma@example.com', links: ['https://gh.example/chidinma'] },
-      experiences: [{ org: 'Paystack', title: 'Senior Backend Engineer', startYm: '2021-03', endYm: null }],
+      experiences: [
+        { org: 'Paystack', title: 'Senior Backend Engineer', startYm: '2021-03', endYm: null },
+      ],
       skills: ['TypeScript', 'PostgreSQL', 'Kubernetes'],
     },
-    evidence: [EvidenceItemSchema.parse({ id: 'EV-1', kind: 'document', label: 'r', sourceRef: 'r', contentText: 'Reduced latency by 38%' })],
-    claims: [ClaimSchema.parse({ id: 'CLM-1', text: 'Reduced latency by 38%', status: 'confirmed', strength: 'documented', evidenceIds: ['EV-1'], numericFacts: [{ value: 38, unit: '%', context: 'x' }] })],
+    evidence: [
+      EvidenceItemSchema.parse({
+        id: 'EV-1',
+        kind: 'document',
+        label: 'r',
+        sourceRef: 'r',
+        contentText: 'Reduced latency by 38%',
+      }),
+    ],
+    claims: [
+      ClaimSchema.parse({
+        id: 'CLM-1',
+        text: 'Reduced latency by 38%',
+        status: 'confirmed',
+        strength: 'documented',
+        evidenceIds: ['EV-1'],
+        numericFacts: [{ value: 38, unit: '%', context: 'x' }],
+      }),
+    ],
   })
 }
 const bullets: Sentence[] = [{ text: 'Reduced latency by 38%', claimIds: ['CLM-1'] }]
@@ -38,7 +62,11 @@ describe('ATS template', () => {
   })
 
   it('passes the tribunal FORMAT_LAW check', async () => {
-    const art = ArtifactSchema.parse({ id: 'resume_ats', kind: 'resume_ats', meta: { html: renderAtsHtml(dossier(), bullets) } })
+    const art = ArtifactSchema.parse({
+      id: 'resume_ats',
+      kind: 'resume_ats',
+      meta: { html: renderAtsHtml(dossier(), bullets) },
+    })
     const r = await FORMAT_LAW.run({ dossier: dossier(), artifact: art, deps: {} })
     expect(r.status).toBe('pass')
   })
@@ -56,8 +84,16 @@ describe('designed / portfolio templates (both themes)', () => {
 
   it('portfolio page passes a link-liveness sweep with a mocked fetcher', async () => {
     const html = renderPortfolioHtml(dossier(), bullets, 'dark')
-    const art = ArtifactSchema.parse({ id: 'portfolio_page', kind: 'portfolio_page', meta: { html } })
-    const r = await LINK_LIVENESS.run({ dossier: dossier(), artifact: art, deps: { fetcher: new FakeFetcher() } })
+    const art = ArtifactSchema.parse({
+      id: 'portfolio_page',
+      kind: 'portfolio_page',
+      meta: { html },
+    })
+    const r = await LINK_LIVENESS.run({
+      dossier: dossier(),
+      artifact: art,
+      deps: { fetcher: new FakeFetcher() },
+    })
     expect(r.status).toBe('pass')
   })
 })
@@ -91,7 +127,12 @@ describe('parse-back engine', () => {
   it('reconstructs experience org/title/dates', () => {
     const d = dossier()
     const parsed = reconstruct(atsPlainText(d, bullets).lines)
-    expect(parsed.experiences[0]).toMatchObject({ org: 'Paystack', title: 'Senior Backend Engineer', startYm: '2021-03', endYm: 'Present' })
+    expect(parsed.experiences[0]).toMatchObject({
+      org: 'Paystack',
+      title: 'Senior Backend Engineer',
+      startYm: '2021-03',
+      endYm: 'Present',
+    })
   })
 
   it('drops fields on a sabotaged (jumbled) layout → below 100%', () => {
@@ -116,6 +157,8 @@ describe('agent manifest', () => {
     expect(m.approvedClaims).toHaveLength(1)
     expect(m.risks).toHaveLength(1)
     expect(m.integrity.manifestSha256).toMatch(/^[0-9a-f]{64}$/)
-    expect(buildAgentManifest(dossier(), coverage).integrity.manifestSha256).toBe(m.integrity.manifestSha256)
+    expect(buildAgentManifest(dossier(), coverage).integrity.manifestSha256).toBe(
+      m.integrity.manifestSha256,
+    )
   })
 })

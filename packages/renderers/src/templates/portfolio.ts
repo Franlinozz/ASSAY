@@ -4,7 +4,11 @@ import { tierOf } from './resume'
 
 // Standalone static one-pager (its own inlined CSS), served later at /p/:slug. This is a share
 // view — the PII_HYGIENE check applies, so it exposes only what the candidate approved.
-export function renderPortfolioHtml(dossier: Dossier, bullets: Sentence[], theme: Theme = 'light'): string {
+export function renderPortfolioHtml(
+  dossier: Dossier,
+  bullets: Sentence[],
+  theme: Theme = 'light',
+): string {
   const p = dossier.profile
   const links = p.contact.links.map((l) => `<a href="${esc(l)}">${esc(l)}</a>`).join('  ·  ')
   const highlights = bullets

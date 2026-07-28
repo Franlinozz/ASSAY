@@ -21,7 +21,9 @@ export function buildAgentManifest(dossier: Dossier, coverage: Coverage[]): Agen
   const approvedClaims = dossier.claims
     .filter((c) => c.status === 'confirmed')
     .map((c) => ({ id: c.id, strength: c.strength, text: c.text }))
-  const risks = coverage.filter((c) => c.status === 'missing').map((c) => `Missing coverage: ${c.requirementId}`)
+  const risks = coverage
+    .filter((c) => c.status === 'missing')
+    .map((c) => `Missing coverage: ${c.requirementId}`)
   return {
     dossierId: dossier.id,
     standardVersion: STANDARD_VERSION,

@@ -1,6 +1,12 @@
 // One extract + decompose + coverage run on the bundled fixture resume. Prints JSON.
 // Fake mode by default (zero spend). Run real cheapest tier with ASY_PROVIDER_MODE=live.
-import { createRouter, extractProfile, decomposeJd, computeCoverage, SAMPLE_RESUME_TEXT } from '@xyndicate/providers'
+import {
+  createRouter,
+  extractProfile,
+  decomposeJd,
+  computeCoverage,
+  SAMPLE_RESUME_TEXT,
+} from '@xyndicate/providers'
 
 const JD = `We are hiring a Senior Backend Engineer.
 Must have strong PostgreSQL and Node.js experience.
@@ -26,8 +32,17 @@ console.log(
   JSON.stringify(
     {
       mode,
-      profile: { fullName: ex.profile.fullName, headline: ex.profile.headline, skills: ex.profile.skills },
-      claims: ex.claims.map((c) => ({ id: c.id, text: c.text, strength: c.strength, status: c.status })),
+      profile: {
+        fullName: ex.profile.fullName,
+        headline: ex.profile.headline,
+        skills: ex.profile.skills,
+      },
+      claims: ex.claims.map((c) => ({
+        id: c.id,
+        text: c.text,
+        strength: c.strength,
+        status: c.status,
+      })),
       requirements: dec.requirements.map((r) => ({ id: r.id, kind: r.kind, text: r.text })),
       coverage,
       gaps: [...ex.gaps, ...dec.gaps],

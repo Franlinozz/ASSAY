@@ -325,6 +325,27 @@ export const ATS_PARSE_BACK: HardCheck = {
   },
 }
 
+// A résumé writes "linkedin.com/in/jane", not "https://linkedin.com/in/jane". Demanding a scheme
+// rejected the single most common way a human writes a profile link — and because contact links are
+// checked for every artifact, one bare LinkedIn URL failed an entire dossier. A link is usable if it
+// parses as-is or parses once a scheme is assumed; only genuinely malformed text is a finding.
+export function isUsableLink(link: string): boolean {
+  const text = link.trim()
+  if (!text || /\s/.test(text)) return false
+  const parse = (value: string): URL | undefined => {
+    try {
+      return new URL(value)
+    } catch {
+      return undefined
+    }
+  }
+  const direct = parse(text)
+  if (direct) return direct.protocol === 'http:' || direct.protocol === 'https:'
+  const assumed = parse(`https://${text}`)
+  // Require a real host with a dot, so "not a link" stays a finding.
+  return !!assumed && /^[^.]+\.[^.]+/.test(assumed.hostname)
+}
+
 // ── CONTACT_VALIDITY ──
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 export const CONTACT_VALIDITY: HardCheck = {
@@ -338,11 +359,8 @@ export const CONTACT_VALIDITY: HardCheck = {
     if (c.email && !EMAIL_RE.test(c.email))
       findings.push({ code: 'BAD_EMAIL', detail: `invalid email "${c.email}"` })
     for (const link of c.links) {
-      try {
-        new URL(link)
-      } catch {
+      if (!isUsableLink(link))
         findings.push({ code: 'BAD_LINK', detail: `invalid link "${link}"`, ref: link })
-      }
     }
     return result(findings)
   },
@@ -393,10 +411,12 @@ export const STAR_COMPLETENESS: HardCheck = {
       const parts = {
         situation: /\b(situation|context|when|while|challenge)\b/i.test(text),
         task: /\b(task|goal|objective|needed to|responsible)\b/i.test(text),
+        // Stories are written both as prose ("I built …") and in labelled STAR form
+        // ("Action: built …"). Requiring a first-person pronoun failed every labelled story.
         action:
-          /\b(i|we)\s+(built|led|changed|created|implemented|designed|introduced|reduced|improved|shipped|mentored)\b/i.test(
+          /\b(i|we)\s+(built|led|changed|created|implemented|designed|introduced|reduced|improved|shipped|mentored|automated|migrated|rebuilt|owned|ran)\b/i.test(
             text,
-          ),
+          ) || /\baction\s*[::-]\s*\S/i.test(text),
         result: /\b(result|outcome|therefore|which|by \d|\d+(?:\.\d+)?%?)\b/i.test(text),
       }
       const missing = Object.entries(parts)

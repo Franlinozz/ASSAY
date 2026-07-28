@@ -23,14 +23,24 @@ export interface DossierSeal {
 }
 
 export function sealDomain(chainId: number, verifyingContract: Address) {
-  return { name: SEAL_DOMAIN_NAME, version: SEAL_DOMAIN_VERSION, chainId, verifyingContract } as const
+  return {
+    name: SEAL_DOMAIN_NAME,
+    version: SEAL_DOMAIN_VERSION,
+    chainId,
+    verifyingContract,
+  } as const
 }
 
 export function sealerAddress(sealerKey: Hex): Address {
   return privateKeyToAccount(sealerKey).address
 }
 
-export async function signSeal(sealerKey: Hex, chainId: number, registry: Address, seal: DossierSeal): Promise<Hex> {
+export async function signSeal(
+  sealerKey: Hex,
+  chainId: number,
+  registry: Address,
+  seal: DossierSeal,
+): Promise<Hex> {
   const account = privateKeyToAccount(sealerKey)
   return account.signTypedData({
     domain: sealDomain(chainId, registry),
@@ -41,7 +51,12 @@ export async function signSeal(sealerKey: Hex, chainId: number, registry: Addres
 }
 
 // Recover the signer of a seal.
-export async function recoverSealer(chainId: number, registry: Address, seal: DossierSeal, signature: Hex): Promise<Address> {
+export async function recoverSealer(
+  chainId: number,
+  registry: Address,
+  seal: DossierSeal,
+  signature: Hex,
+): Promise<Address> {
   return recoverTypedDataAddress({
     domain: sealDomain(chainId, registry),
     types: SEAL_TYPES,

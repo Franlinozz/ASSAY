@@ -98,6 +98,30 @@ describe('Phase 12 apex breadth', () => {
     const q = generateInterviewQuestions(dossier, coverage)[0]!
     expect(findLedgerContradictions(dossier, q, 'I led a team of 8.')).toEqual([])
   })
+
+  // Regression: any answer number the ledger did not carry was reported as a contradiction and
+  // paired with the claim's FIRST fact — so "20 people" came back as "your ledger says 840",
+  // matching a latency figure. Numbers are compared within a unit or not at all.
+  it('does not contradict a figure the claim does not measure', () => {
+    const q = generateInterviewQuestions(dossier, coverage)[0]!
+    // CLM-TEAM carries a unit-less team size of 8; a percentage is a different quantity entirely.
+    expect(findLedgerContradictions(dossier, q, 'We cut latency by 35%.')).toEqual([])
+  })
+
+  it('pairs a contradiction with the fact that actually disagrees, and names the unit', () => {
+    const speedQuestion = {
+      id: 'Q-SPEED',
+      text: 'Tell me about the cycle-time work.',
+      kind: 'behavioral' as const,
+      claimIds: ['CLM-SPEED'],
+    }
+    const found = findLedgerContradictions(dossier, speedQuestion, 'I reduced cycle time by 65%.')
+    expect(found).toHaveLength(1)
+    expect(found[0]?.ledgerValue).toBe(40)
+    expect(found[0]?.claimId).toBe('CLM-SPEED')
+    expect(found[0]?.detail).toContain('65 %')
+    expect(found[0]?.detail).toContain('40 %')
+  })
   it('evaluates STAR structure with one bounded critic result', async () => {
     const q = generateInterviewQuestions(dossier, coverage)[0]!
     const e = await evaluateInterviewAnswer({

@@ -97,22 +97,29 @@ export function findLedgerContradictions(
   question: InterviewQuestion,
   answer: string,
 ): InterviewEvaluation['contradictions'] {
-  const answerValues = extractNumbers(answer)
-    .map((n) => n.value)
-    .filter((n) => n < 1900 || n > 2100)
-  if (answerValues.length === 0) return []
+  // Numbers are compared WITHIN a unit, never positionally. Pairing an answer's "20 people"
+  // against a claim's "840 ms" produced the right verdict for the wrong reason — and a figure the
+  // ledger simply does not carry is unverified, not contradicted. Only a same-unit disagreement is
+  // a contradiction, and it is reported against the fact it actually disagrees with.
+  const answerNumbers = extractNumbers(answer).filter((n) => n.value < 1900 || n.value > 2100)
+  if (answerNumbers.length === 0) return []
   const claims = dossier.claims.filter((c) => question.claimIds.includes(c.id))
   const out: InterviewEvaluation['contradictions'] = []
+  const same = (a: number, b: number): boolean => Math.abs(a - b) < 0.000001
   for (const claim of claims) {
-    const ledgerValues = claim.numericFacts.map((f) => f.value)
-    if (ledgerValues.length === 0) continue
-    for (const value of answerValues) {
-      if (ledgerValues.some((v) => Math.abs(v - value) < 0.000001)) continue
+    if (claim.numericFacts.length === 0) continue
+    for (const number of answerNumbers) {
+      const comparable = claim.numericFacts.filter((f) => (f.unit ?? '') === number.unit)
+      // No fact in this claim measures the same thing — nothing to contradict.
+      if (comparable.length === 0) continue
+      if (comparable.some((f) => same(f.value, number.value))) continue
+      const conflicting = comparable[0]!
+      const unit = number.unit ? ` ${number.unit}` : ''
       out.push({
-        answerValue: value,
-        ledgerValue: ledgerValues[0]!,
+        answerValue: number.value,
+        ledgerValue: conflicting.value,
         claimId: claim.id,
-        detail: `You said ${value}; your confirmed ledger says ${ledgerValues[0]}. Correct the ledger with evidence, or correct the answer.`,
+        detail: `You said ${number.value}${unit}; your confirmed ledger says ${conflicting.value}${unit}. Correct the ledger with evidence, or correct the answer.`,
       })
     }
   }

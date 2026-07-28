@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { spawn, type ChildProcess } from 'node:child_process'
-import { createPublicClient, createWalletClient, http, keccak256, toHex, type Address, type Hex } from 'viem'
+import {
+  createPublicClient,
+  createWalletClient,
+  http,
+  keccak256,
+  toHex,
+  type Address,
+  type Hex,
+} from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { REGISTRY_ABI, REGISTRY_BYTECODE } from './artifact'
 import { RegistryClient, xlayerChain } from './client'
@@ -39,7 +47,11 @@ async function deployRegistry(sealerKey: Hex, sealerAddr: Address): Promise<Addr
   const chain = xlayerChain(CHAIN_ID, RPC)
   const wallet = createWalletClient({ account, chain, transport: http(RPC) })
   const pub = createPublicClient({ chain, transport: http(RPC) })
-  const tx = await wallet.deployContract({ abi: REGISTRY_ABI, bytecode: REGISTRY_BYTECODE, args: [sealerAddr] })
+  const tx = await wallet.deployContract({
+    abi: REGISTRY_ABI,
+    bytecode: REGISTRY_BYTECODE,
+    args: [sealerAddr],
+  })
   const receipt = await pub.waitForTransactionReceipt({ hash: tx })
   if (!receipt.contractAddress) throw new Error('no contract address')
   return receipt.contractAddress
@@ -61,7 +73,12 @@ describe('RegistryClient against a local anvil node', () => {
   it('reverts sealBatch from a non-sealer', async () => {
     const sealerAddr = privateKeyToAccount(keys[0]).address
     const registry = await deployRegistry(keys[0], sealerAddr)
-    const attacker = new RegistryClient({ rpcUrl: RPC, chainId: CHAIN_ID, registry, sealerKey: keys[1] })
+    const attacker = new RegistryClient({
+      rpcUrl: RPC,
+      chainId: CHAIN_ID,
+      registry,
+      sealerKey: keys[1],
+    })
     await expect(attacker.sealBatch([keccak256(toHex('x'))])).rejects.toThrow()
   }, 30000)
 

@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { ymInTz, isValidYm, monthsBetween, tenureMonths, isFutureYm, isFutureInstant, parseYm } from './time'
+import {
+  ymInTz,
+  isValidYm,
+  monthsBetween,
+  tenureMonths,
+  isFutureYm,
+  isFutureInstant,
+  parseYm,
+} from './time'
 
 describe('time (user-timezone aware)', () => {
   it('resolves the calendar month in the user timezone across a UTC boundary', () => {

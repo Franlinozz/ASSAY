@@ -57,7 +57,14 @@ class OpenAICompatAdapter implements ModelAdapter {
     const text = data.choices?.[0]?.message?.content ?? ''
     const inTok = data.usage?.prompt_tokens ?? 0
     const outTok = data.usage?.completion_tokens ?? 0
-    return { text, usage: { inputTokens: inTok, outputTokens: outTok, costUsd: cost(inTok, outTok, this.priceIn, this.priceOut) } }
+    return {
+      text,
+      usage: {
+        inputTokens: inTok,
+        outputTokens: outTok,
+        costUsd: cost(inTok, outTok, this.priceIn, this.priceOut),
+      },
+    }
   }
 }
 
@@ -106,7 +113,14 @@ class ClaudeAdapter implements ModelAdapter {
       .join('')
     const inTok = data.usage?.input_tokens ?? 0
     const outTok = data.usage?.output_tokens ?? 0
-    return { text, usage: { inputTokens: inTok, outputTokens: outTok, costUsd: cost(inTok, outTok, this.priceIn, this.priceOut) } }
+    return {
+      text,
+      usage: {
+        inputTokens: inTok,
+        outputTokens: outTok,
+        costUsd: cost(inTok, outTok, this.priceIn, this.priceOut),
+      },
+    }
   }
 }
 
@@ -121,7 +135,14 @@ export function createLiveAdapters(): ModelAdapter[] {
   const deepseekKey = env('DEEPSEEK_API_KEY')
   if (deepseekKey) {
     adapters.push(
-      new OpenAICompatAdapter('deepseek', 'https://api.deepseek.com/v1', deepseekKey, env('ASY_DEEPSEEK_MODEL') ?? 'deepseek-chat', 0.27, 1.1),
+      new OpenAICompatAdapter(
+        'deepseek',
+        'https://api.deepseek.com/v1',
+        deepseekKey,
+        env('ASY_DEEPSEEK_MODEL') ?? 'deepseek-chat',
+        0.27,
+        1.1,
+      ),
     )
   }
   const anthropicKey = env('ANTHROPIC_API_KEY')
@@ -131,7 +152,14 @@ export function createLiveAdapters(): ModelAdapter[] {
   const openaiKey = env('OPENAI_API_KEY')
   if (openaiKey) {
     adapters.push(
-      new OpenAICompatAdapter('openai', 'https://api.openai.com/v1', openaiKey, env('ASY_OPENAI_MODEL') ?? 'gpt-4o-mini', 0.15, 0.6),
+      new OpenAICompatAdapter(
+        'openai',
+        'https://api.openai.com/v1',
+        openaiKey,
+        env('ASY_OPENAI_MODEL') ?? 'gpt-4o-mini',
+        0.15,
+        0.6,
+      ),
     )
   }
   return adapters

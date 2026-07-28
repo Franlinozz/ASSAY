@@ -39,7 +39,11 @@ export class RegistryClient {
     this.pub = createPublicClient({ chain, transport: http(opts.rpcUrl) })
     if (opts.sealerKey) {
       this.account = privateKeyToAccount(opts.sealerKey)
-      this.wallet = createWalletClient({ account: this.account, chain, transport: http(opts.rpcUrl) })
+      this.wallet = createWalletClient({
+        account: this.account,
+        chain,
+        transport: http(opts.rpcUrl),
+      })
     }
   }
 

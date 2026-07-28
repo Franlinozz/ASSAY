@@ -1,4 +1,11 @@
-import type { GenerateRequest, GenerateResult, ModelAdapter, ProviderName, Role, Usage } from './types'
+import type {
+  GenerateRequest,
+  GenerateResult,
+  ModelAdapter,
+  ProviderName,
+  Role,
+  Usage,
+} from './types'
 import { Governor } from './governor'
 import { repairJsonPrompt } from './prompts'
 import type { GapCode } from './gaps'
@@ -72,13 +79,18 @@ function withTimeout<T>(fn: (signal: AbortSignal) => Promise<T>, ms: number): Pr
 }
 
 function fullUsage(u?: Partial<Usage>): Usage {
-  return { inputTokens: u?.inputTokens ?? 0, outputTokens: u?.outputTokens ?? 0, costUsd: u?.costUsd ?? 0 }
+  return {
+    inputTokens: u?.inputTokens ?? 0,
+    outputTokens: u?.outputTokens ?? 0,
+    costUsd: u?.costUsd ?? 0,
+  }
 }
 
 function classifyError(e: unknown): GapCode {
   if (e instanceof TimeoutError) return 'PROVIDER_TIMEOUT'
   const msg = (e instanceof Error ? e.message : String(e)).toLowerCase()
-  if (msg.includes('quota') || msg.includes('rate limit') || msg.includes('429')) return 'PROVIDER_QUOTA'
+  if (msg.includes('quota') || msg.includes('rate limit') || msg.includes('429'))
+    return 'PROVIDER_QUOTA'
   return 'PROVIDER_ERROR'
 }
 
@@ -125,7 +137,14 @@ export class ModelRouter {
           }
           const usage = fullUsage(raw.usage)
           governor?.charge(dossierId, usage)
-          return { text: raw.text, json: parsed.value, provider: adapter.name, role: req.role, usage, degraded: false }
+          return {
+            text: raw.text,
+            json: parsed.value,
+            provider: adapter.name,
+            role: req.role,
+            usage,
+            degraded: false,
+          }
         }
 
         const usage = fullUsage(raw.usage)

@@ -144,6 +144,7 @@ export async function runDossierPipeline(
     coverage = computeCoverage(
       dec.requirements,
       claims.filter((c) => c.status === 'confirmed'),
+      extracted.evidence,
     )
   }
 

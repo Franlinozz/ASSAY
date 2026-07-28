@@ -12,18 +12,69 @@ export function significantTokens(s: string): string[] {
 // Crude lemmatization so "scaled" and "scaling" both reduce toward "scal". Deterministic.
 export function lemma(w: string): string {
   let x = w
-  if (x.length > 5) x = x.replace(/(ings?|edly|ings|ing|ed)$/,'')
+  if (x.length > 5) x = x.replace(/(ings?|edly|ings|ing|ed)$/, '')
   if (x.length > 4) x = x.replace(/s$/, '')
   return x
 }
 
 // Generic English + JD-filler stopwords, so keyword overlap reflects substance not boilerplate.
 const STOPWORDS = new Set([
-  'the', 'and', 'for', 'with', 'you', 'your', 'our', 'are', 'was', 'were', 'this', 'that', 'have',
-  'has', 'had', 'will', 'would', 'should', 'must', 'able', 'about', 'into', 'from', 'they', 'them',
-  'their', 'who', 'what', 'when', 'where', 'which', 'how', 'strong', 'proven', 'required', 'require',
-  'experience', 'experienc', 'nice', 'good', 'great', 'excellent', 'work', 'working', 'team', 'role',
-  'plus', 'including', 'include', 'etc', 'well', 'years', 'year', 'hiring', 'candidate', 'looking',
+  'the',
+  'and',
+  'for',
+  'with',
+  'you',
+  'your',
+  'our',
+  'are',
+  'was',
+  'were',
+  'this',
+  'that',
+  'have',
+  'has',
+  'had',
+  'will',
+  'would',
+  'should',
+  'must',
+  'able',
+  'about',
+  'into',
+  'from',
+  'they',
+  'them',
+  'their',
+  'who',
+  'what',
+  'when',
+  'where',
+  'which',
+  'how',
+  'strong',
+  'proven',
+  'required',
+  'require',
+  'experience',
+  'experienc',
+  'nice',
+  'good',
+  'great',
+  'excellent',
+  'work',
+  'working',
+  'team',
+  'role',
+  'plus',
+  'including',
+  'include',
+  'etc',
+  'well',
+  'years',
+  'year',
+  'hiring',
+  'candidate',
+  'looking',
 ])
 
 export function normalizeKeywords(candidates: string[]): string[] {

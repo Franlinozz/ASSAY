@@ -108,7 +108,10 @@ function dead(url: string, reason: string): FetchResult {
 }
 
 // Validate scheme + resolve DNS + block private IPs for a single URL. Returns a reason if blocked.
-async function guard(url: string, lookup: FetcherDeps['lookup']): Promise<{ blocked: FetchResult } | { ok: true }> {
+async function guard(
+  url: string,
+  lookup: FetcherDeps['lookup'],
+): Promise<{ blocked: FetchResult } | { ok: true }> {
   let u: URL
   try {
     u = new URL(url)
@@ -165,7 +168,9 @@ async function defaultTransport(url: string, signal: AbortSignal): Promise<Trans
 }
 
 export function createFetcher(deps: Partial<FetcherDeps> = {}): Fetcher {
-  const lookup = deps.lookup ?? (async (host: string) => (await dns.lookup(host, { all: true })).map((r) => r.address))
+  const lookup =
+    deps.lookup ??
+    (async (host: string) => (await dns.lookup(host, { all: true })).map((r) => r.address))
   const transport = deps.transport ?? defaultTransport
   const now = deps.now ?? (() => Date.now())
   const cache = new Map<string, { result: FetchResult; expiresAt: number }>()
@@ -194,7 +199,13 @@ export function createFetcher(deps: Partial<FetcherDeps> = {}): Fetcher {
       }
 
       if (res.contentType && !ALLOWED_CONTENT_TYPES.includes(res.contentType)) {
-        return { ok: false, status: res.status, url: startUrl, blockedReason: `content-type ${res.contentType}`, gap: 'FETCH_BLOCKED' }
+        return {
+          ok: false,
+          status: res.status,
+          url: startUrl,
+          blockedReason: `content-type ${res.contentType}`,
+          gap: 'FETCH_BLOCKED',
+        }
       }
       const ok = res.status >= 200 && res.status < 400
       const title = extractTitle(res.body)

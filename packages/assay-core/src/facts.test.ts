@@ -23,7 +23,12 @@ describe('buildFactsBlock', () => {
 
   it('lists only CONFIRMED claims and excludes unconfirmed ones', () => {
     const claims = [
-      ClaimSchema.parse({ id: 'CLM-OK', text: 'Coined the term debugging.', status: 'confirmed', evidenceIds: ['EV-1'] }),
+      ClaimSchema.parse({
+        id: 'CLM-OK',
+        text: 'Coined the term debugging.',
+        status: 'confirmed',
+        evidenceIds: ['EV-1'],
+      }),
       ClaimSchema.parse({ id: 'CLM-NO', text: 'Unverified boast.', status: 'extracted' }),
     ]
     const block = buildFactsBlock({ profile: profile(), claims })

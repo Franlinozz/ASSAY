@@ -35,9 +35,7 @@ async function genPdf() {
 
 async function genDocx() {
   const doc = new Document({
-    sections: [
-      { children: LINES.map((l) => new Paragraph({ children: [new TextRun(l)] })) },
-    ],
+    sections: [{ children: LINES.map((l) => new Paragraph({ children: [new TextRun(l)] })) }],
   })
   writeFileSync(out('sample.docx'), await Packer.toBuffer(doc))
 }

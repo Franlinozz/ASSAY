@@ -48,7 +48,10 @@ export interface BuildBundleOptions {
 
 // Public, salt-free verification bundle. If ASY_SEALER_KEY is absent, the seal is honestly marked
 // 'unsigned' (dev mode).
-export async function buildVerifyBundle(dossier: Dossier, opts: BuildBundleOptions): Promise<VerifyBundle> {
+export async function buildVerifyBundle(
+  dossier: Dossier,
+  opts: BuildBundleOptions,
+): Promise<VerifyBundle> {
   const manifest = buildManifest(dossier)
   const manifestHash = hashManifest(manifest).keccak256 as Hex
   const leaf = commitmentLeaf(manifestHash, opts.salt)
@@ -67,7 +70,12 @@ export async function buildVerifyBundle(dossier: Dossier, opts: BuildBundleOptio
   }
 
   if (opts.sealerKey) {
-    const seal: DossierSeal = { manifestHash, dossierId: dossier.id, standardVersion: manifest.standardVersion, issuedAt }
+    const seal: DossierSeal = {
+      manifestHash,
+      dossierId: dossier.id,
+      standardVersion: manifest.standardVersion,
+      issuedAt,
+    }
     bundle.signature = await signSeal(opts.sealerKey, opts.chainId, opts.registry, seal)
     bundle.signer = sealerAddress(opts.sealerKey)
     bundle.status = 'signed'

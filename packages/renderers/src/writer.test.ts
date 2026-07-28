@@ -10,9 +10,30 @@ function dossier(): Dossier {
     id: 'DSR-W0000001',
     tz: 'UTC',
     createdAt: '2026-07-01T00:00:00.000Z',
-    profile: { fullName: 'Chidinma Eze', timezone: 'UTC', contact: { email: 'c@example.com', links: [] } },
-    evidence: [EvidenceItemSchema.parse({ id: 'EV-1', kind: 'document', label: 'r', sourceRef: 'r', contentText: 'Reduced latency by 38%' })],
-    claims: [ClaimSchema.parse({ id: 'CLM-1', text: 'Reduced latency by 38%', status: 'confirmed', strength: 'documented', evidenceIds: ['EV-1'], numericFacts: [{ value: 38, unit: '%', context: 'x' }] })],
+    profile: {
+      fullName: 'Chidinma Eze',
+      timezone: 'UTC',
+      contact: { email: 'c@example.com', links: [] },
+    },
+    evidence: [
+      EvidenceItemSchema.parse({
+        id: 'EV-1',
+        kind: 'document',
+        label: 'r',
+        sourceRef: 'r',
+        contentText: 'Reduced latency by 38%',
+      }),
+    ],
+    claims: [
+      ClaimSchema.parse({
+        id: 'CLM-1',
+        text: 'Reduced latency by 38%',
+        status: 'confirmed',
+        strength: 'documented',
+        evidenceIds: ['EV-1'],
+        numericFacts: [{ value: 38, unit: '%', context: 'x' }],
+      }),
+    ],
   })
 }
 
@@ -32,7 +53,11 @@ class ScriptedWriter implements ModelAdapter {
 
 describe('writeArtifact (evidence gate before render)', () => {
   it('fake mode echoes confirmed claims as gate-passing sentences', async () => {
-    const r = await writeArtifact({ kind: 'resume_ats', dossier: dossier(), router: createRouter() })
+    const r = await writeArtifact({
+      kind: 'resume_ats',
+      dossier: dossier(),
+      router: createRouter(),
+    })
     expect(r.sentences.length).toBeGreaterThan(0)
     expect(r.sentences.every((s) => s.claimIds.includes('CLM-1'))).toBe(true)
     expect(r.questions).toHaveLength(0)
@@ -45,7 +70,11 @@ describe('writeArtifact (evidence gate before render)', () => {
         { text: 'Reduced latency by 38%', claimIds: ['CLM-1'] },
       ],
     ])
-    const r = await writeArtifact({ kind: 'resume_ats', dossier: dossier(), router: new ModelRouter([sw]) })
+    const r = await writeArtifact({
+      kind: 'resume_ats',
+      dossier: dossier(),
+      router: new ModelRouter([sw]),
+    })
     expect(r.sentences.map((s) => s.text)).not.toContain('Unsupported boast about leadership')
     expect(r.sentences.some((s) => /38%/.test(s.text))).toBe(true)
     expect(r.questions.length).toBeGreaterThan(0)
@@ -56,14 +85,22 @@ describe('writeArtifact (evidence gate before render)', () => {
       [{ text: 'Reduced latency by 99%', claimIds: ['CLM-1'] }], // 99% not in the claim's figures
       [{ text: 'Reduced latency by 38%', claimIds: ['CLM-1'] }], // retry: supported
     ])
-    const r = await writeArtifact({ kind: 'resume_ats', dossier: dossier(), router: new ModelRouter([sw]) })
+    const r = await writeArtifact({
+      kind: 'resume_ats',
+      dossier: dossier(),
+      router: new ModelRouter([sw]),
+    })
     expect(r.sentences.some((s) => /38%/.test(s.text))).toBe(true)
     expect(r.sentences.some((s) => /99%/.test(s.text))).toBe(false)
     expect(sw.calls).toBe(2)
   })
 
   it('degrades to no sentences (never invents) with a recorded gap', async () => {
-    const r = await writeArtifact({ kind: 'resume_ats', dossier: dossier(), router: new ModelRouter([]) })
+    const r = await writeArtifact({
+      kind: 'resume_ats',
+      dossier: dossier(),
+      router: new ModelRouter([]),
+    })
     expect(r.sentences).toHaveLength(0)
     expect(r.gaps.length).toBeGreaterThan(0)
   })

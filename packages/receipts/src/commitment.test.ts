@@ -5,7 +5,12 @@ import { newSalt, commitmentLeaf, buildVerifyBundle } from './commitment'
 
 const KEY = '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d' as Hex
 const REG = '0x1111111111111111111111111111111111111111' as const
-const dossier = () => DossierSchema.parse({ id: 'DSR-1', tz: 'UTC', profile: { fullName: 'Ada Lovelace', timezone: 'UTC' } })
+const dossier = () =>
+  DossierSchema.parse({
+    id: 'DSR-1',
+    tz: 'UTC',
+    profile: { fullName: 'Ada Lovelace', timezone: 'UTC' },
+  })
 
 describe('commitment', () => {
   it('newSalt is 32 bytes of hex', () => {
@@ -26,7 +31,12 @@ describe('commitment', () => {
 
   it('signed bundle: the salt NEVER appears in the public bundle', async () => {
     const salt = newSalt()
-    const bundle = await buildVerifyBundle(dossier(), { chainId: 1952, registry: REG, salt, sealerKey: KEY })
+    const bundle = await buildVerifyBundle(dossier(), {
+      chainId: 1952,
+      registry: REG,
+      salt,
+      sealerKey: KEY,
+    })
     expect(bundle.status).toBe('signed')
     expect(bundle.signer).toBeDefined()
     expect(JSON.stringify(bundle)).not.toContain(salt)
@@ -35,13 +45,22 @@ describe('commitment', () => {
   })
 
   it('is honestly unsigned when no sealer key is present (dev)', async () => {
-    const bundle = await buildVerifyBundle(dossier(), { chainId: 1952, registry: REG, salt: newSalt() })
+    const bundle = await buildVerifyBundle(dossier(), {
+      chainId: 1952,
+      registry: REG,
+      salt: newSalt(),
+    })
     expect(bundle.status).toBe('unsigned')
     expect(bundle.signature).toBeUndefined()
   })
 
   it('the bundle contains no personal prose (name)', async () => {
-    const bundle = await buildVerifyBundle(dossier(), { chainId: 1952, registry: REG, salt: newSalt(), sealerKey: KEY })
+    const bundle = await buildVerifyBundle(dossier(), {
+      chainId: 1952,
+      registry: REG,
+      salt: newSalt(),
+      sealerKey: KEY,
+    })
     const json = JSON.stringify(bundle)
     expect(json).not.toContain('Ada Lovelace')
     expect(json).not.toContain('Lovelace')

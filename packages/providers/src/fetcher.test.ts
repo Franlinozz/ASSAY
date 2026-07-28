@@ -5,7 +5,11 @@ const HTML = '<html><head><title>Hello</title></head><body><p>world</p></body></
 
 function makeDeps(over: Partial<FetcherDeps> = {}): FetcherDeps {
   return {
-    transport: vi.fn(async (): Promise<TransportResponse> => ({ status: 200, contentType: 'text/html', body: HTML })),
+    transport: vi.fn(async (): Promise<TransportResponse> => ({
+      status: 200,
+      contentType: 'text/html',
+      body: HTML,
+    })),
     lookup: vi.fn(async () => ['93.184.216.34']),
     now: () => 0,
     ...over,
@@ -23,7 +27,13 @@ describe('fetcher SSRF guards', () => {
 
   it('blocks loopback, private and CGNAT literals', async () => {
     const f = createFetcher(makeDeps())
-    for (const url of ['http://127.0.0.1/', 'http://10.0.0.5/', 'http://192.168.1.1/', 'http://172.16.0.1/', 'http://100.100.0.1/']) {
+    for (const url of [
+      'http://127.0.0.1/',
+      'http://10.0.0.5/',
+      'http://192.168.1.1/',
+      'http://172.16.0.1/',
+      'http://100.100.0.1/',
+    ]) {
       expect((await f.fetch(url)).gap).toBe('FETCH_BLOCKED')
     }
   })

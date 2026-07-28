@@ -12,7 +12,11 @@ import {
 
 describe('schemas', () => {
   it('EvidenceItem gets an EV- id and an ISO addedAt by default', () => {
-    const ev = EvidenceItemSchema.parse({ kind: 'document', label: 'Old resume', sourceRef: 'resume.pdf' })
+    const ev = EvidenceItemSchema.parse({
+      kind: 'document',
+      label: 'Old resume',
+      sourceRef: 'resume.pdf',
+    })
     expect(ev.id).toMatch(/^EV-[0-9A-Z]{6}$/)
     expect(Number.isNaN(new Date(ev.addedAt).getTime())).toBe(false)
   })
@@ -34,7 +38,9 @@ describe('schemas', () => {
   })
 
   it('Experience rejects a bad YYYY-MM and accepts a null end', () => {
-    expect(() => ExperienceSchema.parse({ org: 'X', title: 'Eng', startYm: '2020-13', endYm: null })).toThrow()
+    expect(() =>
+      ExperienceSchema.parse({ org: 'X', title: 'Eng', startYm: '2020-13', endYm: null }),
+    ).toThrow()
     const e = ExperienceSchema.parse({ org: 'X', title: 'Eng', startYm: '2020-01', endYm: null })
     expect(e.endYm).toBeNull()
   })
@@ -59,7 +65,10 @@ describe('schemas', () => {
   })
 
   it('Brief decomposes requirements with kinds and default keywords', () => {
-    const b = BriefSchema.parse({ jdText: 'Need Node', decomposed: [{ id: 'R1', text: 'Node.js', kind: 'must' }] })
+    const b = BriefSchema.parse({
+      jdText: 'Need Node',
+      decomposed: [{ id: 'R1', text: 'Node.js', kind: 'must' }],
+    })
     expect(b.decomposed[0].kind).toBe('must')
     expect(b.decomposed[0].keywords).toEqual([])
   })

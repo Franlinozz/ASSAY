@@ -17,14 +17,25 @@ async function main(): Promise<void> {
   const wallet = createWalletClient({ account, chain, transport: http(cfg.rpcUrl) })
   const pub = createPublicClient({ chain, transport: http(cfg.rpcUrl) })
 
-  console.error(`[deploy] net=${net} chainId=${cfg.chainId} deployer=${account.address} sealer=${sealer}`)
-  const deployTx = await wallet.deployContract({ abi: REGISTRY_ABI, bytecode: REGISTRY_BYTECODE, args: [sealer] })
+  console.error(
+    `[deploy] net=${net} chainId=${cfg.chainId} deployer=${account.address} sealer=${sealer}`,
+  )
+  const deployTx = await wallet.deployContract({
+    abi: REGISTRY_ABI,
+    bytecode: REGISTRY_BYTECODE,
+    args: [sealer],
+  })
   const receipt = await pub.waitForTransactionReceipt({ hash: deployTx })
   const address = receipt.contractAddress
   if (!address) throw new Error('no contract address in receipt')
   console.error(`[deploy] AssayRegistry @ ${address}`)
 
-  const client = new RegistryClient({ rpcUrl: cfg.rpcUrl, chainId: cfg.chainId, registry: address, sealerKey: pk as Hex })
+  const client = new RegistryClient({
+    rpcUrl: cfg.rpcUrl,
+    chainId: cfg.chainId,
+    registry: address,
+    sealerKey: pk as Hex,
+  })
   const leaves = [
     keccak256(toHex('assay-fixture-1')),
     keccak256(toHex('assay-fixture-2')),
@@ -32,9 +43,16 @@ async function main(): Promise<void> {
   ]
   const sealTx = await client.sealBatch(leaves)
   const anchored: Array<{ leaf: Hex; anchoredAt: string }> = []
-  for (const leaf of leaves) anchored.push({ leaf, anchoredAt: (await client.anchoredAt(leaf)).toString() })
+  for (const leaf of leaves)
+    anchored.push({ leaf, anchoredAt: (await client.anchoredAt(leaf)).toString() })
 
-  console.log(JSON.stringify({ net, chainId: cfg.chainId, address, deployTx, sealTx, sealer, anchored }, null, 2))
+  console.log(
+    JSON.stringify(
+      { net, chainId: cfg.chainId, address, deployTx, sealTx, sealer, anchored },
+      null,
+      2,
+    ),
+  )
 }
 
 main().catch((e) => {

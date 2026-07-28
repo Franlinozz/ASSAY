@@ -1,4 +1,4 @@
-import type { Claim, Coverage, Requirement } from '@xyndicate/assay-core'
+import type { Claim, Coverage, EvidenceItem, Requirement } from '@xyndicate/assay-core'
 import { keywordSet, lemma } from './text'
 
 // DETERMINISTIC coverage mapper — NO LLM. Requirements × claims → Coverage[], scored by keyword
@@ -8,20 +8,44 @@ import { keywordSet, lemma } from './text'
 const STRONG = 0.66
 const PARTIAL = 0.33
 
-function overlap(req: Requirement, claim: Claim): number {
-  if (req.keywords.length === 0) return 0
+// A claim is an assertion; the evidence it cites is what backs it. Scoring a requirement against
+// the claim sentence alone reported "missing" for requirements the candidate's own evidence
+// plainly covered — e.g. a stack requirement whose tools are listed in the cited document but not
+// re-typed into the claim text. The claim stays the unit of coverage (status still depends on a
+// confirmed claim); its evidence simply gets read too.
+function claimVocabulary(claim: Claim, evidenceById: Map<string, EvidenceItem>): Set<string> {
   const set = keywordSet(claim.text, claim.tags)
+  for (const id of claim.evidenceIds) {
+    const item = evidenceById.get(id)
+    if (!item?.contentText) continue
+    for (const token of keywordSet(item.contentText, [])) set.add(token)
+  }
+  return set
+}
+
+function overlap(req: Requirement, claim: Claim, evidenceById: Map<string, EvidenceItem>): number {
+  if (req.keywords.length === 0) return 0
+  const set = claimVocabulary(claim, evidenceById)
   const hits = req.keywords.filter((k) => set.has(lemma(k))).length
   return hits / req.keywords.length
 }
 
-export function computeCoverage(requirements: Requirement[], claims: Claim[]): Coverage[] {
-  return requirements.map((req) => scoreRequirement(req, claims))
+export function computeCoverage(
+  requirements: Requirement[],
+  claims: Claim[],
+  evidence: EvidenceItem[] = [],
+): Coverage[] {
+  const evidenceById = new Map(evidence.map((e) => [e.id, e]))
+  return requirements.map((req) => scoreRequirement(req, claims, evidenceById))
 }
 
-function scoreRequirement(req: Requirement, claims: Claim[]): Coverage {
+function scoreRequirement(
+  req: Requirement,
+  claims: Claim[],
+  evidenceById: Map<string, EvidenceItem>,
+): Coverage {
   const scored = claims
-    .map((c) => ({ claim: c, score: overlap(req, c) }))
+    .map((c) => ({ claim: c, score: overlap(req, c, evidenceById) }))
     .filter((s) => s.score >= PARTIAL)
     .sort((a, b) => b.score - a.score)
 

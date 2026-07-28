@@ -73,7 +73,10 @@ describe('ModelRouter', () => {
       text: 'ok',
       usage: { inputTokens: 10, outputTokens: 20, costUsd: 0.001 },
     }))
-    await new ModelRouter([adapter], { governor: gov }).generate({ role: 'utility', prompt: 'x' }, { dossierId: 'd2' })
+    await new ModelRouter([adapter], { governor: gov }).generate(
+      { role: 'utility', prompt: 'x' },
+      { dossierId: 'd2' },
+    )
     expect(gov.spentFor('d2').tokens).toBe(30)
   })
 })

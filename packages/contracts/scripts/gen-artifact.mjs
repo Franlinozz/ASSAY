@@ -2,7 +2,11 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-const compiled = JSON.parse(readFileSync(fileURLToPath(new URL('../solidity/out/AssayRegistry.sol/AssayRegistry.json', import.meta.url))))
+const compiled = JSON.parse(
+  readFileSync(
+    fileURLToPath(new URL('../solidity/out/AssayRegistry.sol/AssayRegistry.json', import.meta.url)),
+  ),
+)
 const out = [
   '// Auto-generated from solidity/src/AssayRegistry.sol via forge. Do not edit by hand.',
   '// Regenerate: forge build && node scripts/gen-artifact.mjs',

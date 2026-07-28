@@ -140,3 +140,21 @@ describe('AS 1.1 artifact profiles', () => {
     )
   })
 })
+
+describe('contact links as humans actually write them', () => {
+  it('accepts a scheme-less profile link and still rejects genuine junk', async () => {
+    const { isUsableLink } = await import('./hard/checks')
+    // Regression: "linkedin.com/in/jane" failed CONTACT_VALIDITY, and because contact links are
+    // checked on every artifact, one bare URL failed an entire dossier (0 of 9) whose craft
+    // scores averaged 86-91.
+    for (const good of [
+      'linkedin.com/in/mqreyes',
+      'https://github.com/someone',
+      'http://example.org/path?q=1',
+      'github.io/portfolio',
+    ])
+      expect(isUsableLink(good), good).toBe(true)
+    for (const bad of ['not a link', '', '   ', 'javascript:alert(1)', 'mqreyes'])
+      expect(isUsableLink(bad), JSON.stringify(bad)).toBe(false)
+  })
+})

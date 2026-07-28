@@ -27,12 +27,16 @@ describe('policyGate', () => {
   })
 
   it('allows a normal tailoring request', () => {
-    const r = policyGate({ text: 'Tailor my resume for a backend role, emphasizing my Node.js work.' })
+    const r = policyGate({
+      text: 'Tailor my resume for a backend role, emphasizing my Node.js work.',
+    })
     expect(r.allowed).toBe(true)
   })
 
   it('does NOT refuse including a real degree the user holds', () => {
-    const r = policyGate({ text: "Add my Master's degree in Computer Science to the education section." })
+    const r = policyGate({
+      text: "Add my Master's degree in Computer Science to the education section.",
+    })
     expect(r.allowed).toBe(true)
   })
 })

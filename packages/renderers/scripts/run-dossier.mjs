@@ -10,7 +10,12 @@ import {
   computeCoverage,
   SAMPLE_RESUME_TEXT,
 } from '@xyndicate/providers'
-import { forgeDossier, parseBackFromBuffer, htmlToPng, readDocxHeadings } from '@xyndicate/renderers'
+import {
+  forgeDossier,
+  parseBackFromBuffer,
+  htmlToPng,
+  readDocxHeadings,
+} from '@xyndicate/renderers'
 import { gradeArtifact, summarize } from '@xyndicate/tribunal'
 import { DossierSchema } from '@xyndicate/assay-core'
 
@@ -27,7 +32,11 @@ console.error(`[run-dossier] mode=${mode}`)
 const router = createRouter()
 const fetcher = createModeFetcher()
 
-const ex = await extractProfile({ documents: [{ label: 'resume.txt', contentText: SAMPLE_RESUME_TEXT }], router, dossierId: 'run' })
+const ex = await extractProfile({
+  documents: [{ label: 'resume.txt', contentText: SAMPLE_RESUME_TEXT }],
+  router,
+  dossierId: 'run',
+})
 const claims = ex.claims.map((c) => ({ ...c, status: 'confirmed' })) // the user confirms in the Ledger
 const dec = await decomposeJd({ jdText: JD, router, dossierId: 'run' })
 const coverage = computeCoverage(dec.requirements, claims)
@@ -73,7 +82,12 @@ console.log(
       artifacts: out.artifacts.map((a) => a.id),
       questions: out.questions,
       tribunal: summarize(reports),
-      reports: reports.map((r) => ({ id: r.artifactId, pass: r.pass, hardPass: r.hardPass, craftMean: r.craftWeightedMean })),
+      reports: reports.map((r) => ({
+        id: r.artifactId,
+        pass: r.pass,
+        hardPass: r.hardPass,
+        craftMean: r.craftWeightedMean,
+      })),
     },
     null,
     2,

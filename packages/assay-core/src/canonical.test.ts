@@ -9,7 +9,9 @@ describe('canonicalize', () => {
   })
 
   it('sorts nested keys and preserves array order', () => {
-    expect(canonicalize({ z: { d: 1, c: 2 }, arr: [3, 1, 2] })).toBe('{"arr":[3,1,2],"z":{"c":2,"d":1}}')
+    expect(canonicalize({ z: { d: 1, c: 2 }, arr: [3, 1, 2] })).toBe(
+      '{"arr":[3,1,2],"z":{"c":2,"d":1}}',
+    )
   })
 
   it('drops undefined values', () => {
@@ -92,7 +94,11 @@ describe('buildManifest (privacy-preserving)', () => {
       profile: {
         timezone: 'Europe/London',
         headline: 'Staff Analytical Engineer',
-        contact: { links: ['https://ada.example'], phone: '+44 20 7946 0000', email: 'ada@analytical.example' },
+        contact: {
+          links: ['https://ada.example'],
+          phone: '+44 20 7946 0000',
+          email: 'ada@analytical.example',
+        },
         fullName: 'Ada Lovelace',
       },
       claims: [...base.claims].reverse(),

@@ -117,12 +117,37 @@ Adaeze led Product Operations at Kuda from January 2022. She redesigned our KYC 
         email: 'adaeze.okonkwo@example.com',
         links: ['https://assayed.xyz/fixtures/adaeze-okonkwo-portfolio.html'],
       },
-      skills: ['Operations strategy', 'KYC workflows', 'SQL', 'Looker', 'Stakeholder management', 'Process design'],
+      skills: [
+        'Operations strategy',
+        'KYC workflows',
+        'SQL',
+        'Looker',
+        'Stakeholder management',
+        'Process design',
+      ],
     },
     experiences: [
-      { org: 'Kuda', title: 'Product Operations Lead', startYm: '2022-01', endYm: null, location: 'Lagos' },
-      { org: 'Flutterwave', title: 'Senior Product Operations Analyst', startYm: '2019-03', endYm: '2021-12', location: 'Lagos' },
-      { org: 'Jumia', title: 'Product Operations Analyst', startYm: '2017-07', endYm: '2019-02', location: 'Lagos' },
+      {
+        org: 'Kuda',
+        title: 'Product Operations Lead',
+        startYm: '2022-01',
+        endYm: null,
+        location: 'Lagos',
+      },
+      {
+        org: 'Flutterwave',
+        title: 'Senior Product Operations Analyst',
+        startYm: '2019-03',
+        endYm: '2021-12',
+        location: 'Lagos',
+      },
+      {
+        org: 'Jumia',
+        title: 'Product Operations Analyst',
+        startYm: '2017-07',
+        endYm: '2019-02',
+        location: 'Lagos',
+      },
     ],
     claims: [
       {
@@ -214,8 +239,20 @@ TypeScript, React, Next.js, WebPerf, accessibility, Playwright, CSS`,
       skills: ['TypeScript', 'React', 'Next.js', 'WebPerf', 'Accessibility', 'Playwright', 'CSS'],
     },
     experiences: [
-      { org: 'Mercado Libre', title: 'Frontend Engineer', startYm: '2021-04', endYm: null, location: 'Buenos Aires' },
-      { org: 'Auth0', title: 'Frontend Engineer', startYm: '2019-02', endYm: '2021-03', location: 'Remote' },
+      {
+        org: 'Mercado Libre',
+        title: 'Frontend Engineer',
+        startYm: '2021-04',
+        endYm: null,
+        location: 'Buenos Aires',
+      },
+      {
+        org: 'Auth0',
+        title: 'Frontend Engineer',
+        startYm: '2019-02',
+        endYm: '2021-03',
+        location: 'Remote',
+      },
     ],
     claims: [
       {
@@ -292,11 +329,29 @@ Clinical pharmacology, protocol design, inventory management, patient counsellin
         email: 'mei-lin.chao@example.com',
         links: ['https://assayed.xyz/fixtures/mei-lin-chao-portfolio.html'],
       },
-      skills: ['Clinical pharmacology', 'Protocol design', 'Inventory management', 'Patient counselling', 'Regulatory compliance'],
+      skills: [
+        'Clinical pharmacology',
+        'Protocol design',
+        'Inventory management',
+        'Patient counselling',
+        'Regulatory compliance',
+      ],
     },
     experiences: [
-      { org: 'Singapore General Hospital', title: 'Clinical Pharmacist', startYm: '2018-08', endYm: null, location: 'Singapore' },
-      { org: 'Guardian Health', title: 'Community Pharmacist', startYm: '2015-06', endYm: '2018-07', location: 'Singapore' },
+      {
+        org: 'Singapore General Hospital',
+        title: 'Clinical Pharmacist',
+        startYm: '2018-08',
+        endYm: null,
+        location: 'Singapore',
+      },
+      {
+        org: 'Guardian Health',
+        title: 'Community Pharmacist',
+        startYm: '2015-06',
+        endYm: '2018-07',
+        location: 'Singapore',
+      },
     ],
     claims: [
       {

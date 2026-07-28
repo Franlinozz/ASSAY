@@ -14,7 +14,9 @@ const seal: DossierSeal = {
 describe('eip712 seal', () => {
   it('signs and recovers the sealer (round-trip)', async () => {
     const sig = await signSeal(KEY, 1952, REG, seal)
-    expect((await recoverSealer(1952, REG, seal, sig)).toLowerCase()).toBe(sealerAddress(KEY).toLowerCase())
+    expect((await recoverSealer(1952, REG, seal, sig)).toLowerCase()).toBe(
+      sealerAddress(KEY).toLowerCase(),
+    )
     expect(await verifySeal(1952, REG, seal, sig, sealerAddress(KEY))).toBe(true)
   })
 
@@ -31,6 +33,8 @@ describe('eip712 seal', () => {
 
   it('a wrong expected signer fails', async () => {
     const sig = await signSeal(KEY, 1952, REG, seal)
-    expect(await verifySeal(1952, REG, seal, sig, '0x2222222222222222222222222222222222222222')).toBe(false)
+    expect(
+      await verifySeal(1952, REG, seal, sig, '0x2222222222222222222222222222222222222222'),
+    ).toBe(false)
   })
 })

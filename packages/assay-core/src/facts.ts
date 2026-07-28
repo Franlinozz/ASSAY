@@ -80,7 +80,9 @@ export function buildFactsBlock(input: FactsInput): string {
   lines.push('  - Every sentence you write must cite at least one confirmed claim ID above.')
   lines.push("  - Never state a number that is not listed in a claim's figures.")
   lines.push('  - Never invent employers, titles, dates, credentials, links, or metrics.')
-  lines.push('  - If something cannot be supported by a claim above, return a question — never prose.')
+  lines.push(
+    '  - If something cannot be supported by a claim above, return a question — never prose.',
+  )
 
   lines.push('=== END FACTS BLOCK ===')
   return lines.join('\n')

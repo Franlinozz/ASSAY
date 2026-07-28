@@ -62,7 +62,12 @@ export function policyGate(input: PolicyInput): PolicyResult {
   const text = input.text ?? ''
   for (const rule of RULES) {
     if (rule.re.test(text)) {
-      return { allowed: false, code: rule.code, reason: rule.reason, detail: `matched ${rule.code} rule` }
+      return {
+        allowed: false,
+        code: rule.code,
+        reason: rule.reason,
+        detail: `matched ${rule.code} rule`,
+      }
     }
   }
   return { allowed: true }

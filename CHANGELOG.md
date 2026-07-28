@@ -6,6 +6,27 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Fixed
 
+- **A bare profile link no longer fails an entire dossier.** `CONTACT_VALIDITY` required a URL
+  scheme, so `linkedin.com/in/jane` — the way people actually write a profile link on a résumé —
+  was a `BAD_LINK` finding. Contact links are checked for every artifact, so that single finding
+  failed **all nine** artifacts of an otherwise excellent dossier whose craft scores averaged
+  86–91. A link is now accepted if it parses as-is or once a scheme is assumed; genuine junk
+  (`not a link`, `javascript:` URLs, host-less text) is still a finding.
+- **Labelled STAR stories are no longer reported as missing their action.** The detector required a
+  first-person pronoun (`I built …`), so every story written in `Action: built …` form failed
+  `STAR_COMPLETENESS`. Both formats are now recognised; a story with no action at all still fails.
+- **Interview contradictions are matched by unit, not by position.** Any figure absent from the
+  ledger was reported as a contradiction and paired with the claim's _first_ numeric fact — so an
+  answer of "20 people" came back as _"your confirmed ledger says 840"_, matching a latency figure.
+  Numbers are now compared only within the same unit, the contradiction names the fact that
+  actually disagrees, and a figure the claim does not measure is left alone rather than
+  misreported.
+- **Requirement coverage reads the evidence behind a claim.** Scoring used only the claim sentence
+  and its tags, so a requirement naming a toolchain was reported `missing` even when the cited
+  evidence listed that exact stack. The claim remains the unit of coverage — status still depends on
+  a confirmed claim — but its cited evidence is now part of its vocabulary. `computeCoverage` takes
+  evidence as an optional third argument, so callers that pass none behave exactly as before.
+
 - **An empty document can no longer pass the Tribunal — the worst bug this project has shipped.** A
   paid Career Dossier delivered nine blank artifacts (0 claims, 0 sentences) and graded them
   **9/9 PASS**. Cause: `proseBearing` was derived from `sentences.length > 0`, so a prose artifact

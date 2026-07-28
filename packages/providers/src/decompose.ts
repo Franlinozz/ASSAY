@@ -23,7 +23,12 @@ interface RawRequirement {
 
 export async function decomposeJd(input: DecomposeInput): Promise<DecomposeResult> {
   const res = await input.router.generate(
-    { role: 'decomposer', system: DECOMPOSE_SYSTEM, prompt: buildDecomposePrompt(input.jdText), json: true },
+    {
+      role: 'decomposer',
+      system: DECOMPOSE_SYSTEM,
+      prompt: buildDecomposePrompt(input.jdText),
+      json: true,
+    },
     input.dossierId ? { dossierId: input.dossierId } : {},
   )
   if (res.degraded) {

@@ -352,7 +352,7 @@ export async function fitBrief(
   const { requirements } = await decomposeJd({ jdText: args.jd, router: ctx.router })
   const ev = attestation((args.claims ?? []).join('\n') || 'profile', 'Agent-provided profile')
   const claims = claimsFromStrings(args.claims ?? [], ev)
-  const coverage: Coverage[] = computeCoverage(requirements, claims)
+  const coverage: Coverage[] = computeCoverage(requirements, claims, [ev])
   const reqById = new Map(requirements.map((r) => [r.id, r]))
   const map = coverage.map((c) => ({
     requirement: reqById.get(c.requirementId)?.text ?? c.requirementId,
@@ -479,11 +479,13 @@ export async function interviewPrep(
     coverage = computeCoverage(
       requirements,
       dossier.claims.filter((c) => c.status === 'confirmed'),
+      dossier.evidence,
     )
   } else if (dossier.brief) {
     coverage = computeCoverage(
       dossier.brief.decomposed,
       dossier.claims.filter((c) => c.status === 'confirmed'),
+      dossier.evidence,
     )
   }
   const questions = generateInterviewQuestions(dossier, coverage)

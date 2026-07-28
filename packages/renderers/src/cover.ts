@@ -6,8 +6,10 @@ import { esc } from './templates/theme'
 export function renderCoverSvg(dossier: Dossier): string {
   const p = dossier.profile
   const lattice: string[] = []
-  for (let x = 0; x <= 1200; x += 24) lattice.push(`<line x1="${x}" y1="0" x2="${x}" y2="630" stroke="#E6E0D2" stroke-width="0.5"/>`)
-  for (let y = 0; y <= 630; y += 24) lattice.push(`<line x1="0" y1="${y}" x2="1200" y2="${y}" stroke="#E6E0D2" stroke-width="0.5"/>`)
+  for (let x = 0; x <= 1200; x += 24)
+    lattice.push(`<line x1="${x}" y1="0" x2="${x}" y2="630" stroke="#E6E0D2" stroke-width="0.5"/>`)
+  for (let y = 0; y <= 630; y += 24)
+    lattice.push(`<line x1="0" y1="${y}" x2="1200" y2="${y}" stroke="#E6E0D2" stroke-width="0.5"/>`)
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="#FBF9F3"/>
   ${lattice.join('')}

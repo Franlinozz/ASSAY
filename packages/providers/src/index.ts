@@ -10,7 +10,13 @@ export * from './text'
 export * from './extract'
 export * from './decompose'
 export * from './coverage'
-export { FakeAdapter, FakeFetcher, createFakeAdapters, SAMPLE_RESUME_TEXT, resetFakeRepairDemo } from './fake/index'
+export {
+  FakeAdapter,
+  FakeFetcher,
+  createFakeAdapters,
+  SAMPLE_RESUME_TEXT,
+  resetFakeRepairDemo,
+} from './fake/index'
 export { PERSONAS, personaBySlug, fakePersonaExtractionFor } from './fake/personas'
 export type { PersonaFixture, PersonaLink, PersonaExtraction } from './fake/personas'
 export { createLiveAdapters } from './live/index'

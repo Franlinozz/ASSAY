@@ -173,3 +173,32 @@ describe('an empty prose artifact is a non-delivery, never a pass', () => {
     expect(s.finalPassed).toBeLessThan(reports.length)
   })
 })
+
+describe('STAR completeness reads both story formats', () => {
+  // Regression: the action detector required a first-person pronoun ("I built ..."), so every
+  // labelled story ("Action: built ...") was reported as missing its action.
+  const story = (text: string) =>
+    ArtifactSchema.parse({
+      id: 'A-story',
+      kind: 'story_bank',
+      sentences: [{ text, claimIds: ['CLM-1'] }],
+      meta: {},
+    })
+
+  it('accepts a labelled STAR story', async () => {
+    const labelled =
+      'Situation: 13 teams had no path to production. Task: ship a developer platform. ' +
+      'Action: built Backstage on Crossplane to standardize provisioning. ' +
+      'Result: 11 of 13 teams adopted it and deploys fell from 9 days to 6 hours.'
+    const report = await gradeArtifact(baseDossier(), story(labelled) as Artifact, deps)
+    expect(report.hard.find((h) => h.id === 'STAR_COMPLETENESS')?.findings ?? []).toHaveLength(0)
+  })
+
+  it('still flags a story with no action at all', async () => {
+    const thin = 'Situation: the team was behind. Task: catch up. Result: 20% faster.'
+    const report = await gradeArtifact(baseDossier(), story(thin) as Artifact, deps)
+    const findings = report.hard.find((h) => h.id === 'STAR_COMPLETENESS')?.findings ?? []
+    expect(findings.length).toBeGreaterThan(0)
+    expect(JSON.stringify(findings)).toMatch(/action/i)
+  })
+})

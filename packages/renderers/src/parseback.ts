@@ -26,7 +26,11 @@ export interface ParseBackResult {
 // Extract text as lines, reconstructing rows by y-position (robust to space-joined PDF text).
 export async function pdfToLines(data: Uint8Array): Promise<string[]> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(data), useSystemFonts: true, verbosity: 0 }).promise
+  const doc = await pdfjs.getDocument({
+    data: new Uint8Array(data),
+    useSystemFonts: true,
+    verbosity: 0,
+  }).promise
   const lines: string[] = []
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i)
@@ -41,7 +45,8 @@ export async function pdfToLines(data: Uint8Array): Promise<string[]> {
       rows.set(y, arr)
     }
     for (const y of [...rows.keys()].sort((a, b) => b - a)) {
-      const row = rows.get(y)!
+      const row = rows
+        .get(y)!
         .sort((a, b) => a.x - b.x)
         .map((r) => r.s)
         .join(' ')
@@ -92,7 +97,9 @@ export function reconstruct(lines: string[]): ParsedResume {
   const skillsStart = lines.findIndex((l) => l.toUpperCase() === 'SKILLS')
   const skills =
     skillsStart >= 0 && lines[skillsStart + 1]
-      ? lines[skillsStart + 1]!.split(/[,·]/).map((s) => s.trim()).filter(Boolean)
+      ? lines[skillsStart + 1]!.split(/[,·]/)
+          .map((s) => s.trim())
+          .filter(Boolean)
       : []
 
   return { name, email, links, experiences, skills }
@@ -130,7 +137,10 @@ export function diffProfile(source: Profile, parsed: ParsedResume): ParseBackRes
   }
 }
 
-export async function parseBackFromBuffer(pdf: Uint8Array, source: Profile): Promise<ParseBackResult> {
+export async function parseBackFromBuffer(
+  pdf: Uint8Array,
+  source: Profile,
+): Promise<ParseBackResult> {
   return diffProfile(source, reconstruct(await pdfToLines(pdf)))
 }
 

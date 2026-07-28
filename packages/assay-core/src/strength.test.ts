@@ -31,7 +31,9 @@ describe('strength tiers', () => {
   it('a dead link plus a document → documented, not linked', () => {
     const dead = ev({ id: 'EV-l', kind: 'link', fetchedOk: false })
     const doc = ev({ id: 'EV-d', kind: 'document' })
-    expect(computeStrength(claim({ evidenceIds: ['EV-l', 'EV-d'] }), [dead, doc])).toBe('documented')
+    expect(computeStrength(claim({ evidenceIds: ['EV-l', 'EV-d'] }), [dead, doc])).toBe(
+      'documented',
+    )
   })
 
   it('sealed is terminal', () => {

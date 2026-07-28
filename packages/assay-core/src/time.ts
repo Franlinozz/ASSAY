@@ -32,7 +32,11 @@ export function ymInTz(iso: string, timeZone: string): string {
   return `${year}-${month}`
 }
 
-export function formatInTz(iso: string, timeZone: string, opts?: Intl.DateTimeFormatOptions): string {
+export function formatInTz(
+  iso: string,
+  timeZone: string,
+  opts?: Intl.DateTimeFormatOptions,
+): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) throw new Error(`invalid ISO datetime: ${iso}`)
   const base: Intl.DateTimeFormatOptions = opts ?? { dateStyle: 'medium', timeStyle: 'short' }
