@@ -127,3 +127,49 @@ describe('summarize', () => {
     expect(s.postRepairPassRate).toBe(50)
   })
 })
+
+describe('an empty prose artifact is a non-delivery, never a pass', () => {
+  // Regression: a paid Career Dossier once shipped nine blank files graded 9/9 PASS. A prose
+  // artifact rendered with zero sentences used to be misread as a "structured" artifact, which is
+  // decided by hard checks alone and passed vacuously.
+  const emptyProse = (kind: string) =>
+    ArtifactSchema.parse({ id: `A-${kind}`, kind, sentences: [], meta: {} })
+
+  it('refuses every prose kind that renders empty', async () => {
+    for (const kind of [
+      'resume_ats',
+      'resume_designed',
+      'cover_letter',
+      'story_bank',
+      'portfolio_page',
+    ]) {
+      const report = await gradeArtifact(baseDossier(), emptyProse(kind) as Artifact, deps)
+      expect(report.pass, kind).toBe(false)
+      expect(report.hardPass, kind).toBe(false)
+      expect(report.gradeStatus, kind).toBe('not_delivered')
+      expect(report.repairBrief, kind).toMatch(/empty/i)
+    }
+  })
+
+  it('still grades genuinely structured artifacts on hard checks alone', async () => {
+    // manifest_json and resume_docx legitimately carry no sentences — they must not be swept up.
+    const structured = ArtifactSchema.parse({
+      id: 'A-json',
+      kind: 'manifest_json',
+      sentences: [],
+      meta: {},
+    })
+    const report = await gradeArtifact(baseDossier(), structured as Artifact, deps)
+    expect(report.gradeStatus).not.toBe('not_delivered')
+  })
+
+  it('excludes the empty artifacts from the pass rate instead of inflating it', async () => {
+    const reports = await Promise.all([
+      gradeArtifact(baseDossier(), clean('A1'), deps),
+      gradeArtifact(baseDossier(), emptyProse('cover_letter') as Artifact, deps),
+    ])
+    const s = summarize(reports)
+    expect(s.notDelivered).toBe(1)
+    expect(s.finalPassed).toBeLessThan(reports.length)
+  })
+})

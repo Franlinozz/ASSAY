@@ -48,9 +48,9 @@ questions or honest gaps — never invented achievements.
 **The claim gate is demonstrable, not rhetorical.** In a real paid call on 2026-07-27, the same
 résumé and the same job description were run through two Assay services. The ATS scan reported
 **50% of must-have keywords present** — and explicitly labelled that as word presence, not fit. The
-Fit Brief, which only counts a requirement as covered when a *confirmed claim* backs it, returned
+Fit Brief, which only counts a requirement as covered when a _confirmed claim_ backs it, returned
 **2 strong and 5 missing** for the identical inputs, marking databases, AWS, Docker and team
-leadership as *"No evidence covers this yet — do not claim it."* The cover letter that followed
+leadership as _"No evidence covers this yet — do not claim it."_ The cover letter that followed
 contained four sentences, each carrying a claim ID, and mentioned none of the five missing
 requirements. That gap between "keywords present" and "evidence-backed" is the product.
 
@@ -99,9 +99,9 @@ dossier in-band when it completes inside the payment window; verification stays 
   service publishes its full input contract at `GET /x402/:service/schema` — price, arguments, and a
   working example — so a buyer can learn exactly what to send before spending a cent.
 
-The product is live at **https://assayed.xyz**, its generated documentation at
-**https://assayed.xyz/docs**, and its full source at **https://github.com/Franlinozz/ASSAY**. The
-repository is itself an exhibit: **376 passing tests** (315 Vitest, 57 Playwright, 4 Foundry),
+The product is live at https://assayed.xyz , its generated documentation at
+https://assayed.xyz/docs , and its full source at https://github.com/Franlinozz/ASSAY . The
+repository is itself an exhibit: **380 passing tests** (319 Vitest, 57 Playwright, 4 Foundry),
 clean-checkout CI, a published security model, failure drills, generated tool documentation, a real
 mainnet registry, real sealed demonstration dossiers, and a free public verifier. Gallery personas
 are explicitly labelled fictional; their pipeline runs, Chromium PDF rendering, parse-back reports,
@@ -177,15 +177,15 @@ replay of a real sealed run) · [/gallery](https://assayed.xyz/gallery) ·
 Every hash below is on X Layer mainnet (`eip155:196`) and resolves on
 [oklink](https://www.oklink.com/x-layer). Nothing is staged.
 
-| What | Transaction |
-|---|---|
-| **AssayRegistry** (contract) | [`0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4`](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4) |
-| First real x402 settlement — paid `asy_ats_scan`, 0.05 USD₮0 | `0x4babf76c2b29c6a8ac0314b42ad93081213f62022d537903c99abfecf73794a7` |
-| Sealed 3 demonstration dossiers in one batch | `0xae83407122efebea92e422921f91dd319ad504c611388fe15196274dc92b923e` |
+| What                                                                                   | Transaction                                                                                                                                              |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AssayRegistry** (contract)                                                           | [`0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4`](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)                        |
+| First real x402 settlement — paid `asy_ats_scan`, 0.05 USD₮0                           | `0x4babf76c2b29c6a8ac0314b42ad93081213f62022d537903c99abfecf73794a7`                                                                                     |
+| Sealed 3 demonstration dossiers in one batch                                           | `0xae83407122efebea92e422921f91dd319ad504c611388fe15196274dc92b923e`                                                                                     |
 | **Marketplace purchase 1** — ATS Resume Scan, 0.05 USD₮0 (paid → delivered → complete) | pay `0xe63ee4880f489ab0848fcd12ad0964f5da8bcc4abb2a09350e80506f7c3a9e8a` · complete `0x274af255b8cd1466209261565b3e26b758387fd756e13517b8213b18139e4e81` |
-| **Marketplace purchase 2** — Job Fit Brief, 0.10 USD₮0 | pay `0x187c7edd52c11fb8a4a863ac3609faeff392872b925142c880c1ac3066e19959` · complete `0x6a02216f3c2b131deafc7a21246d5d8bf49dec41542b6e959a8081755ec81316` |
-| **Marketplace purchase 3** — Cover Letter, 0.15 USD₮0 | pay `0x194d57dda8e755927ee69f0e411aa8d6e47f670c5869b339ee902667302cdffe` · complete `0x8fa47993f9d3d1156f54de9e9a489cfefccdc32d37af5e0551d859e1c7b9ccf4` |
-| **Career Dossier purchase** — 2.00 USD₮0, 9 artifacts sealed | `0x12fa7c013686ce9a29a493ebef9605c09c0906e0f010c2e973c30f75838a782e` |
+| **Marketplace purchase 2** — Job Fit Brief, 0.10 USD₮0                                 | pay `0x187c7edd52c11fb8a4a863ac3609faeff392872b925142c880c1ac3066e19959` · complete `0x6a02216f3c2b131deafc7a21246d5d8bf49dec41542b6e959a8081755ec81316` |
+| **Marketplace purchase 3** — Cover Letter, 0.15 USD₮0                                  | pay `0x194d57dda8e755927ee69f0e411aa8d6e47f670c5869b339ee902667302cdffe` · complete `0x8fa47993f9d3d1156f54de9e9a489cfefccdc32d37af5e0551d859e1c7b9ccf4` |
+| **Career Dossier purchase** — 2.00 USD₮0, 9 artifacts sealed                           | `0x12fa7c013686ce9a29a493ebef9605c09c0906e0f010c2e973c30f75838a782e`                                                                                     |
 
 All three marketplace purchases were commissioned **through the OKX.AI task marketplace** by a
 separate buyer agent, settled via the OKX Agent Payments Protocol (x402 v2, scheme `exact`, gasless
@@ -199,18 +199,18 @@ calling itself — it is the platform's own buyer flow, end to end.
 Official criteria: product experience · service completeness · user value · creativity · approved
 and live on OKX.AI. Source: <https://web3.okx.com/xlayer/build-x-series?i5lsj=7>.
 
-| Criterion | What Assay puts on the table |
-|---|---|
-| **Approved & live** | Agent #8599 listed and active; endpoint live with a valid, correctly-priced x402 challenge on all 13 offers |
-| **Product experience** | Five-room Studio with an observable pipeline, a recruiter share portal, a free public verifier, a 90-second `/judge` replay of a real sealed run, light/dark theming, and axe-clean accessibility on every public page |
-| **Service completeness** | 11 canonical tools + 13 marketplace offers; async job rails; generated docs; version lineage; redaction; share expiry and revocation; capability-token access; disk, rate and payload guards; failure drills |
-| **User value** | Solves a real and expensive problem — unverifiable career claims. Repeat use across job search, promotion, and freelance, not a one-shot generator |
-| **Creativity** | A generator that refuses to generate; a public standard that grades its own maker and ships its failures; machine parse-back of the rendered PDF; contradiction-checking against the ledger; privacy-preserving on-chain provenance; a paywall that refuses to charge for what it cannot deliver |
-| **Agent economy** | Native A2MCP + x402 on X Layer, free verification tier, background job rail, machine-readable manifest, published per-service input contracts |
+| Criterion                | What Assay puts on the table                                                                                                                                                                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Approved & live**      | Agent #8599 listed and active; endpoint live with a valid, correctly-priced x402 challenge on all 13 offers                                                                                                                                                                                      |
+| **Product experience**   | Five-room Studio with an observable pipeline, a recruiter share portal, a free public verifier, a 90-second `/judge` replay of a real sealed run, light/dark theming, and axe-clean accessibility on every public page                                                                           |
+| **Service completeness** | 11 canonical tools + 13 marketplace offers; async job rails; generated docs; version lineage; redaction; share expiry and revocation; capability-token access; disk, rate and payload guards; failure drills                                                                                     |
+| **User value**           | Solves a real and expensive problem — unverifiable career claims. Repeat use across job search, promotion, and freelance, not a one-shot generator                                                                                                                                               |
+| **Creativity**           | A generator that refuses to generate; a public standard that grades its own maker and ships its failures; machine parse-back of the rendered PDF; contradiction-checking against the ledger; privacy-preserving on-chain provenance; a paywall that refuses to charge for what it cannot deliver |
+| **Agent economy**        | Native A2MCP + x402 on X Layer, free verification tier, background job rail, machine-readable manifest, published per-service input contracts                                                                                                                                                    |
 
 ---
 
-## What we deliberately do *not* claim
+## What we deliberately do _not_ claim
 
 Judges reward calibration and punish overreach. Keep these lines if an "limitations" or "roadmap"
 field exists — they cost nothing and buy credibility.

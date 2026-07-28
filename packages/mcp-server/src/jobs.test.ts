@@ -141,3 +141,32 @@ describe('paid dossier delivery', () => {
     expect(r.cfg.inlineJobWaitMs).toBeGreaterThan(120_000)
   })
 })
+
+describe('a dossier with nothing behind it', () => {
+  it('fails the job with an actionable reason instead of forging blank documents', async () => {
+    const r = testRuntime({ ASY_INLINE_JOB_WAIT_MS: '0' })
+    const deps: JobDeps = {
+      store: r.store,
+      router: r.router,
+      fetcher: r.fetcher,
+      cfg: r.cfg,
+      toPdf: devPdf,
+      realPdf: false,
+      sampleContrast: async () => 12.4,
+    }
+    const pipe = makeCtx(r.store, r.router, r.cfg, r.fetcher)
+    // A document the extractor can find no confirmable achievement in.
+    const created = await createDossierJob(pipe, {
+      resumeText: 'to whom it may concern. please find attached. regards.',
+    })
+    const jobId = created.data['jobId'] as string
+    await new JobRunner(deps, 10).tick()
+
+    const job = r.store.getJob(jobId)!
+    expect(job.status).toBe('failed')
+    expect(job.error).toMatch(/no confirmed claims/i)
+    // The buyer is told what to send, not handed a set of empty files.
+    expect(job.error).toMatch(/achievements|Studio/i)
+    expect(r.store.getDossier(job.resultRef ?? '')).toBeUndefined()
+  })
+})

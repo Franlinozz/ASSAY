@@ -112,6 +112,19 @@ export async function runDossierPipeline(
     c.status === 'extracted' ? { ...c, status: 'confirmed' as const } : c,
   )
 
+  // Nothing cleared the claim gate. Forging from here produces a set of empty documents, and a
+  // dossier of blank files reported as "ready" is the single worst thing this product can do —
+  // it is precisely the unearned confidence Assay exists to refuse. Fail loudly and say why.
+  if (!claims.some((c) => c.status === 'confirmed')) {
+    store.recordEvent('dossier_no_claims', { chars: ing.contentText.length })
+    throw new Error(
+      'no confirmed claims could be extracted from that document — Assay will not forge a dossier ' +
+        'with nothing behind it. Supply a résumé with concrete, dated achievements (what you did, ' +
+        'where, and the outcome), or build the ledger in the Studio where each claim can be ' +
+        'confirmed against its evidence.',
+    )
+  }
+
   // 3) JD decomposition + coverage
   let brief: Dossier['brief']
   let coverage: Coverage[] = []

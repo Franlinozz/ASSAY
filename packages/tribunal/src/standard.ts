@@ -169,3 +169,22 @@ export function renderStandardMarkdown(standard: AssayStandard = ASSAY_STANDARD)
   lines.push('')
   return lines.join('\n')
 }
+
+// Artifact kinds whose entire purpose is prose. If one of these renders with zero sentences the
+// pipeline produced an empty document — it must never be graded as if it were a structured
+// artifact (docx / json / table), which is decided by hard checks alone and would otherwise pass
+// vacuously. An empty document is a non-delivery, not a pass.
+export const PROSE_ARTIFACT_KINDS = new Set<string>([
+  'resume_ats',
+  'resume_designed',
+  'cover_letter',
+  'story_bank',
+  'portfolio_page',
+  'interview_evaluation',
+  'promotion_narrative',
+  'promotion_memo',
+  'manager_one_pager',
+  'capability_statement',
+  'case_studies',
+  'proposal_letter',
+])

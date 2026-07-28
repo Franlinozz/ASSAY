@@ -3,7 +3,13 @@ import { nowIso } from '@xyndicate/assay-core'
 import type { ModelRouter } from '@xyndicate/providers'
 import { checksForArtifact } from './hard/index'
 import type { CheckDeps } from './hard/types'
-import { CRAFT_AXES, REPAIR_LIMIT, STANDARD_VERSION, passRule } from './standard'
+import {
+  CRAFT_AXES,
+  PROSE_ARTIFACT_KINDS,
+  REPAIR_LIMIT,
+  STANDARD_VERSION,
+  passRule,
+} from './standard'
 import { gradeCraft, type CraftGrade } from './critic'
 import type { HardCheckReport, TribunalReport } from './report'
 
@@ -47,6 +53,29 @@ export async function gradeArtifact(
       createdAt: nowIso(),
     }
   }
+  // An artifact whose whole purpose is prose, rendered with nothing in it, is an empty document.
+  // Grading it as "structured" (hard checks only, craft skipped) would pass it vacuously — the
+  // failure mode that let a paid dossier ship nine blank files stamped 9/9 PASS. Refuse it here,
+  // where every caller of the Standard sees the same verdict.
+  if (PROSE_ARTIFACT_KINDS.has(artifact.kind) && (artifact.sentences?.length ?? 0) === 0) {
+    return {
+      artifactId: artifact.id,
+      artifactKind: artifact.kind,
+      draftIndex,
+      hard: [],
+      craft: [],
+      craftWeightedMean: 0,
+      gradeStatus: 'not_delivered',
+      pass: false,
+      hardPass: false,
+      craftPass: false,
+      repairBrief:
+        'Rendered empty — no sentence cleared the claim gate, so there was nothing to grade. This artifact is a non-delivery, not a pass.',
+      standardVersion: STANDARD_VERSION,
+      createdAt: nowIso(),
+    }
+  }
+
   const hard: HardCheckReport[] = []
   for (const check of checksForArtifact(artifact.kind)) {
     const r = await check.run({ dossier, artifact, deps })

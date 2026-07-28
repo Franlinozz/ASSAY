@@ -6,6 +6,22 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Fixed
 
+- **An empty document can no longer pass the Tribunal — the worst bug this project has shipped.** A
+  paid Career Dossier delivered nine blank artifacts (0 claims, 0 sentences) and graded them
+  **9/9 PASS**. Cause: `proseBearing` was derived from `sentences.length > 0`, so a prose artifact
+  that rendered _empty_ was misclassified as a structured artifact (docx/json/table), which is
+  decided by hard checks alone and passed vacuously. Any prose-kind artifact rendering with zero
+  sentences is now graded `not_delivered` — excluded from the pass rate, never counted as a pass —
+  with the reason stated plainly. `PROSE_ARTIFACT_KINDS` lives in `standard.ts` beside the rest of
+  the published Standard, so every consumer of the grader sees the same verdict.
+- **The dossier job no longer forges from nothing.** If extraction confirms zero claims, the job
+  fails with an actionable reason ("supply a résumé with concrete, dated achievements, or build the
+  ledger in the Studio") instead of producing empty documents and reporting "ready — 9 artifacts".
+  A dossier of blank files announced as ready is exactly the unearned confidence Assay exists to
+  refuse.
+- The dead-link sweep recognises the concrete `/x402/:service[/schema]` resources and signed
+  `/f/:id` · `/p/:slug` URLs, so documenting real endpoints no longer fails the gate.
+
 - **Marketplace intake (OKX.AI listing review).** A paid call could previously settle and then
   return a refusal — an ATS scan with no résumé, a cover letter with no evidence, a 2.00 USDT
   dossier job whose background run then failed on an empty ingest — and a payload that named a key

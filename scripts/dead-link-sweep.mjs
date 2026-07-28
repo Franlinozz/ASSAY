@@ -91,7 +91,13 @@ function validateAssayUrl(url, source = 'source') {
       parsed.pathname === '/' ||
       parsed.pathname === '/mcp' ||
       parsed.pathname === '/health' ||
-      parsed.pathname === '/.well-known/assay.json'
+      parsed.pathname === '/.well-known/assay.json' ||
+      // Concrete marketplace resources and their free input contracts (documented in /docs/api).
+      parsed.pathname === '/x402' ||
+      /^\/x402\/[a-z0-9_]+(\/schema)?$/.test(parsed.pathname) ||
+      // Signed artifact downloads and public portfolio pages carry generated ids.
+      /^\/f\/[a-z0-9_]+$/.test(parsed.pathname) ||
+      /^\/p\/[a-z0-9_]+$/.test(parsed.pathname)
     if (!known) failures.push(`${source}: unknown Assay API URL ${url}`)
     return true
   }
