@@ -377,7 +377,11 @@ export async function claimAudit(
             }
           const unbacked = numbers.filter((n) => !sourceCarries(sourceLower, n.value))
           if (!unbacked.length)
-            return { text: line, status: 'SUPPORTED', issue: 'every figure traces to your evidence' }
+            return {
+              text: line,
+              status: 'SUPPORTED',
+              issue: 'every figure traces to your evidence',
+            }
           return {
             text: line,
             status: 'UNSUPPORTED_NUMBER',
@@ -464,7 +468,8 @@ type WriterKind = 'cover_letter' | 'story_bank' | 'resume_ats'
 // sending it in `claims`, just in the format they already have. Split it into statements here so
 // "Tailor Résumé" can be given a résumé, and keep the strength honest: this is a self-attestation,
 // never a verified fact. Section headings and contact lines are not claims, so they are dropped.
-const HEADING_LINE = /^\s*(?:[-*•\s]*)(experience|work experience|employment|education|skills|technical skills|projects|summary|profile|objective|certifications|awards|publications|interests|references|contact)\s*:?\s*$/i
+const HEADING_LINE =
+  /^\s*(?:[-*•\s]*)(experience|work experience|employment|education|skills|technical skills|projects|summary|profile|objective|certifications|awards|publications|interests|references|contact)\s*:?\s*$/i
 
 export function claimLinesFromResume(text: string): string[] {
   return text

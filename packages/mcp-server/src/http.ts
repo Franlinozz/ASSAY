@@ -632,7 +632,8 @@ export function buildApp(rt: AppRuntime): Express {
             'That Idempotency-Key is already bound to a different paid request.',
           )
         restoreSettlement(res, existing.settlement)
-        if (existing.result) return void deliver(store, res, existing.idempotencyKey, JSON.parse(existing.result))
+        if (existing.result)
+          return void deliver(store, res, existing.idempotencyKey, JSON.parse(existing.result))
       } else {
         // Before charging again, look for this exact purchase already paid for and never received.
         // A buyer whose client timed out re-sends the same body with a fresh payment proof; making
@@ -719,7 +720,9 @@ export function buildApp(rt: AppRuntime): Express {
       { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg },
       { receipt: String(req.params['receipt'] ?? '') },
     )
-    return void res.status(result.refused ? 404 : 200).json({ summary: result.summary, ...result.data })
+    return void res
+      .status(result.refused ? 404 : 200)
+      .json({ summary: result.summary, ...result.data })
   })
 
   // Free input contract for every marketplace service: a buyer can learn the exact payload before

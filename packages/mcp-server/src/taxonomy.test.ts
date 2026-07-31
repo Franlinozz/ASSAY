@@ -190,11 +190,6 @@ describe('taxonomy: prices never drift', () => {
       .filter(([, p]) => p === 0)
       .map(([t]) => t)
       .sort()
-    expect(free).toEqual([
-      'asy_job_result',
-      'asy_job_status',
-      'asy_order_result',
-      'asy_verify',
-    ])
+    expect(free).toEqual(['asy_job_result', 'asy_job_status', 'asy_order_result', 'asy_verify'])
   })
 })

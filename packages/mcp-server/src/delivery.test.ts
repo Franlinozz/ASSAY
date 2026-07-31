@@ -117,26 +117,30 @@ describe('runPaidWork', () => {
 })
 
 describe('a paid purchase can always be collected', () => {
-  it('returns a receipt instead of stranding the buyer when work outruns the budget', { timeout: 30_000 }, async () => {
-    const rig = testRuntime({ ASY_PAID_INLINE_BUDGET_MS: '30' })
-    slowRouter(rig, 120)
-    const { base, rt } = start(rig)
-    const bought = await buy(base, 'asy_cover_letter', 'sig-receipt-0001')
-    expect(bought.status).toBe(200)
-    expect(bought.json['status']).toBe('working')
-    expect(bought.json['charged']).toBe(true)
-    const receipt = String(bought.json['receipt'])
-    expect(receipt).toMatch(/^ord_/)
+  it(
+    'returns a receipt instead of stranding the buyer when work outruns the budget',
+    { timeout: 30_000 },
+    async () => {
+      const rig = testRuntime({ ASY_PAID_INLINE_BUDGET_MS: '30' })
+      slowRouter(rig, 120)
+      const { base, rt } = start(rig)
+      const bought = await buy(base, 'asy_cover_letter', 'sig-receipt-0001')
+      expect(bought.status).toBe(200)
+      expect(bought.json['status']).toBe('working')
+      expect(bought.json['charged']).toBe(true)
+      const receipt = String(bought.json['receipt'])
+      expect(receipt).toMatch(/^ord_/)
 
-    // The work continues; collection is free and needs no payment proof.
-    for (let i = 0; i < 100 && !rt.store.getOrder(receipt)?.result; i++)
-      await new Promise((r) => setTimeout(r, 50))
-    const collected = await fetch(`${base}/x402/receipt/${receipt}`)
-    expect(collected.status).toBe(200)
-    const body = (await collected.json()) as Record<string, unknown>
-    expect(body['status']).toBe('delivered')
-    expect((body['result'] as { summary?: string }).summary).toBeTruthy()
-  })
+      // The work continues; collection is free and needs no payment proof.
+      for (let i = 0; i < 100 && !rt.store.getOrder(receipt)?.result; i++)
+        await new Promise((r) => setTimeout(r, 50))
+      const collected = await fetch(`${base}/x402/receipt/${receipt}`)
+      expect(collected.status).toBe(200)
+      const body = (await collected.json()) as Record<string, unknown>
+      expect(body['status']).toBe('delivered')
+      expect((body['result'] as { summary?: string }).summary).toBeTruthy()
+    },
+  )
 
   it('reports an unknown receipt honestly rather than inventing a purchase', async () => {
     const { base } = start(testRuntime())
@@ -145,25 +149,29 @@ describe('a paid purchase can always be collected', () => {
     expect(((await res.json()) as Record<string, unknown>)['reason']).toBe('UNKNOWN_RECEIPT')
   })
 
-  it('never charges twice for an identical request whose result was never delivered', { timeout: 30_000 }, async () => {
-    const rig = testRuntime({ ASY_PAID_INLINE_BUDGET_MS: '30' })
-    slowRouter(rig, 120)
-    const { base, rt } = start(rig)
-    const first = await buy(base, 'asy_cover_letter', 'sig-stranded-0001')
-    const receipt = String(first.json['receipt'])
-    for (let i = 0; i < 100 && !rt.store.getOrder(receipt)?.result; i++)
-      await new Promise((r) => setTimeout(r, 50))
-    expect(rt.store.getOrder(receipt)?.deliveredAt).toBeNull()
+  it(
+    'never charges twice for an identical request whose result was never delivered',
+    { timeout: 30_000 },
+    async () => {
+      const rig = testRuntime({ ASY_PAID_INLINE_BUDGET_MS: '30' })
+      slowRouter(rig, 120)
+      const { base, rt } = start(rig)
+      const first = await buy(base, 'asy_cover_letter', 'sig-stranded-0001')
+      const receipt = String(first.json['receipt'])
+      for (let i = 0; i < 100 && !rt.store.getOrder(receipt)?.result; i++)
+        await new Promise((r) => setTimeout(r, 50))
+      expect(rt.store.getOrder(receipt)?.deliveredAt).toBeNull()
 
-    // The buyer's client timed out and re-sends the same body with a FRESH payment proof — exactly
-    // what happened in production. They get the work they already bought, and no second order.
-    const before = rt.store.orderCount()
-    const retry = await buy(base, 'asy_cover_letter', 'sig-stranded-0002')
-    expect(retry.status).toBe(200)
-    expect(retry.headers.get('assay-recovered-receipt')).toBe(receipt)
-    expect(rt.store.orderCount()).toBe(before)
-    expect(rt.store.getOrder(receipt)?.deliveredAt).not.toBeNull()
-  })
+      // The buyer's client timed out and re-sends the same body with a FRESH payment proof — exactly
+      // what happened in production. They get the work they already bought, and no second order.
+      const before = rt.store.orderCount()
+      const retry = await buy(base, 'asy_cover_letter', 'sig-stranded-0002')
+      expect(retry.status).toBe(200)
+      expect(retry.headers.get('assay-recovered-receipt')).toBe(receipt)
+      expect(rt.store.orderCount()).toBe(before)
+      expect(rt.store.getOrder(receipt)?.deliveredAt).not.toBeNull()
+    },
+  )
 
   it('does not hand out a delivered purchase to a later identical request', async () => {
     const { base, rt } = start(testRuntime())
@@ -220,37 +228,41 @@ describe('the collection surface is discoverable and free', () => {
 // the response window, they must still receive STORIES. A response whose whole content is
 // {status:"working"} reads as a service that took the money and produced nothing.
 describe('a budget expiry still delivers what the buyer bought', () => {
-  it('carries the cited sentences in-band when only the grade is still running', { timeout: 30_000 }, async () => {
-    const rig = testRuntime({ ASY_PAID_INLINE_BUDGET_MS: '40' })
-    // Only the critic is slow — the writer lands, the grade does not. This is production's shape:
-    // the writer measured 2.5-9s and the craft critic 6-23s.
-    const generate = rig.router.generate.bind(rig.router)
-    rig.router.generate = async (req, ctx) => {
-      if (req.role === 'critic') await new Promise((r) => setTimeout(r, 400))
-      return generate(req, ctx)
-    }
-    const { base, rt } = start(rig)
-    const bought = await buy(base, 'asy_story_bank', 'sig-partial-0001')
+  it(
+    'carries the cited sentences in-band when only the grade is still running',
+    { timeout: 30_000 },
+    async () => {
+      const rig = testRuntime({ ASY_PAID_INLINE_BUDGET_MS: '40' })
+      // Only the critic is slow — the writer lands, the grade does not. This is production's shape:
+      // the writer measured 2.5-9s and the craft critic 6-23s.
+      const generate = rig.router.generate.bind(rig.router)
+      rig.router.generate = async (req, ctx) => {
+        if (req.role === 'critic') await new Promise((r) => setTimeout(r, 400))
+        return generate(req, ctx)
+      }
+      const { base, rt } = start(rig)
+      const bought = await buy(base, 'asy_story_bank', 'sig-partial-0001')
 
-    expect(bought.status).toBe(200)
-    expect(bought.json['status']).toBe('partial')
-    expect(bought.json['charged']).toBe(true)
-    const result = bought.json['result'] as { data: { sentences: { text: string }[] } }
-    // The actual deliverable, in the actual response.
-    expect(result.data.sentences.length).toBeGreaterThan(0)
-    expect(result.data.sentences[0]!.text.length).toBeGreaterThan(10)
+      expect(bought.status).toBe(200)
+      expect(bought.json['status']).toBe('partial')
+      expect(bought.json['charged']).toBe(true)
+      const result = bought.json['result'] as { data: { sentences: { text: string }[] } }
+      // The actual deliverable, in the actual response.
+      expect(result.data.sentences.length).toBeGreaterThan(0)
+      expect(result.data.sentences[0]!.text.length).toBeGreaterThan(10)
 
-    // And the graded version completes and is collectable under the same receipt.
-    const receipt = String(bought.json['receipt'])
-    for (let i = 0; i < 100 && !rt.store.getOrder(receipt)?.result; i++)
-      await new Promise((r) => setTimeout(r, 50))
-    const collected = (await (await fetch(`${base}/x402/receipt/${receipt}`)).json()) as {
-      status: string
-      result: { data: { tribunal?: unknown } }
-    }
-    expect(collected.status).toBe('delivered')
-    expect(collected.result.data.tribunal).toBeTruthy()
-  })
+      // And the graded version completes and is collectable under the same receipt.
+      const receipt = String(bought.json['receipt'])
+      for (let i = 0; i < 100 && !rt.store.getOrder(receipt)?.result; i++)
+        await new Promise((r) => setTimeout(r, 50))
+      const collected = (await (await fetch(`${base}/x402/receipt/${receipt}`)).json()) as {
+        status: string
+        result: { data: { tribunal?: unknown } }
+      }
+      expect(collected.status).toBe('delivered')
+      expect(collected.result.data.tribunal).toBeTruthy()
+    },
+  )
 
   it('says "working" only when there is genuinely nothing to show yet', async () => {
     const rig = testRuntime({ ASY_PAID_INLINE_BUDGET_MS: '30' })

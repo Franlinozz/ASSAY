@@ -360,7 +360,8 @@ export function isUsableLink(link: string): boolean {
 const ACHIEVEMENT_VERB =
   '(built|led|changed|created|implemented|designed|introduced|reduced|improved|shipped|mentored|automated|migrated|rebuilt|owned|ran|established|replaced|instrumented|delivered|launched|scaled|consolidated|negotiated' +
   '|guided|drove|coached|trained|coordinated|developed|deployed|standardi[sz]ed|streamlined|resolved|secured|oversaw|spearheaded|championed|initiated|piloted|restructured|refactored|integrated|unified|expanded|eliminated|cut|grew|raised|wrote|drafted|authored|rewrote|architected|partnered|facilitated|convinced|persuaded|recovered|rescued|salvaged|audited|documented|reorganised|reorganized)'
-const ACTION_PHRASE = /\b(took (on|over|charge)|set up|stood up|rolled out|put in place|brought in)\b/i
+const ACTION_PHRASE =
+  /\b(took (on|over|charge)|set up|stood up|rolled out|put in place|brought in)\b/i
 
 export function starParts(text: string): {
   situation: boolean

@@ -111,7 +111,7 @@ describe('Phase 12 apex breadth', () => {
   it('pairs a contradiction with the fact that actually disagrees, and names the unit', () => {
     const speedQuestion = {
       id: 'Q-SPEED',
-      text: 'Tell me about the cycle-time work.',
+      prompt: 'Tell me about the cycle-time work.',
       kind: 'behavioral' as const,
       claimIds: ['CLM-SPEED'],
     }
@@ -250,7 +250,7 @@ describe('a contradiction requires the same quantity, not just the same unit', (
   })
   const question = {
     id: 'Q-MIG',
-    text: 'Tell me about the migration.',
+    prompt: 'Tell me about the migration.',
     kind: 'behavioral' as const,
     claimIds: ['CLM-MIG'],
   }

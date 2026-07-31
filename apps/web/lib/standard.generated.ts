@@ -394,6 +394,7 @@ export const TOOL_PRICES: Record<string, number> = {
   "asy_create_dossier_job": 2,
   "asy_job_status": 0,
   "asy_job_result": 0,
+  "asy_order_result": 0,
   "asy_verify": 0
 }
 
@@ -479,6 +480,12 @@ export const TOOLS: ToolDoc[] = [
         "type": "string[]",
         "required": false,
         "description": "A list of claim sentences to audit (alternative to a résumé upload)."
+      },
+      {
+        "name": "evidence",
+        "type": "string",
+        "required": false,
+        "description": "The source text your claims came from — audited against, not audited."
       }
     ]
   },
@@ -523,6 +530,12 @@ export const TOOLS: ToolDoc[] = [
         "description": "An existing sealed dossier to draw evidence from."
       },
       {
+        "name": "resumeText",
+        "type": "string",
+        "required": false,
+        "description": "Your résumé as plain text. Its lines are treated as self-attested claims."
+      },
+      {
         "name": "profile",
         "type": "object",
         "required": false,
@@ -562,6 +575,12 @@ export const TOOLS: ToolDoc[] = [
         "description": "An existing sealed dossier to draw evidence from."
       },
       {
+        "name": "resumeText",
+        "type": "string",
+        "required": false,
+        "description": "Your résumé as plain text. Its lines are treated as self-attested claims."
+      },
+      {
         "name": "profile",
         "type": "object",
         "required": false,
@@ -599,6 +618,12 @@ export const TOOLS: ToolDoc[] = [
         "type": "string",
         "required": false,
         "description": "An existing sealed dossier to draw evidence from."
+      },
+      {
+        "name": "resumeText",
+        "type": "string",
+        "required": false,
+        "description": "Your résumé as plain text. Its lines are treated as self-attested claims."
       },
       {
         "name": "profile",
@@ -644,6 +669,12 @@ export const TOOLS: ToolDoc[] = [
         "type": "string",
         "required": false,
         "description": "An existing sealed dossier to draw evidence from."
+      },
+      {
+        "name": "resumeText",
+        "type": "string",
+        "required": false,
+        "description": "Your résumé as plain text. Its lines are treated as self-attested claims."
       },
       {
         "name": "profile",
@@ -755,6 +786,21 @@ export const TOOLS: ToolDoc[] = [
         "type": "string",
         "required": true,
         "description": ""
+      }
+    ]
+  },
+  {
+    "name": "asy_order_result",
+    "title": "Collect purchase",
+    "marketplaceSummary": "Collect a settled purchase by receipt when the work outran the response window — free, never charged twice.",
+    "description": "Collect a purchase you have already paid for, using the receipt returned in-band when a paid call needs longer than its response window. Free. FREE — the sale already settled, so collection is never a second charge. Example: {receipt:\"ord_…\"} → {status:\"delivered\", result}. Proof promise: settlement is not delivery; nothing you paid for can be stranded on our side.",
+    "priceUsdt": 0,
+    "args": [
+      {
+        "name": "receipt",
+        "type": "string",
+        "required": true,
+        "description": "The receipt id returned with your payment (ord_…)."
       }
     ]
   },

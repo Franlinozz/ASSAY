@@ -39,9 +39,7 @@ export const DEFAULT_PAID_INLINE_BUDGET_MS = 15_000
 export const DEFAULT_RECOVERY_WINDOW_MS = 60 * 60_000
 
 export type PaidOutcome =
-  | { kind: 'delivered'; result: unknown }
-  | { kind: 'failed'; error: unknown }
-  | { kind: 'working' }
+  { kind: 'delivered'; result: unknown } | { kind: 'failed'; error: unknown } | { kind: 'working' }
 
 /**
  * Run paid work against a response budget. The work always runs to completion and always caches

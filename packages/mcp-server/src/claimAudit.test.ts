@@ -13,7 +13,9 @@ describe('a formatted figure is not an invented one', () => {
   })
 
   it('leaves numbers that are not thousands alone', () => {
-    expect(stripThousands('4.83 and 1,612 and 12,00 and 2,4')).toBe('4.83 and 1612 and 12,00 and 2,4')
+    expect(stripThousands('4.83 and 1,612 and 12,00 and 2,4')).toBe(
+      '4.83 and 1612 and 12,00 and 2,4',
+    )
   })
 })
 

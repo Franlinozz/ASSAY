@@ -12,6 +12,7 @@
     "asy_create_dossier_job",
     "asy_job_status",
     "asy_job_result",
+    "asy_order_result",
     "asy_verify"
   ]
 }

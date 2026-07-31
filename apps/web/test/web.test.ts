@@ -45,11 +45,13 @@ describe('generated price table (guardrail #5)', () => {
       asy_create_dossier_job: 2,
       asy_job_status: 0,
       asy_job_result: 0,
+      // Collecting a purchase that already settled is not a second sale.
+      asy_order_result: 0,
       asy_verify: 0,
     })
   })
-  it('documents all eleven tools with schema-derived args', () => {
-    expect(TOOLS).toHaveLength(11)
+  it('documents all twelve tools with schema-derived args', () => {
+    expect(TOOLS).toHaveLength(12)
     for (const tool of TOOLS) {
       expect(tool.marketplaceSummary.length).toBeGreaterThan(30)
       expect(tool.description.length).toBeGreaterThan(40)

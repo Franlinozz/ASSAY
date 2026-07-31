@@ -378,8 +378,7 @@ export class Store {
   getOrderByIdempotencyKey(key: string): OrderRow | undefined {
     return this.toOrderRow(
       this.db.prepare(`SELECT * FROM orders WHERE idempotency_key = ?`).get(key) as
-        | OrderRecord
-        | undefined,
+        OrderRecord | undefined,
     )
   }
 
@@ -411,7 +410,9 @@ export class Store {
 
   markOrderDelivered(idempotencyKey: string): void {
     this.db
-      .prepare(`UPDATE orders SET delivered_at = ? WHERE idempotency_key = ? AND delivered_at IS NULL`)
+      .prepare(
+        `UPDATE orders SET delivered_at = ? WHERE idempotency_key = ? AND delivered_at IS NULL`,
+      )
       .run(nowIso(), idempotencyKey)
   }
 

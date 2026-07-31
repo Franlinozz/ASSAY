@@ -100,6 +100,7 @@ const callExamples = {
   },
   asy_job_status: { jobId: 'job_…' },
   asy_job_result: { jobId: 'job_…' },
+  asy_order_result: { receipt: 'ord_…' },
   asy_verify: { dossierId: 'DSR-WC0Q7NZ7' },
 }
 for (const tool of tools) {
