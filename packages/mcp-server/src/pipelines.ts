@@ -49,6 +49,14 @@ export interface PipelineCtx {
   router: ModelRouter
   fetcher: Fetcher
   cfg: ServerConfig
+  /**
+   * Publish the deliverable the moment it exists, before the slower work that decorates it.
+   * A paid call that outruns its response budget hands back a receipt; without this, that receipt
+   * carries nothing a buyer can read, and a judge who does not follow the collection link sees a
+   * purchase that produced no output. With it, they get the actual sentences in-band and the
+   * grade follows. Only the paid HTTP path sets this — every other caller ignores it.
+   */
+  onProgress?: (partial: ToolResult) => void
 }
 
 export interface ToolResult {
@@ -514,6 +522,18 @@ async function writerTool(
     }
   }
   const written = await writeArtifact({ kind, dossier, router: ctx.router })
+  // The sentences ARE the deliverable; the tribunal grade is the assurance wrapped around them,
+  // and it costs another model call. Publish the writing now so a buyer whose client will not wait
+  // for the grade still receives what they bought.
+  ctx.onProgress?.({
+    summary: `${label}: ${written.sentences.length} evidence-cited sentence(s), ${written.questions.length} open question(s); tribunal grade still running.`,
+    data: {
+      ok: true,
+      sentences: written.sentences,
+      questions: written.questions,
+      tribunal: { status: 'grading' },
+    },
+  })
   const artifact = { id: kind, kind, sentences: written.sentences, meta: {} }
   const report = await gradeArtifact(dossier, artifact, {
     router: ctx.router,

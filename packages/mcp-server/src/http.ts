@@ -664,13 +664,24 @@ export function buildApp(rt: AppRuntime): Express {
         for (const [key, value] of Object.entries(decision.settlement)) res.setHeader(key, value)
       }
 
+      // The capability publishes its deliverable here as soon as it exists, so a budget expiry can
+      // still hand the buyer something they can read rather than only a receipt.
+      let partial: unknown
       const outcome = await runPaidWork({
         store,
         idempotencyKey: idemKey,
         budgetMs: cfg.paidInlineBudgetMs,
         run: () =>
           executeTool(
-            { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg: rt.cfg },
+            {
+              store: rt.store,
+              router: rt.router,
+              fetcher: rt.fetcher,
+              cfg: rt.cfg,
+              onProgress: (p) => {
+                partial = p
+              },
+            },
             tool,
             args,
           ),
@@ -689,7 +700,12 @@ export function buildApp(rt: AppRuntime): Express {
       }
       if (outcome.kind === 'working')
         return void res.json(
-          receiptBody({ tool, receipt: existing?.id ?? idemKey, baseUrl: cfg.baseUrl }),
+          receiptBody({
+            tool,
+            receipt: existing?.id ?? idemKey,
+            baseUrl: cfg.baseUrl,
+            ...(partial ? { partial } : {}),
+          }),
         )
       return void deliver(store, res, idemKey, outcome.result)
     } catch (error) {

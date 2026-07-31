@@ -18,10 +18,22 @@ import { toJson } from './util'
 //      collect a completed-but-undelivered order for free.
 
 /**
- * How long a paid call may hold its HTTP response open before handing back a receipt instead.
- * Sits under the ~30s marketplace client timeout with room for settlement (~5s) ahead of it.
+ * How long a paid call may hold its HTTP response open before answering with what it has.
+ *
+ * Calibrated against production, not guessed. Two different clients are visible in the capability
+ * log, and they have very different patience:
+ *   • a direct caller (curl, a script) waits a long time — 28s, 36s, 37s and one 132s dossier all
+ *     delivered successfully on 2026-07-27;
+ *   • the OKX marketplace buyer client gives up at about 30 SECONDS — on 2026-07-31 it collected
+ *     calls of 3.3s, 3.7s, 4.7s and 13.2s, and abandoned three calls that ran 26-31s including
+ *     settlement.
+ *
+ * Settlement runs ahead of the work and costs ~5s of that window, so the budget is what is left
+ * over minus a real margin: 15s of work answers by ~20s, a full 10s inside the observed hangup.
+ * A budget set close to the wire is worthless — a receipt that arrives after the client has gone
+ * is exactly as lost as the result it replaced.
  */
-export const DEFAULT_PAID_INLINE_BUDGET_MS = 20_000
+export const DEFAULT_PAID_INLINE_BUDGET_MS = 15_000
 
 /** How far back a retry may reach to collect a purchase that was paid for but never delivered. */
 export const DEFAULT_RECOVERY_WINDOW_MS = 60 * 60_000
@@ -71,17 +83,24 @@ export function receiptBody(opts: {
   tool: string
   receipt: string
   baseUrl: string
+  /** Whatever the capability had finished producing when the budget ran out. */
+  partial?: unknown
 }): Record<string, unknown> {
-  const { tool, receipt, baseUrl } = opts
+  const { tool, receipt, baseUrl, partial } = opts
   return {
     ok: true,
-    status: 'working',
+    // A response carrying the deliverable is a delivery, even though a slower part is still
+    // running. Saying "working" over the top of real output understates what the buyer has.
+    status: partial ? 'partial' : 'working',
     tool,
     receipt,
     charged: true,
-    message:
-      `Payment settled and ${tool} is running — it needs a little longer than this response can be held open. ` +
-      `Collect the finished result with your receipt ${receipt}; collection is free and you are never charged twice.`,
+    ...(partial ? { result: partial } : {}),
+    message: partial
+      ? `Payment settled. The deliverable is in this response; one slower step (the tribunal grade) is still running. ` +
+        `Collect the completed version with your receipt ${receipt} — collection is free and you are never charged twice.`
+      : `Payment settled and ${tool} is running — it needs a little longer than this response can be held open. ` +
+        `Collect the finished result with your receipt ${receipt}; collection is free and you are never charged twice.`,
     collect: {
       url: `${baseUrl}/x402/receipt/${receipt}`,
       tool: 'asy_order_result',
