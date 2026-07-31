@@ -177,6 +177,7 @@ const ALIASES: Record<string, string[]> = {
   dossierId: ['dossierid', 'dossier', 'dossierref', 'dossierreference'],
   jobId: ['jobid', 'job', 'jobref', 'jobreference', 'taskid', 'id'],
   leaf: ['leaf', 'commitment', 'commitmentleaf', 'sealleaf'],
+  receipt: ['receipt', 'receiptid', 'orderid', 'order', 'orderref', 'purchaseid'],
   answer: ['answer', 'answertext', 'response', 'reply', 'candidateanswer'],
   answers: ['answers', 'clarifications', 'clarificationanswers', 'questionanswers'],
   variant: ['variant', 'dossiertype', 'dossierkind', 'kind', 'type', 'mode'],
@@ -449,7 +450,12 @@ export function preflight(tool: string, args: Record<string, unknown>): Prefligh
     case 'asy_story_bank':
     case 'asy_tailor_resume':
     case 'asy_interview_prep': {
-      if (hasText(args['dossierId']) || hasClaims(args['claims']) || hasText(args['evidence'], 20))
+      if (
+        hasText(args['dossierId']) ||
+        hasClaims(args['claims']) ||
+        hasText(args['evidence'], 20) ||
+        hasText(args['resumeText'], 20)
+      )
         return OK
       const label =
         tool === 'asy_cover_letter'
@@ -462,8 +468,8 @@ export function preflight(tool: string, args: Record<string, unknown>): Prefligh
       return {
         ok: false,
         code: 'EVIDENCE_REQUIRED',
-        message: `Assay will not write a ${label} it cannot trace. Send \`claims\` (statements you stand behind) with optional \`evidence\`, or a \`dossierId\` from a completed dossier. No payment was taken.`,
-        accepts: ['claims', 'evidence', 'dossierId'],
+        message: `Assay will not write a ${label} it cannot trace. Send \`claims\` (statements you stand behind) with optional \`evidence\`, your \`resumeText\`, or a \`dossierId\` from a completed dossier. No payment was taken.`,
+        accepts: ['claims', 'evidence', 'resumeText', 'dossierId'],
         example: {
           claims: ['Shipped billing v2 to 40k users', 'Cut checkout latency from 900ms to 320ms'],
           evidence: 'Launch post: https://example.com/billing-v2',
@@ -492,6 +498,17 @@ export function preflight(tool: string, args: Record<string, unknown>): Prefligh
         message: 'Send the `jobId` returned by asy_create_dossier_job.',
         accepts: ['jobId'],
         example: { jobId: 'job_abc123' },
+      }
+
+    case 'asy_order_result':
+      if (hasText(args['receipt'])) return OK
+      return {
+        ok: false,
+        code: 'RECEIPT_REQUIRED',
+        message:
+          'Send the `receipt` returned with your payment (ord_…). Collection is free — you are never charged twice for one purchase.',
+        accepts: ['receipt'],
+        example: { receipt: 'ord_abc123' },
       }
 
     case 'asy_verify':

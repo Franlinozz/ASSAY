@@ -90,9 +90,17 @@ export function normalizeKeywords(candidates: string[]): string[] {
 }
 
 // The lemma-set of a piece of text plus optional tags — used to match against requirement keywords.
+//
+// The threshold here is 3, not the 4 that `significantTokens` uses, and the difference is the
+// whole point. `normalizeKeywords` keeps requirement keywords down to three characters, so a JD
+// asking for ICH-GCP yields the keywords "ich" and "gcp" — while a claim reading "Completed
+// ICH-GCP training (March 2024)" produced a vocabulary that had silently dropped both, because
+// they are three letters long. Every requirement stated as an acronym (ICH, GCP, AWS, SQL, CPA,
+// RN) was therefore unmatchable, and the honest-looking "missing" was a bug in the matcher rather
+// than a gap in the candidate. Both sides now agree on what counts as a word.
 export function keywordSet(text: string, tags: string[] = []): Set<string> {
   const set = new Set<string>()
-  for (const w of significantTokens(text)) set.add(lemma(w))
+  for (const w of words(text)) if (w.length >= 3 || /^\d+$/.test(w)) set.add(lemma(w))
   for (const t of tags) for (const w of words(t)) set.add(lemma(w))
   return set
 }

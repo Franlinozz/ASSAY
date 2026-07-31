@@ -35,6 +35,8 @@ export interface OrderRow {
   result: string | null
   settlement: string | null
   createdAt: string
+  /** When the paid response was actually flushed to the buyer; null means they never got it. */
+  deliveredAt: string | null
 }
 
 export interface JobRow {
@@ -67,6 +69,20 @@ const MIME: Record<string, string> = {
 }
 
 const nowIso = (): string => new Date().toISOString()
+
+interface OrderRecord {
+  id: string
+  tool: string
+  price_usdt: number
+  payer_ref: string | null
+  idempotency_key: string
+  request_hash: string | null
+  status: OrderStatus
+  result: string | null
+  settlement: string | null
+  created_at: string
+  delivered_at: string | null
+}
 
 export class Store {
   private readonly db: DB
@@ -183,6 +199,13 @@ export class Store {
     // Bind an idempotency key to the exact paid operation. A completed response may be recovered
     // without resending a payment proof, but the same key can never be reused for different input.
     this.ensureColumn('orders', 'request_hash', 'TEXT')
+    // Did the buyer actually RECEIVE what they paid for? Settlement proves money moved; only a
+    // flushed response proves delivery. Recording the difference is what makes an undelivered
+    // purchase recoverable instead of merely regrettable.
+    this.ensureColumn('orders', 'delivered_at', 'TEXT')
+    this.db.exec(
+      `CREATE INDEX IF NOT EXISTS idx_orders_recovery ON orders(tool, request_hash, delivered_at)`,
+    )
   }
 
   private ensureColumn(table: string, column: string, decl: string): void {
@@ -335,21 +358,7 @@ export class Store {
   }
 
   // ── orders (payments + idempotency) ──
-  getOrderByIdempotencyKey(key: string): OrderRow | undefined {
-    const r = this.db.prepare(`SELECT * FROM orders WHERE idempotency_key = ?`).get(key) as
-      | {
-          id: string
-          tool: string
-          price_usdt: number
-          payer_ref: string | null
-          idempotency_key: string
-          request_hash: string | null
-          status: OrderStatus
-          result: string | null
-          settlement: string | null
-          created_at: string
-        }
-      | undefined
+  private toOrderRow(r: OrderRecord | undefined): OrderRow | undefined {
     if (!r) return undefined
     return {
       id: r.id,
@@ -362,7 +371,48 @@ export class Store {
       result: r.result,
       settlement: r.settlement,
       createdAt: r.created_at,
+      deliveredAt: r.delivered_at ?? null,
     }
+  }
+
+  getOrderByIdempotencyKey(key: string): OrderRow | undefined {
+    return this.toOrderRow(
+      this.db.prepare(`SELECT * FROM orders WHERE idempotency_key = ?`).get(key) as
+        | OrderRecord
+        | undefined,
+    )
+  }
+
+  /** Look an order up by the receipt handed back in-band when work outran the response budget. */
+  getOrder(id: string): OrderRow | undefined {
+    return this.toOrderRow(
+      this.db.prepare(`SELECT * FROM orders WHERE id = ?`).get(id) as OrderRecord | undefined,
+    )
+  }
+
+  /**
+   * A completed purchase for exactly this request that the buyer never received. Used to hand back
+   * paid work on a retry rather than charging a second time for it — deliberately narrow: same
+   * tool, same canonical arguments, a result on file, never delivered, and recent.
+   */
+  findUndeliveredOrder(tool: string, requestHash: string, maxAgeMs: number): OrderRow | undefined {
+    const since = new Date(Date.now() - maxAgeMs).toISOString()
+    return this.toOrderRow(
+      this.db
+        .prepare(
+          `SELECT * FROM orders
+            WHERE tool = ? AND request_hash = ? AND result IS NOT NULL
+              AND delivered_at IS NULL AND created_at >= ?
+            ORDER BY created_at DESC LIMIT 1`,
+        )
+        .get(tool, requestHash, since) as OrderRecord | undefined,
+    )
+  }
+
+  markOrderDelivered(idempotencyKey: string): void {
+    this.db
+      .prepare(`UPDATE orders SET delivered_at = ? WHERE idempotency_key = ? AND delivered_at IS NULL`)
+      .run(nowIso(), idempotencyKey)
   }
 
   orderCount(): number {
@@ -390,6 +440,7 @@ export class Store {
       result: input.result ?? null,
       settlement: input.settlement ?? null,
       createdAt: nowIso(),
+      deliveredAt: null,
     }
     this.db
       .prepare(

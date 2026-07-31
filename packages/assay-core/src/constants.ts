@@ -20,6 +20,8 @@ export const TOOL_PRICES = {
   asy_create_dossier_job: 2.0,
   asy_job_status: 0,
   asy_job_result: 0,
+  // Collecting a purchase you already paid for is never a second sale.
+  asy_order_result: 0,
   asy_verify: 0,
 } as const
 

@@ -5,6 +5,20 @@ import { EXTRACTION_SYSTEM, buildExtractionPrompt } from './prompts'
 import { sanitizeGap, logRaw, type Gap } from './gaps'
 import { significantTokens } from './text'
 
+/** "2,400" and "1,612" become "2400" and "1612" so a formatted source matches an extracted value. */
+export function stripThousands(text: string): string {
+  return text.replace(/(\d),(?=\d{3}(?!\d))/g, '$1')
+}
+
+/**
+ * Does the source text actually carry this figure? Substring containment on a separator-stripped
+ * source, which also lets a source that overshoots a stated floor ("4.83 mean" behind a claim of
+ * "above 4.8") count as carrying it — the claim is true and must not be reported as invented.
+ */
+export function sourceCarries(sourceTextLower: string, value: number): boolean {
+  return sourceTextLower.includes(String(value))
+}
+
 export interface IngestedDoc {
   label: string
   contentText: string
@@ -129,7 +143,14 @@ export async function extractProfile(input: ExtractInput): Promise<ExtractResult
   const sourceTokens = new Set<string>()
   for (const e of evidence)
     for (const t of significantTokens(e.contentText ?? '')) sourceTokens.add(t)
-  const sourceTextLower = evidence.map((e) => (e.contentText ?? '').toLowerCase()).join('\n')
+  // Thousands separators are the difference between "2,400 installs" in the source and the
+  // extracted fact {value: 2400}. String(2400) is not a substring of "2,400", so EVERY figure at
+  // or above a thousand came back unverified — a résumé's real numbers are exactly the ones this
+  // hit, and asy_claim_audit reported them as UNSUPPORTED_NUMBER against evidence that stated them
+  // verbatim. Strip the separators before asking whether the source carries the number.
+  const sourceTextLower = stripThousands(
+    evidence.map((e) => (e.contentText ?? '').toLowerCase()).join('\n'),
+  )
 
   const claims: Claim[] = []
   const seen = new Set<string>()
@@ -163,7 +184,7 @@ export async function extractProfile(input: ExtractInput): Promise<ExtractResult
         ...(typeof f.unit === 'string' && f.unit ? { unit: f.unit } : {}),
         context: typeof f.context === 'string' ? f.context : '',
       }))
-    const numberMissing = numbers.some((f) => !sourceTextLower.includes(String(f.value)))
+    const numberMissing = numbers.some((f) => !sourceCarries(sourceTextLower, f.value))
     const status = numberMissing ? 'needs_confirmation' : 'extracted'
 
     const base: Claim = {

@@ -217,3 +217,68 @@ describe('Phase 12 apex breadth', () => {
     expect(out.files.get('manifest_json')?.ext).toBe('json')
   })
 })
+
+// A live buyer's interview evaluation reported "You said 61 %; your confirmed ledger says 0.4 %" —
+// a data-completeness figure indicted by a migration exception rate, purely because both are
+// percentages. Matching units is necessary and not sufficient: two numbers only disagree if they
+// measure the same thing.
+describe('a contradiction requires the same quantity, not just the same unit', () => {
+  const govDossier = DossierSchema.parse({
+    profile: { fullName: 'Ada Records', timezone: 'UTC', contact: { email: 'a@b.co', links: [] } },
+    tz: 'UTC',
+    evidence: [
+      {
+        id: 'EV-GOV',
+        kind: 'document',
+        label: 'migration report',
+        sourceRef: 'migration.pdf',
+        contentText:
+          'Catalogue migration completed with a 0.4% exception rate. Data completeness reached 88%.',
+      },
+    ],
+    claims: [
+      {
+        id: 'CLM-MIG',
+        text: 'Completed the catalogue migration with a 0.4% exception rate',
+        evidenceIds: ['EV-GOV'],
+        status: 'confirmed',
+        strength: 'documented',
+        numericFacts: [{ value: 0.4, unit: '%', context: 'migration exception rate' }],
+        tags: [],
+      },
+    ],
+  })
+  const question = {
+    id: 'Q-MIG',
+    text: 'Tell me about the migration.',
+    kind: 'behavioral' as const,
+    claimIds: ['CLM-MIG'],
+  }
+
+  it('does not indict a different percentage with an unrelated one', () => {
+    expect(
+      findLedgerContradictions(
+        govDossier,
+        question,
+        'We raised data completeness to 61% across the catalogue.',
+      ),
+    ).toEqual([])
+  })
+
+  it('still catches a disagreement about the very same quantity', () => {
+    const found = findLedgerContradictions(
+      govDossier,
+      question,
+      'The migration finished with an exception rate of 3%.',
+    )
+    expect(found).toHaveLength(1)
+    expect(found[0]?.ledgerValue).toBe(0.4)
+  })
+
+  it('recognises a quantity restated in different words', () => {
+    // The ledger recorded "team size"; the candidate says "people". Same quantity, and the
+    // disagreement is real.
+    const q = generateInterviewQuestions(dossier, coverage)[0]!
+    expect(findLedgerContradictions(dossier, q, 'I led 12 people.')[0]?.ledgerValue).toBe(8)
+  })
+})

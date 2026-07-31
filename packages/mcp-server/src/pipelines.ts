@@ -20,6 +20,9 @@ import {
   decomposeJd,
   extractProfile,
   computeCoverage,
+  stripThousands,
+  sourceCarries,
+  type IngestedDoc,
   type Fetcher,
   type ModelRouter,
 } from '@xyndicate/providers'
@@ -271,44 +274,108 @@ export async function atsScan(
 }
 
 // ── 2) asy_claim_audit ───────────────────────────────────────────────────────
+
+// Two whole classes of unsupportable claim used to sail through as SUPPORTED, because the audit
+// only ever asked "is this number in the source?" and "does this have a number at all?".
+//
+//  • An unfalsifiable comparative — "our NABCEP pass rate is the best in the region" — asserts a
+//    ranking against a field the candidate has no data for. A live audit passed exactly that while
+//    the supplied evidence said, in as many words, that no regional comparison data existed.
+//  • A collective achievement written in the first person — "was responsible for the company
+//    winning Regional Installer of the Year" — claims an organisation's award as personal work.
+//    An interviewer will ask what the candidate personally did, and the résumé has no answer.
+//
+// Neither is a lie, and neither is graded as one. They are claims a candidate cannot defend, which
+// is precisely what this service exists to find before an interviewer does.
+const COMPARATIVE =
+  /\b(best|top|#\s*1|number one|leading|industry[- ]leading|world[- ]class|fastest|highest|largest|greatest|most \w+|unmatched|unrivall?ed|premier|better than|superior to|outperform\w*)\b/i
+const COMPARATIVE_SCOPE =
+  /\b(in the (region|industry|market|country|state|sector|company|firm|field)|of any|among all|nationwide|company[- ]wide|anywhere)\b/i
+const ORG_AWARD =
+  /\b(award|of the year|prize|accolade|recognition|recogni[sz]ed as|named|ranked|certif\w* as)\b/i
+const ORG_SUBJECT = /\b(the )?(company|firm|organi[sz]ation|business|agency|practice|our team)\b/i
+
+export interface AuditLanguageIssue {
+  status: 'UNVERIFIABLE_COMPARISON' | 'UNCLEAR_ATTRIBUTION'
+  issue: string
+}
+
+/** Deterministic language checks. Returns nothing when a claim raises neither problem. */
+export function auditLanguage(text: string): AuditLanguageIssue | undefined {
+  if (COMPARATIVE.test(text) && COMPARATIVE_SCOPE.test(text))
+    return {
+      status: 'UNVERIFIABLE_COMPARISON',
+      issue:
+        'ranks you against a field you have no data for — cite the comparison (source, period, who else was measured) or state your own figure without the ranking',
+    }
+  if (ORG_AWARD.test(text) && ORG_SUBJECT.test(text))
+    return {
+      status: 'UNCLEAR_ATTRIBUTION',
+      issue:
+        'credits a company-level achievement to you — say what you personally did toward it, or attribute it to the organisation',
+    }
+  return undefined
+}
+
 export async function claimAudit(
   ctx: PipelineCtx,
-  args: UploadArgs & { claims?: string[] | undefined },
+  args: UploadArgs & { claims?: string[] | undefined; evidence?: string | undefined },
 ): Promise<ToolResult> {
-  let text = ''
-  let hasSourceDocument = false
-  if (args.claims && args.claims.length) text = args.claims.join('\n')
-  else {
+  const supplied = (args.claims ?? []).filter((c) => c.trim())
+  // A caller who sends claims AND the evidence behind them was having the evidence thrown away:
+  // the old branch audited the claims against nothing but themselves, so every figure in them was
+  // unverifiable by construction. Audit against whatever source the caller actually provided.
+  let sourceText = args.evidence?.trim() ?? ''
+  if (args.resumeText?.trim() || args.resumeB64?.trim()) {
     const ing = await ingestUpload(args)
-    if (!ing.ok)
+    if (!ing.ok && !supplied.length)
       return {
         summary: 'Could not read that input — supply résumé text or a list of claims.',
         data: { ok: false },
         refused: true,
       }
-    text = ing.text
-    hasSourceDocument = true
+    if (ing.ok && ing.text) sourceText = sourceText ? `${sourceText}\n${ing.text}` : ing.text
   }
-  const extracted = await extractProfile({
-    documents: [{ label: 'audit-input', contentText: text }],
-    router: ctx.router,
-  })
+  const hasSourceDocument = sourceText.length > 0
+  const text = supplied.length ? supplied.join('\n') : sourceText
+  if (!text.trim())
+    return {
+      summary: 'Could not read that input — supply résumé text or a list of claims.',
+      data: { ok: false },
+      refused: true,
+    }
+  const documents: IngestedDoc[] = [{ label: 'audit-input', contentText: text }]
+  if (hasSourceDocument && supplied.length)
+    documents.push({ label: 'supporting-evidence', contentText: sourceText })
+  const extracted = await extractProfile({ documents, router: ctx.router })
   // A caller who hands us explicit claims has told us exactly what to audit. If extraction returns
   // nothing for them (short, fragmentary bullets are legitimately hard to segment), audit the
   // supplied statements directly — an empty audit on a paid call is not the advertised service.
-  // Verdicts stay honest: with no source document behind a bare claim, a figure in it is
-  // unverified by definition.
+  // This holds whether or not a source was supplied: gating it on the absence of a source meant
+  // that sending your evidence, the single most useful thing you can do, produced an empty audit.
+  // Verdicts stay honest either way — a figure is SUPPORTED only if the source actually carries it.
+  const sourceLower = stripThousands(sourceText.toLowerCase())
   const fallback =
-    !extracted.claims.length && args.claims?.length && !hasSourceDocument
-      ? args.claims.map((line) => {
+    !extracted.claims.length && supplied.length
+      ? supplied.map((line) => {
+          const language = auditLanguage(line)
+          if (language) return { text: line, ...language }
           const numbers = extractNumbers(line)
-          const status = numbers.length ? 'UNSUPPORTED_NUMBER' : 'VAGUE'
+          if (!numbers.length)
+            return {
+              text: line,
+              status: 'VAGUE',
+              issue: 'no quantified outcome — add a metric an interviewer can probe',
+            }
+          const unbacked = numbers.filter((n) => !sourceCarries(sourceLower, n.value))
+          if (!unbacked.length)
+            return { text: line, status: 'SUPPORTED', issue: 'every figure traces to your evidence' }
           return {
             text: line,
-            status,
-            issue: numbers.length
-              ? 'cites a figure with no source behind it — supply the résumé or evidence it came from, or drop the number'
-              : 'no quantified outcome — add a metric an interviewer can probe',
+            status: 'UNSUPPORTED_NUMBER',
+            issue: hasSourceDocument
+              ? `cites ${unbacked.map((n) => n.raw).join(', ')}, which your evidence does not carry — confirm it or drop the number`
+              : 'cites a figure with no source behind it — supply the résumé or evidence it came from, or drop the number',
           }
         })
       : undefined
@@ -317,6 +384,10 @@ export async function claimAudit(
   const audited =
     fallback ??
     claims.map((c) => {
+      // A claim the candidate cannot defend is a finding even when every number in it checks out,
+      // so the language rules are consulted before the arithmetic ones.
+      const language = auditLanguage(c.text)
+      if (language) return { text: c.text, ...language }
       const numberUnverified = c.status === 'needs_confirmation'
       const vague = c.numericFacts.length === 0 && !/\b\d/.test(c.text)
       const status = numberUnverified ? 'UNSUPPORTED_NUMBER' : vague ? 'VAGUE' : 'SUPPORTED'
@@ -381,6 +452,20 @@ export async function fitBrief(
 // ── 4/5/6) evidence-constrained writers ──────────────────────────────────────
 type WriterKind = 'cover_letter' | 'story_bank' | 'resume_ats'
 
+// A résumé line is the candidate asserting something about their own history — the same act as
+// sending it in `claims`, just in the format they already have. Split it into statements here so
+// "Tailor Résumé" can be given a résumé, and keep the strength honest: this is a self-attestation,
+// never a verified fact. Section headings and contact lines are not claims, so they are dropped.
+const HEADING_LINE = /^\s*(?:[-*•\s]*)(experience|work experience|employment|education|skills|technical skills|projects|summary|profile|objective|certifications|awards|publications|interests|references|contact)\s*:?\s*$/i
+
+export function claimLinesFromResume(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*[-*•▪◦]+\s*/, '').trim())
+    .filter((line) => line.length >= 25 && !HEADING_LINE.test(line))
+    .filter((line) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(line) && !/^https?:\/\/\S+$/i.test(line))
+}
+
 async function ephemeralDossier(
   ctx: PipelineCtx,
   args: {
@@ -388,14 +473,22 @@ async function ephemeralDossier(
     profile?: unknown
     claims?: string[] | undefined
     evidence?: string | undefined
+    resumeText?: string | undefined
   },
 ): Promise<Dossier | undefined> {
   if (args.dossierId) return ctx.store.getDossier(args.dossierId)
-  const hasMaterial = (args.claims && args.claims.length) || (args.evidence && args.evidence.trim())
+  const resume = args.resumeText?.trim()
+  const claimTexts =
+    args.claims && args.claims.length ? args.claims : resume ? claimLinesFromResume(resume) : []
+  const evidenceText = args.evidence?.trim() || resume
+  const hasMaterial = claimTexts.length > 0 || (evidenceText && evidenceText.length > 0)
   if (!hasMaterial) return undefined
   const profile = coerceProfile(args.profile)
-  const ev = attestation(args.evidence ?? (args.claims ?? []).join('\n'))
-  const claims = claimsFromStrings(args.claims ?? [], ev)
+  const ev = attestation(
+    evidenceText ?? claimTexts.join('\n'),
+    resume && !args.evidence?.trim() ? 'Candidate-supplied résumé' : 'Agent-provided evidence',
+  )
+  const claims = claimsFromStrings(claimTexts, ev)
   return DossierSchema.parse({ profile, tz: profile.timezone, evidence: [ev], claims })
 }
 
@@ -408,6 +501,7 @@ async function writerTool(
     profile?: unknown
     claims?: string[] | undefined
     evidence?: string | undefined
+    resumeText?: string | undefined
     jd?: string | undefined
   },
 ): Promise<ToolResult> {
@@ -632,6 +726,43 @@ export function jobResult(ctx: PipelineCtx, args: { jobId: string }): ToolResult
       tribunal: result.tribunal,
       seal: result.seal,
       questions: result.questions ?? [],
+    },
+  }
+}
+
+// ── 9b) asy_order_result (FREE — collecting what you already bought) ─────────
+// The counterpart to the receipt a paid call hands back when its work outruns the response
+// budget. Free by construction: this returns a purchase that was already settled, so charging for
+// collection would be charging twice for one sale.
+export function orderResult(ctx: PipelineCtx, args: { receipt: string }): ToolResult {
+  const receipt = String(args.receipt ?? '').trim()
+  const order = receipt ? ctx.store.getOrder(receipt) : undefined
+  if (!order)
+    return {
+      summary: `No purchase with receipt ${receipt || '(none given)'} — check the receipt returned with your payment.`,
+      data: { ok: false, receipt, reason: 'UNKNOWN_RECEIPT' },
+      refused: true,
+    }
+  if (!order.result)
+    return {
+      summary: `Receipt ${order.id} (${order.tool}) is still running — retry in a few seconds.`,
+      data: {
+        ok: true,
+        status: 'working',
+        receipt: order.id,
+        tool: order.tool,
+        retryAfterMs: 5_000,
+      },
+    }
+  ctx.store.markOrderDelivered(order.idempotencyKey)
+  return {
+    summary: `Receipt ${order.id} (${order.tool}) — delivered.`,
+    data: {
+      ok: true,
+      status: 'delivered',
+      receipt: order.id,
+      tool: order.tool,
+      result: JSON.parse(order.result) as unknown,
     },
   }
 }

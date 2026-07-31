@@ -25,6 +25,15 @@ const uploadShape = {
 
 const writerInput = {
   dossierId: z.string().describe('An existing sealed dossier to draw evidence from.').optional(),
+  // A service called "Tailor Résumé" that rejects a résumé is a contract nobody can guess their
+  // way past. The published schema is additionalProperties:false, so `resumeText` was refused
+  // outright with EVIDENCE_REQUIRED — a clean refusal to an entirely reasonable request. The
+  // résumé is the candidate's own statement of their history, so it is admissible exactly the way
+  // `claims` are: as self-attested evidence, never as verified fact.
+  resumeText: z
+    .string()
+    .describe('Your résumé as plain text. Its lines are treated as self-attested claims.')
+    .optional(),
   profile: z.record(z.string(), z.unknown()).describe('Profile JSON.').optional(),
   claims: z
     .array(z.string())
@@ -70,6 +79,12 @@ export const TOOL_SPECS: ToolSpec[] = [
       claims: z
         .array(z.string())
         .describe('A list of claim sentences to audit (alternative to a résumé upload).')
+        .optional(),
+      // Auditing claims against nothing but themselves makes every figure in them unverifiable by
+      // construction. Callers were already sending the backing evidence; now it is read.
+      evidence: z
+        .string()
+        .describe('The source text your claims came from — audited against, not audited.')
         .optional(),
     },
   },
@@ -158,6 +173,16 @@ export const TOOL_SPECS: ToolSpec[] = [
       'Fetch signed artifact links, tribunal results, portfolio URL, and seal after a paid dossier job.',
     description: `Fetch a finished dossier's artifacts (signed download links), tribunal summary and seal. ${priceTag('asy_job_result')} (Paid once at create.) Example: {jobId:"job_…"}.`,
     inputSchema: { jobId: z.string() },
+  },
+  {
+    name: 'asy_order_result',
+    title: 'Collect purchase',
+    marketplaceSummary:
+      'Collect a settled purchase by receipt when the work outran the response window — free, never charged twice.',
+    description: `Collect a purchase you have already paid for, using the receipt returned in-band when a paid call needs longer than its response window. ${priceTag('asy_order_result')} FREE — the sale already settled, so collection is never a second charge. Example: {receipt:"ord_…"} → {status:"delivered", result}. Proof promise: settlement is not delivery; nothing you paid for can be stranded on our side.`,
+    inputSchema: {
+      receipt: z.string().describe('The receipt id returned with your payment (ord_…).'),
+    },
   },
   {
     name: 'asy_verify',

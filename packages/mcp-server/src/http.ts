@@ -10,6 +10,8 @@ import type { Store } from './store'
 import type { PaymentGate } from './gate'
 import { readPaymentSig } from './gate'
 import { buildServer, executeTool } from './server'
+import { orderResult } from './pipelines'
+import { receiptBody, runPaidWork } from './delivery'
 import {
   normalizeArgs,
   preflight,
@@ -95,6 +97,20 @@ function idempotencyConflict(res: Response, message: string): void {
     error: 'idempotency_conflict',
     message,
   })
+}
+
+// Send a paid result and record the delivery — but only once the response has actually flushed.
+// "Settled" and "received" are different facts, and the gap between them is exactly what strands a
+// purchase; marking delivery on the flush is what lets a retry recover an order that never landed.
+function deliver(store: Store, res: Response, idempotencyKey: string, payload: unknown): void {
+  res.on('finish', () => {
+    try {
+      store.markOrderDelivered(idempotencyKey)
+    } catch {
+      // Bookkeeping must never break a paid response.
+    }
+  })
+  res.json(payload)
 }
 
 function restoreSettlement(res: Response, settlement: string | null): void {
@@ -404,7 +420,12 @@ export function buildApp(rt: AppRuntime): Express {
                 )
               restoreSettlement(res, recovered.settlement)
               if (recovered.result)
-                return void res.json(jsonRpcResult(body.id, JSON.parse(recovered.result)))
+                return void deliver(
+                  store,
+                  res,
+                  recovered.idempotencyKey,
+                  jsonRpcResult(body.id, JSON.parse(recovered.result)),
+                )
               if (!paymentSig)
                 return void res.status(409).json({
                   error: 'paid_request_incomplete',
@@ -438,11 +459,35 @@ export function buildApp(rt: AppRuntime): Express {
             // Already paid — never charge twice.
             restoreSettlement(res, existing.settlement)
             if (existing.result)
-              return void res.json(jsonRpcResult(body.id, JSON.parse(existing.result)))
+              return void deliver(
+                store,
+                res,
+                existing.idempotencyKey,
+                jsonRpcResult(body.id, JSON.parse(existing.result)),
+              )
             // Paid but never completed (crash) — re-run without re-charging.
             return void (await handleMcp(rt, req, res, body, (mcp) =>
               store.attachOrderResult(idemKey, toJson(mcp)),
             ))
+          }
+
+          // A purchase already settled for this exact request and never received. The MCP transport
+          // owns the response once it starts, so this surface cannot hand back a receipt mid-flight
+          // the way /x402/:service does — but it can refuse to sell the same work twice.
+          const stranded = store.findUndeliveredOrder(
+            billableTool,
+            requestHash,
+            cfg.recoveryWindowMs,
+          )
+          if (stranded?.result) {
+            restoreSettlement(res, stranded.settlement)
+            res.setHeader('Assay-Recovered-Receipt', stranded.id)
+            return void deliver(
+              store,
+              res,
+              stranded.idempotencyKey,
+              jsonRpcResult(body.id, JSON.parse(stranded.result)),
+            )
           }
 
           const decision = await gate.check(req, { tool: billableTool, priceUsdt: price })
@@ -465,6 +510,13 @@ export function buildApp(rt: AppRuntime): Express {
             ...(decision.payerRef ? { payerRef: decision.payerRef } : {}),
           })
           for (const [k, v] of Object.entries(decision.settlement)) res.setHeader(k, v)
+          res.on('finish', () => {
+            try {
+              store.markOrderDelivered(idemKey)
+            } catch {
+              // Bookkeeping must never break a paid response.
+            }
+          })
           return void (await handleMcp(rt, req, res, body, (mcp) =>
             store.attachOrderResult(idemKey, toJson(mcp)),
           ))
@@ -569,7 +621,7 @@ export function buildApp(rt: AppRuntime): Express {
       }
 
       const idemKey = (explicitIdem ?? sha256Hex(paymentSig)).slice(0, 80)
-      const existing = store.getOrderByIdempotencyKey(idemKey)
+      let existing = store.getOrderByIdempotencyKey(idemKey)
       if (existing) {
         if (
           existing.tool !== tool ||
@@ -580,8 +632,17 @@ export function buildApp(rt: AppRuntime): Express {
             'That Idempotency-Key is already bound to a different paid request.',
           )
         restoreSettlement(res, existing.settlement)
-        if (existing.result) return void res.json(JSON.parse(existing.result))
+        if (existing.result) return void deliver(store, res, existing.idempotencyKey, JSON.parse(existing.result))
       } else {
+        // Before charging again, look for this exact purchase already paid for and never received.
+        // A buyer whose client timed out re-sends the same body with a fresh payment proof; making
+        // them pay twice for work that is finished and sitting here would be indefensible.
+        const stranded = store.findUndeliveredOrder(tool, requestHash, cfg.recoveryWindowMs)
+        if (stranded?.result) {
+          restoreSettlement(res, stranded.settlement)
+          res.setHeader('Assay-Recovered-Receipt', stranded.id)
+          return void deliver(store, res, stranded.idempotencyKey, JSON.parse(stranded.result))
+        }
         const decision = await gate.check(req, { tool, priceUsdt: price, resourcePath })
         if (decision.kind === 'challenge') {
           for (const [key, value] of Object.entries(decision.headers)) res.setHeader(key, value)
@@ -591,7 +652,7 @@ export function buildApp(rt: AppRuntime): Express {
           for (const [key, value] of Object.entries(decision.headers)) res.setHeader(key, value)
           return void res.status(decision.status).json(decision.body)
         }
-        store.createOrder({
+        existing = store.createOrder({
           tool,
           priceUsdt: price,
           idempotencyKey: idemKey,
@@ -603,14 +664,18 @@ export function buildApp(rt: AppRuntime): Express {
         for (const [key, value] of Object.entries(decision.settlement)) res.setHeader(key, value)
       }
 
-      let result
-      try {
-        result = await executeTool(
-          { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg: rt.cfg },
-          tool,
-          args,
-        )
-      } catch {
+      const outcome = await runPaidWork({
+        store,
+        idempotencyKey: idemKey,
+        budgetMs: cfg.paidInlineBudgetMs,
+        run: () =>
+          executeTool(
+            { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg: rt.cfg },
+            tool,
+            args,
+          ),
+      })
+      if (outcome.kind === 'failed') {
         // Settled but the run failed. The result is deliberately NOT cached, so replaying the same
         // payment proof re-runs the work for free rather than leaving the buyer with nothing.
         return void res.status(502).json({
@@ -622,12 +687,25 @@ export function buildApp(rt: AppRuntime): Express {
           idempotencyKey: idemKey,
         })
       }
-      store.attachOrderResult(idemKey, toJson(result))
-      return void res.json(result)
+      if (outcome.kind === 'working')
+        return void res.json(
+          receiptBody({ tool, receipt: existing?.id ?? idemKey, baseUrl: cfg.baseUrl }),
+        )
+      return void deliver(store, res, idemKey, outcome.result)
     } catch (error) {
       next(error)
     }
   }
+  // ── GET /x402/receipt/:receipt — collect a settled purchase. FREE: the sale already happened,
+  // so collection can never be a second charge. Registered ahead of the paid /x402/:tool routes.
+  app.get('/x402/receipt/:receipt', (req: Request, res: Response) => {
+    const result = orderResult(
+      { store: rt.store, router: rt.router, fetcher: rt.fetcher, cfg },
+      { receipt: String(req.params['receipt'] ?? '') },
+    )
+    return void res.status(result.refused ? 404 : 200).json({ summary: result.summary, ...result.data })
+  })
+
   // Free input contract for every marketplace service: a buyer can learn the exact payload before
   // spending anything. Registered ahead of the paid routes so it is never swallowed by them.
   app.get('/x402/:tool/schema', (req: Request, res: Response) => {

@@ -183,11 +183,18 @@ describe('taxonomy: prices never drift', () => {
       expect(priceOf(tool)).toBe(price)
     }
   })
-  it('the free tools are exactly asy_verify, asy_job_status, asy_job_result', () => {
+  // asy_order_result collects a purchase that already settled. Charging for collection would be
+  // charging twice for one sale, so it belongs on this list and must stay on it.
+  it('the free tools are exactly asy_verify, asy_job_status, asy_job_result, asy_order_result', () => {
     const free = Object.entries(TOOL_PRICES)
       .filter(([, p]) => p === 0)
       .map(([t]) => t)
       .sort()
-    expect(free).toEqual(['asy_job_result', 'asy_job_status', 'asy_verify'])
+    expect(free).toEqual([
+      'asy_job_result',
+      'asy_job_status',
+      'asy_order_result',
+      'asy_verify',
+    ])
   })
 })

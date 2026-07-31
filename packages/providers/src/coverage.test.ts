@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { computeCoverage } from './coverage'
+import { keywordSet, normalizeKeywords } from './text'
 import { ClaimSchema } from '@xyndicate/assay-core'
 import type { Requirement } from '@xyndicate/assay-core'
 
@@ -101,6 +102,57 @@ describe('a claim is scored with the evidence behind it', () => {
 
   it('still reports missing when nothing — claim or evidence — covers it', () => {
     const unrelated = { ...requirement, id: 'REQ-X', keywords: ['welding', 'forklift'] }
+    const [cov] = computeCoverage([unrelated], [claim], evidence)
+    expect(cov?.status).toBe('missing')
+  })
+})
+
+// A live buyer's fit brief reported "Working knowledge of ICH-GCP" as MISSING against a claim that
+// read "Completed ICH-GCP training (TCD Clinical Research Facility, March 2024)". The requirement
+// side kept keywords down to three characters; the claim side threw away anything under four. Every
+// acronym requirement was unmatchable, and the resulting "missing" looked like an honest finding.
+describe('coverage: acronym requirements are matchable', () => {
+  const evidence = [
+    {
+      id: 'EVD-GCP',
+      kind: 'attestation' as const,
+      label: 'Training record',
+      sourceRef: 'agent-input',
+      contentText: 'Completed ICH-GCP training at the TCD Clinical Research Facility, March 2024.',
+      addedAt: '2026-07-01T00:00:00.000Z',
+    },
+  ]
+  const claim = {
+    id: 'CLM-GCP',
+    text: 'Completed ICH-GCP training (TCD Clinical Research Facility, March 2024)',
+    evidenceIds: ['EVD-GCP'],
+    strength: 'attested' as const,
+    status: 'confirmed' as const,
+    numericFacts: [],
+    tags: [],
+  }
+  const requirement = {
+    id: 'REQ-GCP',
+    text: 'Working knowledge of ICH-GCP; certification within 6 months',
+    keywords: normalizeKeywords(['Working knowledge of ICH-GCP; certification within 6 months']),
+    weight: 1,
+    kind: 'must' as const,
+  }
+
+  it('keeps three-letter acronyms on both sides of the match', () => {
+    expect(requirement.keywords).toContain('ich')
+    expect(requirement.keywords).toContain('gcp')
+    expect(keywordSet(claim.text)).toContain('gcp')
+  })
+
+  it('reports partial, not missing — training is evidence, certification is not yet', () => {
+    const [cov] = computeCoverage([requirement], [claim], evidence)
+    expect(cov?.status).toBe('partial')
+    expect(cov?.claimIds).toContain('CLM-GCP')
+  })
+
+  it('does not start matching genuinely unrelated acronyms', () => {
+    const unrelated = { ...requirement, id: 'REQ-FAA', keywords: ['faa', 'part', 'pilot'] }
     const [cov] = computeCoverage([unrelated], [claim], evidence)
     expect(cov?.status).toBe('missing')
   })

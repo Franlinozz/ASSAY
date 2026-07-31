@@ -352,8 +352,15 @@ export function isUsableLink(link: string): boolean {
 // well-written narrative story the Forge produces - a false positive on the product's own output.
 // These patterns look for the STAR *shape* instead: a scene, an intent, a past-tense achievement
 // verb with any subject, and an outcome.
+// A closed vocabulary is the weakness here: every verb missing from it is a false "missing action"
+// against prose that plainly describes one. "Facing a need to grow the leadership bench, she
+// guided 4 engineers through promotion" has an action; the list simply had no word for it. Widened
+// to the verbs career writing actually uses, plus the multi-word forms ("took on", "rolled out")
+// that a single-word list can never reach.
 const ACHIEVEMENT_VERB =
-  '(built|led|changed|created|implemented|designed|introduced|reduced|improved|shipped|mentored|automated|migrated|rebuilt|owned|ran|established|replaced|instrumented|delivered|launched|scaled|consolidated|negotiated)'
+  '(built|led|changed|created|implemented|designed|introduced|reduced|improved|shipped|mentored|automated|migrated|rebuilt|owned|ran|established|replaced|instrumented|delivered|launched|scaled|consolidated|negotiated' +
+  '|guided|drove|coached|trained|coordinated|developed|deployed|standardi[sz]ed|streamlined|resolved|secured|oversaw|spearheaded|championed|initiated|piloted|restructured|refactored|integrated|unified|expanded|eliminated|cut|grew|raised|wrote|drafted|authored|rewrote|architected|partnered|facilitated|convinced|persuaded|recovered|rescued|salvaged|audited|documented|reorganised|reorganized)'
+const ACTION_PHRASE = /\b(took (on|over|charge)|set up|stood up|rolled out|put in place|brought in)\b/i
 
 export function starParts(text: string): {
   situation: boolean
@@ -372,6 +379,7 @@ export function starParts(text: string): {
       ) || /\bto\s+[a-z]+\b/i.test(text),
     action:
       new RegExp(`\\b${ACHIEVEMENT_VERB}\\b`, 'i').test(text) ||
+      ACTION_PHRASE.test(text) ||
       /\baction\s*[::-]\s*\S/i.test(text),
     result:
       /\b(result|outcome|therefore|which|resulting in|bringing|cutting|dropping|from \d)\b/i.test(
@@ -449,7 +457,12 @@ export const STAR_COMPLETENESS: HardCheck = {
       if (missing.length)
         findings.push({
           code: 'STAR_INCOMPLETE',
-          detail: `story ${index + 1} is missing ${missing.join(', ')}`,
+          // A finding a writer can act on beats a finding that only names the gap. "missing
+          // situation" left the repair loop guessing; saying where the situation belongs is what
+          // actually turns the next draft into a complete story.
+          detail: missing.includes('situation')
+            ? `story ${index + 1} is missing ${missing.join(', ')} — open it with the circumstances that existed before any action ("When …", "Facing …"), then task, action, result`
+            : `story ${index + 1} is missing ${missing.join(', ')}`,
           ref: artifact.id,
         })
     }

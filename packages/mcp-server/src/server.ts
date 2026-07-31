@@ -11,6 +11,7 @@ import {
   createDossierJob,
   jobStatus,
   jobResult,
+  orderResult,
   verify,
 } from './pipelines'
 import { TOOL_SPECS } from './toolspec'
@@ -51,6 +52,7 @@ const HANDLERS: Record<string, Handler> = {
   asy_create_dossier_job: createDossierJob,
   asy_job_status: jobStatus,
   asy_job_result: jobResult,
+  asy_order_result: orderResult,
   asy_verify: verify,
 }
 

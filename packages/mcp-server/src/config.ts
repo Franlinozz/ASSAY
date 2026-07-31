@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { resolve } from 'node:path'
 import { STANDARD_VERSION, TOOL_PRICES } from '@xyndicate/assay-core'
+import { DEFAULT_PAID_INLINE_BUDGET_MS, DEFAULT_RECOVERY_WINDOW_MS } from './delivery'
 
 // Env-driven server configuration. Secrets come from the environment only (guardrail #4) — never a
 // committed file. Sensible dev defaults so the server boots with zero config in fake/dev mode.
@@ -43,6 +44,10 @@ export interface ServerConfig {
   maxBodyBytes: number
   /** How long a paid dossier call waits in-band for its background job before handing back a jobId. */
   inlineJobWaitMs: number
+  /** How long any other paid call holds its response open before handing back a receipt. */
+  paidInlineBudgetMs: number
+  /** How far back a retry may reach to collect a purchase that settled but was never delivered. */
+  recoveryWindowMs: number
   modelTimeoutMs: number
   minFreeDiskBytes: number
 }
@@ -81,6 +86,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     // payment window every challenge advertises, so a marketplace caller that treats the response
     // as the deliverable actually receives one.
     inlineJobWaitMs: num(env['ASY_INLINE_JOB_WAIT_MS'], 240_000),
+    paidInlineBudgetMs: num(env['ASY_PAID_INLINE_BUDGET_MS'], DEFAULT_PAID_INLINE_BUDGET_MS),
+    recoveryWindowMs: num(env['ASY_RECOVERY_WINDOW_MS'], DEFAULT_RECOVERY_WINDOW_MS),
     maxBodyBytes: num(env['ASY_MAX_BODY_BYTES'], 2 * 1024 * 1024),
     modelTimeoutMs: num(env['ASY_MODEL_TIMEOUT_MS'], 28_000),
     minFreeDiskBytes: num(env['ASY_MIN_FREE_DISK_MB'], 256) * 1024 * 1024,
@@ -120,6 +127,7 @@ export const TOOL_NAMES: ToolName[] = [
   'asy_create_dossier_job',
   'asy_job_status',
   'asy_job_result',
+  'asy_order_result',
   'asy_verify',
 ]
 
@@ -148,9 +156,15 @@ export const A2MCP_ROUTE_TARGETS: Record<
   asy_verify: { tool: 'asy_verify' },
   asy_job_status: { tool: 'asy_job_status' },
   asy_job_result: { tool: 'asy_job_result' },
+  asy_order_result: { tool: 'asy_order_result' },
 }
 
-export const FREE_TOOLS = new Set<string>(['asy_job_status', 'asy_job_result', 'asy_verify'])
+export const FREE_TOOLS = new Set<string>([
+  'asy_job_status',
+  'asy_job_result',
+  'asy_order_result',
+  'asy_verify',
+])
 
 export function priceOf(tool: string): number {
   return tool in PRICES ? PRICES[tool as ToolName] : 0

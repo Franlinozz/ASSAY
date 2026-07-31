@@ -66,7 +66,29 @@ function kindInstruction(kind: ArtifactKind): string {
     case 'cover_letter':
       return 'Write a concise cover letter body: 3–5 sentences, each citing a confirmed claim.'
     case 'story_bank':
-      return 'Write 2–4 STAR interview stories, one sentence each, each citing the confirmed claim it draws on.'
+      // Lead with the situation. Left to itself the writer opens on intent ("To eliminate
+      // configuration drift, she built …") or straight on the achievement, which reads fine but
+      // is not an interview story — the interviewer never learns what was true before the
+      // candidate acted, and STAR_COMPLETENESS correctly fails it. Ordering is the instruction's
+      // job, not the grader's: state the scene first, then task, action, result.
+      return (
+        'Write 2–4 STAR interview stories, one or two sentences each, each citing the confirmed claim it draws on. ' +
+        // These are stories the candidate says out loud in a room. Demanding four explicit beats
+        // inside a single sentence pushed the writer into agentless passive ("mentorship was
+        // provided", "the effort led the migration") — grammatical, unsayable, and it hides the
+        // one thing an interviewer is listening for: who did it. First person, active, with room
+        // to breathe.
+        'Write in the first person ("I …"), in the active voice, with the candidate as the subject of every action. ' +
+        'Never write agentless passive constructions such as "mentorship was provided" or "a linter was built". ' +
+        'Every story MUST open with the situation — the circumstances that already existed before any action, ' +
+        'written as a scene-setting clause (for example "When deploys across 14 legacy services took 45 minutes, …" ' +
+        'or "Facing inconsistent configuration across 9 teams, …"). After that clause the story must STATE — ' +
+        'not merely imply — the three remaining beats in order: the task (what had to be achieved: ' +
+        '"the goal was to …", "the team needed to …"), the action actually taken, and the measurable result. ' +
+        'A story that jumps from the situation straight to what was built has stated no task and is incomplete. ' +
+        'Never open on the action, the outcome, or the purpose ("To reduce…", "In order to…"). ' +
+        'Write natural prose — do not emit "Situation:" / "Task:" / "Action:" / "Result:" labels.'
+      )
     case 'promotion_narrative':
       return 'Write a concise performance-review narrative grouped by impact. Every sentence cites a confirmed claim.'
     case 'promotion_memo':

@@ -24,6 +24,12 @@ export function buildCriticPrompt(artifact: Artifact, dossier: Dossier): string 
     `Grade each axis 0-100:\n${axes}`,
     'Return JSON: {"axes":{"voice":n,...},"findings":[{"axis":string,"detail":string}],"repairBrief":string}.',
     'repairBrief must be a concrete instruction for anything scoring below 72.',
+    // Latency is a correctness concern here, not a nicety: the craft critic measured 18-23s of a
+    // 21-26s paid call on 2026-07-31, which is what pushed three services past the buyer's ~30s
+    // patience. Nearly all of that is generated prose. Findings earn their place by being
+    // actionable, not long — bounding them costs nothing a writer could have used.
+    'Be terse. Emit findings ONLY for axes below 72, at most three, each under 25 words. ' +
+      'Keep repairBrief under 60 words. Do not restate the artifact, explain your scores, or add commentary.',
   ].join('\n\n')
 }
 
@@ -43,6 +49,9 @@ export async function gradeCraft(
       system: CRITIC_SYSTEM,
       prompt: buildCriticPrompt(artifact, dossier),
       json: true,
+      // A grade plus three short findings does not need 2048 tokens, and the ceiling is what the
+      // model paces itself against.
+      maxTokens: 700,
     },
     { dossierId: dossier.id },
   )
