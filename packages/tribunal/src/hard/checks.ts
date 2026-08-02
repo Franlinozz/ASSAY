@@ -363,6 +363,38 @@ const ACHIEVEMENT_VERB =
 const ACTION_PHRASE =
   /\b(took (on|over|charge)|set up|stood up|rolled out|put in place|brought in)\b/i
 
+// Widening the list twice was still not enough — "managed", "moved" and "pre-qualified" all read
+// as missing actions in a live purchase. A closed vocabulary cannot win against English, so the
+// list is now only the fast path and the real rule is grammatical: a subject followed by a
+// past-tense verb IS a stated action, whatever the verb happens to be. The writer is instructed to
+// write in the first person and the active voice, so this is the shape its output actually takes.
+const IRREGULAR_PAST =
+  '(ran|led|won|met|set|put|cut|got|gave|drew|knew|grew|threw|built|kept|left|sent|spent|taught|brought|caught|fought|sought|made|took|wrote|drove|rose|held|found|began|chose|broke|spoke|stood|understood|rebuilt|oversaw|withdrew)'
+// CASE-SENSITIVE on purpose. An earlier cut carried the /i flag, which made "[A-Z][a-z]+" match
+// any word at all — so "when deploys across 14 legacy services took 45 minutes" counted "services
+// took" as the candidate's action and a story with no action in it passed. The subject of an
+// action is a pronoun or a name, and both are capitalised or fixed.
+const SUBJECT = '(?:I|[Ww]e|[Ss]he|[Hh]e|[Tt]hey|[A-Z][a-z]+)'
+// "I managed", "We pre-qualified", "She has since rebuilt", "They quickly moved".
+const SUBJECT_PAST_VERB = new RegExp(
+  `\\b${SUBJECT}\\s+(?:\\w+ly\\s+)?(?:(?:have|has|had|then|since|also)\\s+)?(?:[a-z]+(?:-[a-z]+)*ed|${IRREGULAR_PAST})\\b`,
+)
+
+// A result is an outcome, and prose states one far more often than it states a number. The old
+// rule wanted a digit or a keyword, so "and secured passage for the corridor on those terms" —
+// unambiguously the outcome of the story — read as no result at all.
+const RESULT_WORD =
+  /\b(result|outcome|therefore|which|resulting in|bringing|cutting|dropping|ending|leaving|achiev\w+|reach\w+|deliver\w+|secur\w+|sav\w+|avoid\w+|prevent\w+|with no|without a|no recall|on time|ahead of|under budget|adopted|approved|passed|promoted|renewed|retained|certified)\b/i
+// A trailing participial clause is how English most often attaches a consequence:
+// "…, cutting lead time from 94 days to 38 days", "…, reaching all 14 centres".
+const RESULT_CLAUSE = /,\s*(?:and\s+)?\w+ing\b/i
+// A conjoined second past-tense clause is the other common shape: "I negotiated with all three
+// groups AND REOPENED the corridor". The action is the first verb, the outcome is the second, and
+// no word list will ever contain every verb English uses for the second one.
+const CONJOINED_OUTCOME = new RegExp(
+  `\\b(?:and|then|,)\\s+(?:\\w+ly\\s+)?(?:[a-z]+(?:-[a-z]+)*ed|${IRREGULAR_PAST})\\b`,
+)
+
 export function starParts(text: string): {
   situation: boolean
   task: boolean
@@ -381,11 +413,16 @@ export function starParts(text: string): {
     action:
       new RegExp(`\\b${ACHIEVEMENT_VERB}\\b`, 'i').test(text) ||
       ACTION_PHRASE.test(text) ||
+      SUBJECT_PAST_VERB.test(text) ||
       /\baction\s*[::-]\s*\S/i.test(text),
+    // A figure is kept as a result signal — a story carrying a concrete number nearly always
+    // states an outcome — but it is no longer the ONLY signal, which is what made "and secured
+    // passage for the corridor on those terms" read as a story with no result.
     result:
-      /\b(result|outcome|therefore|which|resulting in|bringing|cutting|dropping|from \d)\b/i.test(
-        text,
-      ) || /\d/.test(text),
+      RESULT_WORD.test(text) ||
+      RESULT_CLAUSE.test(text) ||
+      CONJOINED_OUTCOME.test(text) ||
+      /\d/.test(text),
   }
 }
 
@@ -441,6 +478,38 @@ export const PII_HYGIENE: HardCheck = {
   },
 }
 
+/**
+ * A story is a unit of meaning, not a unit of punctuation. The writer is free to tell one story
+ * across two sentences — "When the corridor was closed, the task was to reopen it." / "I negotiated
+ * with all three groups and secured passage." — and that is good interview prose: the scene lands,
+ * then the action. Grading each sentence as though it were a whole story failed both halves of
+ * every pair, so a live purchase of eight sentences forming four complete stories came back with
+ * eight STAR_INCOMPLETE findings and a failing grade. The stories were fine; the grader was
+ * counting wrong.
+ *
+ * Consecutive sentences citing exactly the same claim are one story. A story bank is built one
+ * claim at a time, so this is the seam the writer already works to.
+ */
+export function storyUnits(sentences: Array<{ text: string; claimIds: string[] }>): Array<{
+  text: string
+  claimIds: string[]
+}> {
+  const units: Array<{ text: string; claimIds: string[] }> = []
+  for (const sentence of sentences) {
+    const key = [...sentence.claimIds].sort().join('|')
+    const previous = units.at(-1)
+    const previousKey = previous ? [...previous.claimIds].sort().join('|') : undefined
+    // An uncited sentence cannot be merged on identity, so it stands alone rather than being
+    // absorbed into whatever happened to precede it.
+    if (previous && key && key === previousKey) {
+      previous.text = `${previous.text} ${sentence.text}`
+      continue
+    }
+    units.push({ text: sentence.text, claimIds: [...sentence.claimIds] })
+  }
+  return units
+}
+
 export const STAR_COMPLETENESS: HardCheck = {
   id: 'STAR_COMPLETENESS',
   title: 'STAR completeness',
@@ -449,8 +518,8 @@ export const STAR_COMPLETENESS: HardCheck = {
   run({ artifact }: CheckContext): CheckResult {
     if (artifact.kind !== 'story_bank') return { status: 'skip', findings: [] }
     const findings: CheckFinding[] = []
-    for (const [index, sentence] of (artifact.sentences ?? []).entries()) {
-      const text = sentence.text
+    for (const [index, story] of storyUnits(artifact.sentences ?? []).entries()) {
+      const text = story.text
       const parts = starParts(text)
       const missing = Object.entries(parts)
         .filter(([, ok]) => !ok)

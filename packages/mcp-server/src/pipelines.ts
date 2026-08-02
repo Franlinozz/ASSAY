@@ -33,7 +33,13 @@ import {
   evaluateInterviewAnswer,
   buildInterviewArtifact,
 } from '@xyndicate/renderers'
-import { gradeArtifact, APPROVED_HEADINGS } from '@xyndicate/tribunal'
+import {
+  gradeArtifact,
+  APPROVED_HEADINGS,
+  CRAFT_AXIS_FLOOR,
+  CRAFT_PASS_MEAN,
+  type TribunalReport,
+} from '@xyndicate/tribunal'
 import { pdfToLines, reconstruct } from '@xyndicate/renderers'
 import { RegistryClient } from '@xyndicate/contracts'
 import { buildVerifyBundle } from '@xyndicate/receipts'
@@ -526,6 +532,13 @@ async function writerTool(
       refused: true,
     }
   }
+  // Attach the target role. These tools advertise tailoring to a JD and accept one, but the brief
+  // was never put on the dossier — so the writer wrote untargeted prose and the craft critic then
+  // failed it on the tailoring axis with "No target brief provided", against a request that had
+  // provided exactly that. Carrying the raw text costs nothing; decomposing it into requirements
+  // would cost another model call and the response budget it would eat.
+  if (args.jd?.trim() && !dossier.brief)
+    dossier.brief = { jdText: args.jd.trim(), decomposed: [], mode: 'job', projectClaimIds: [] }
   const written = await writeArtifact({ kind, dossier, router: ctx.router })
   // The sentences ARE the deliverable; the tribunal grade is the assurance wrapped around them,
   // and it costs another model call. Publish the writing now so a buyer whose client will not wait
@@ -556,13 +569,36 @@ async function writerTool(
       ok: true,
       sentences: written.sentences,
       questions: written.questions,
-      tribunal: {
-        pass: report.pass,
-        hardPass: report.hardPass,
-        craftMean: report.craftWeightedMean,
-        findings: report.hard.filter((h) => h.status === 'fail').flatMap((h) => h.findings),
-      },
+      tribunal: tribunalView(report),
     },
+  }
+}
+
+/**
+ * The buyer-facing view of a grade. It used to report only the HARD findings, which meant a craft
+ * failure arrived as `pass: false, hardPass: true, findings: []` — a verdict with no stated reason,
+ * indistinguishable from a broken grader. The Standard fails craft when the weighted mean is under
+ * 72 OR any single axis is under the floor of 60, so an artifact can score a mean of 77.9 and
+ * still, correctly, not pass. Whichever half failed, say so and say why.
+ */
+function tribunalView(report: TribunalReport): Record<string, unknown> {
+  const hardFindings = report.hard.filter((h) => h.status === 'fail').flatMap((h) => h.findings)
+  return {
+    pass: report.pass,
+    hardPass: report.hardPass,
+    craftPass: report.craftPass,
+    craftMean: report.craftWeightedMean,
+    standard: { craftPassMean: CRAFT_PASS_MEAN, craftAxisFloor: CRAFT_AXIS_FLOOR },
+    craft: report.craft,
+    ...(report.craft.length
+      ? {
+          axesBelowFloor: report.craft
+            .filter((axis) => axis.score < CRAFT_AXIS_FLOOR)
+            .map((axis) => axis.axis),
+        }
+      : {}),
+    findings: hardFindings,
+    ...(report.repairBrief ? { repairBrief: report.repairBrief } : {}),
   }
 }
 

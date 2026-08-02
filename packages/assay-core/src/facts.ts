@@ -64,6 +64,12 @@ export function buildFactsBlock(input: FactsInput): string {
       const kw = r.keywords.length ? ` — keywords: ${r.keywords.join(', ')}` : ''
       lines.push(`  - [${r.kind}] ${r.text}${kw}`)
     }
+  } else if (brief?.jdText.trim()) {
+    // The per-tool writers accept a `jd` but do not pay for a decomposition pass, so the brief
+    // reaches them as raw text. Without this branch that text was dropped on the floor: the buyer
+    // supplied a target role, paid for a document tailored to it, and the writer never saw it.
+    lines.push('TARGET BRIEF')
+    lines.push(`  ${brief.jdText.trim().slice(0, 2000)}`)
   }
 
   lines.push('PRODUCT')
