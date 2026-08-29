@@ -30,10 +30,11 @@ export default function PricingPage() {
           checking a seal costs nothing, forever.
         </p>
         <p className="marketplace-count-note">
-          <strong>11 callable tools · 13 OKX.AI service cards.</strong> Career Dossier, Promotion
+          <strong>12 callable tools · 13 OKX.AI service cards.</strong> Career Dossier, Promotion
           Dossier, and Freelancer Proof Pack are three buyer-facing modes of the same 2.00 USDT{' '}
-          <span className="mono">asy_create_dossier_job</span> tool—not duplicate charges or hidden
-          endpoints.
+          <span className="mono">asy_create_dossier_job</span> tool. The free recovery-only{' '}
+          <span className="mono">asy_order_result</span> tool is callable but is not sold as a
+          separate marketplace card.
         </p>
       </div>
 

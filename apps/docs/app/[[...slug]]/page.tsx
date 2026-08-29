@@ -2,7 +2,7 @@ import type { ComponentType } from 'react'
 import { notFound } from 'next/navigation'
 import defaultMdxComponents from 'fumadocs-ui/mdx'
 import { DocsPage, DocsBody, DocsTitle, DocsDescription } from 'fumadocs-ui/page'
-import type { TOCItemType } from 'fumadocs-core/server'
+import type { TOCItemType } from 'fumadocs-core/toc'
 import { source } from '@/lib/source'
 
 // The files-shape shim in lib/source.ts loses fumadocs-mdx's inferred page types — restate the

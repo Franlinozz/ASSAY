@@ -7,7 +7,7 @@ import { GuillocheBand } from '../../components/Guilloche'
 export const metadata: Metadata = {
   title: 'For Agents',
   description:
-    'Call Assay over A2MCP: one protocol, eleven tools and thirteen marketplace offers, with x402 payment in USDT on X Layer.',
+    'Call Assay over A2MCP: one protocol, twelve tools and thirteen marketplace offers, with x402 payment in USDT on X Layer.',
   openGraph: { images: ['/og/agents.png'] },
 }
 
@@ -52,17 +52,18 @@ export default function AgentsPage() {
     <>
       <div className="container page-head">
         <p className="overline">For agents · A2MCP · agent #{SITE.agentId}</p>
-        <h1>Eleven tools. Thirteen offers. One protocol.</h1>
+        <h1>Twelve tools. Thirteen offers. One protocol.</h1>
         <p className="lede">
           Assay is an Agent Service Provider on OKX.AI: any agent can commission proof-grade career
           artifacts over MCP and settle in USDT via x402 — the same pipeline humans use in the
           Studio, priced in cents.
         </p>
         <p className="marketplace-count-note">
-          <strong>Why 13 on OKX.AI?</strong> The 11-tool MCP manifest stays canonical. The single{' '}
-          <span className="mono">asy_create_dossier_job</span> tool has three discoverable
-          marketplace modes—Career Dossier, Promotion Dossier, and Freelancer Proof Pack—so buyers
-          can find the right outcome without adding duplicate API methods.
+          <strong>Why 13 on OKX.AI?</strong> The 12-tool MCP manifest stays canonical. Recovery-only{' '}
+          <span className="mono">asy_order_result</span> is not a separate purchasable offer, while
+          the single <span className="mono">asy_create_dossier_job</span> tool has three
+          discoverable marketplace modes—Career Dossier, Promotion Dossier, and Freelancer Proof
+          Pack—so buyers can find the right outcome without adding duplicate API methods.
         </p>
         <p className="caption" style={{ marginTop: '0.7rem' }}>
           MCP clients negotiate and discover tools at <span className="mono">/mcp</span>. Assay

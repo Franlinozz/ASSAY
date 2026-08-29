@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Metadata } from 'next'
-import { RootProvider } from 'fumadocs-ui/provider'
+import { RootProvider } from 'fumadocs-ui/provider/next'
 import { DocsLayout } from 'fumadocs-ui/layouts/docs'
 import { source } from '@/lib/source'
 import './global.css'
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: '%s · Assay Docs',
   },
   description:
-    'Guides and generated references for Assay: quickstart, all eleven asy_* tools, the published Standard, seal verification, and x402 payment notes.',
+    'Guides and generated references for Assay: quickstart, all twelve asy_* tools, the published Standard, seal verification, and x402 payment notes.',
 }
 
 export default function Layout({ children }: { children: ReactNode }) {

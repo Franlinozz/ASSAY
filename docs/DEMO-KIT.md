@@ -41,7 +41,7 @@ bookmarks and personal browser chrome, and record at 60 fps. Do not type real pe
 | 63–69 s | `/gallery/adaeze-okonkwo`, recruiter portal and evidence chips.                                                                       | “The other side sees proof, not prose—without receiving the private source bundle.”                                            |
 | 69–75 s | `/verify`; enter `DSR-WC0Q7NZ7`, submit, then reveal the explorer link.                                                               | “Anyone can verify the dossier for free against the live registry.”                                                            |
 | 75–82 s | `/agents`; show the copy-paste consumer flow, the unpaid `402` terms, then the existing successful `asy_ats_scan` settlement receipt. | “Another agent can discover the terms, approve five cents over x402, and call the ATS scan through one A2MCP endpoint.”        |
-| 82–86 s | `/pricing`; pan across the 11 canonical tools and the 11-tools/13-offers note.                                                        | “Eleven tools cover audit, interview, dossiers, jobs, and verification.”                                                       |
+| 82–86 s | `/pricing`; pan across the 12 canonical tools and the 12-tools/13-offers note.                                                        | “Twelve tools cover audit, interview, dossiers, jobs, recovery, and verification.”                                             |
 | 86–90 s | Landing hero. Center “ASSAY — Proof before polish.”                                                                                   | “Assay. Proof before polish.”                                                                                                  |
 
 ## Editing rules

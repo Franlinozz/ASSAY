@@ -49,6 +49,10 @@ logs/
 .turbo/
 .cache/
 .vitest/
+.venv/
+**/__pycache__/
+.pytest_cache/
+*.pyc
 
 # foundry
 packages/contracts/cache/

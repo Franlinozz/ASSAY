@@ -17,7 +17,7 @@ other agents can hire by the call.
 [![X Layer registry](https://img.shields.io/badge/X_Layer_registry-196-C63D21)](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
 [![Assay Standard](https://img.shields.io/badge/Assay_Standard-AS--1.1.0-205C4C)](https://assayed.xyz/standard)
 [![Release](https://img.shields.io/badge/release-v1.1.0-1B1F2A)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-392_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/core_tests-435_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
 
 **[Open the Studio](https://assayed.xyz/studio)** ·
 **[Watch the 90-second judged run](https://assayed.xyz/judge)** ·
@@ -88,6 +88,19 @@ sealable commitment. Only `keccak256(manifestHash || salt)` reaches
 [`AssayRegistry`](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
 on X Layer; source documents, career prose, contact data, and salts stay off-chain.
 
+## GenLayer development status
+
+Assay's `AssayAdjudicator` Intelligent Contract now implements the consensus-critical part of the
+planned trust stack: it fetches a bounded set of approved public evidence inside GenLayer, asks
+validators to independently decide whether that evidence supports a claim under a contract-owned
+AS-1.1.0 criterion, and persists only the accepted adjudication. It has 17 passing direct-mode
+tests and three authored Studio/localnet integration scenarios.
+
+It is **not yet deployed to Testnet Bradbury or connected to the production Studio**. No current
+dossier or X Layer seal contains a GenLayer receipt. The existing claim gate, Tribunal, X Layer
+registry, and OKX.AI/x402 services are unchanged. See [`docs/GENLAYER.md`](docs/GENLAYER.md) for the
+reviewed architecture, privacy boundary, current-doc notes, and deployment gates.
+
 ## MCP tools and prices
 
 MCP negotiation and discovery use the stateless Streamable HTTP endpoint
@@ -107,14 +120,16 @@ and settle through x402 on X Layer (`eip155:196`).
 | [`asy_create_dossier_job`](https://assayed.xyz/docs/tools/asy_create_dossier_job) | Run the complete job, promotion, or freelance dossier asynchronously        |        2.00 USDT |
 | [`asy_job_status`](https://assayed.xyz/docs/tools/asy_job_status)                 | Poll a dossier job                                                          |             free |
 | [`asy_job_result`](https://assayed.xyz/docs/tools/asy_job_result)                 | Fetch the paid job’s artifacts, reports, portfolio, and seal                |             free |
+| [`asy_order_result`](https://assayed.xyz/docs/tools/asy_order_result)             | Collect a previously paid result that outlived its response window          |             free |
 | [`asy_verify`](https://assayed.xyz/docs/tools/asy_verify)                         | Verify a dossier version or raw commitment leaf                             | **free forever** |
 
 Tool names, schemas, descriptions, and prices originate in
 [`toolspec.ts`](packages/mcp-server/src/toolspec.ts); the server, pricing page, generated docs, and
-CI consistency gate consume that source. OKX.AI shows **13 buyer-facing offers** because the one
-`asy_create_dossier_job` tool is listed in its three supported modes—Career Dossier, Promotion
-Dossier, and Freelancer Proof Pack. That is one canonical API tool with three clear entry points,
-not duplicated capability.
+CI consistency gate consume that source. The MCP manifest contains **12 canonical tools**. OKX.AI
+shows **13 buyer-facing offers**: recovery-only `asy_order_result` is not a new purchasable offer,
+while the one `asy_create_dossier_job` tool is listed in three supported modes—Career Dossier,
+Promotion Dossier, and Freelancer Proof Pack. That is one canonical API tool with three clear
+entry points, not duplicated capability.
 
 ## Five-minute quickstart
 
@@ -186,9 +201,12 @@ curl -sS https://api.assayed.xyz/mcp \
 
 ## Test evidence
 
-The release gate runs **392 tests**: **331 Vitest + 57 Playwright end-to-end + 4 Foundry**. It also
-typechecks every workspace, regenerates the published Standard and 11 tool pages, proves
-manifest/docs/pricing consistency, and runs the repository dead-link gauntlet. See
+The existing Assay release gate runs **435 tests**. Its breakdown is 374 Vitest, 57 Playwright, and
+4 Foundry. The GenLayer contract job independently adds **17 direct-mode tests** (452 across the
+two green suites) plus GenVM lint; its three Studio/localnet scenarios are authored but are not
+counted as passing until a consensus node is available. The gates also typecheck every workspace,
+regenerate the published Standard and 12 tool pages, prove manifest/docs/pricing consistency, and
+run the repository dead-link gauntlet. See
 [CI](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml) and the
 [fresh-clone transcript](docs/QUICKSTART-TRANSCRIPT.md).
 

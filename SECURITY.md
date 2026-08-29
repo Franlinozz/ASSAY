@@ -89,6 +89,29 @@ Evidence tiers communicate the separate strength question.
 Seals are per dossier version. Re-forging creates a new version and does not mutate the old seal or
 Tribunal report.
 
+### GenLayer public-evidence adjudication
+
+`packages/genlayer` is a development-only Intelligent Contract package and is not yet deployed or
+connected to the production Studio. Its boundary is intentionally narrower than Assay's normal
+evidence ingestion:
+
+- only one to three HTTPS URLs on the contract allowlist are accepted;
+- claim keys, claim text, URLs, source text, result prose, criterion IDs, and Standard versions are
+  bounded or closed sets;
+- résumé files, private documents, email addresses, phone numbers, and unrestricted user prompts
+  are not contract inputs;
+- evidence fetched inside the contract is framed as untrusted data, and the adjudication prompt is
+  constructed entirely by contract code;
+- validators independently fetch and evaluate the evidence and compare the substantive verdict,
+  reason code, and source availability—not merely the output's JSON shape; and
+- state is written only after GenLayer accepts the non-deterministic execution. An unavailable
+  source is counted explicitly; if every source is unavailable, the call fails without a verdict.
+
+A GenLayer verdict means validators reached consensus about whether the approved public evidence
+supports the stated claim under the selected criterion. It does **not** prove identity, employment,
+issuer authenticity, or absolute factual truth. Private Assay evidence remains off GenLayer by
+default, and X Layer remains the dossier-integrity and settlement chain.
+
 ### Payments and secrets
 
 - Policy checks run before payment handling, so refused requests are not charged.

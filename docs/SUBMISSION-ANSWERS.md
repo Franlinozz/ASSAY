@@ -87,9 +87,10 @@ document, or salt ever touches the chain.** Share portals are private by default
 expirable, selectively redactable, and can expose evidence threads so a recruiter sees proof rather
 than polish. Seal verification is **free forever** — for candidates, recruiters, and other agents.
 
-**Assay is an agent-native business, not just a website.** Other agents hire **11 canonical A2MCP
-tools** — surfaced as 13 marketplace offers, because the one dossier tool serves Career, Promotion
-and Freelancer modes without duplicating the API contract. Calls settle in USDT via **x402 on X
+**Assay is an agent-native business, not just a website.** Other agents call **12 canonical A2MCP
+tools** — surfaced as 13 marketplace offers because recovery-only `asy_order_result` is not sold
+separately, while the one dossier tool serves Career, Promotion and Freelancer modes without
+duplicating the API contract. Calls settle in USDT via **x402 on X
 Layer**; long dossier work runs on async create/status/result job rails and returns the finished
 dossier in-band when it completes inside the payment window; verification stays free.
 
@@ -99,7 +100,8 @@ dossier in-band when it completes inside the payment window; verification stays 
   rejected with `400 invalid_request` **before the payment gate** — naming the missing input, the
   keys that satisfy it, and a runnable example, with `charged: false`. Assay would rather return
   nothing and take nothing than bill for an apology.
-- **Free means free.** Seal verification, job status, and job result are never gated, and every
+- **Free means free.** Seal verification, job status, job result, and paid-order collection are
+  never gated, and every
   service publishes its full input contract at `GET /x402/:service/schema` — price, arguments, and a
   working example — so a buyer can learn exactly what to send before spending a cent.
 
@@ -132,7 +134,7 @@ builds the claim ledger, maps job/promotion/client briefs, checks interview answ
 the ledger, forges artifact packs, and grades them against the published, code-generated Assay
 Standard AS-1.1.0. ATS résumés are rendered and actually re-parsed field by field. Each version gets
 an EIP-712 receipt and anchors a privacy-preserving salted commitment on X Layer — no personal data
-on-chain. Agents hire 11 canonical tools via A2MCP with x402 USDT settlement and async job rails; a
+on-chain. Agents call 12 canonical tools via A2MCP with x402 USDT settlement and async job rails; a
 request that cannot be served is rejected before payment (`charged: false`); seal verification is
 free forever. Live: https://assayed.xyz · Docs: https://assayed.xyz/docs · Source:
 https://github.com/Franlinozz/ASSAY · Agent #8599.
@@ -207,7 +209,7 @@ and live on OKX.AI. Source: <https://web3.okx.com/xlayer/build-x-series?i5lsj=7>
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Approved & live**      | Agent #8599 listed and active; endpoint live with a valid, correctly-priced x402 challenge on all 13 offers                                                                                                                                                                                      |
 | **Product experience**   | Five-room Studio with an observable pipeline, a recruiter share portal, a free public verifier, a 90-second `/judge` replay of a real sealed run, light/dark theming, and axe-clean accessibility on every public page                                                                           |
-| **Service completeness** | 11 canonical tools + 13 marketplace offers; async job rails; generated docs; version lineage; redaction; share expiry and revocation; capability-token access; disk, rate and payload guards; failure drills                                                                                     |
+| **Service completeness** | 12 canonical tools + 13 marketplace offers; async job rails; generated docs; version lineage; redaction; share expiry and revocation; capability-token access; disk, rate and payload guards; failure drills                                                                                     |
 | **User value**           | Solves a real and expensive problem — unverifiable career claims. Repeat use across job search, promotion, and freelance, not a one-shot generator                                                                                                                                               |
 | **Creativity**           | A generator that refuses to generate; a public standard that grades its own maker and ships its failures; machine parse-back of the rendered PDF; contradiction-checking against the ledger; privacy-preserving on-chain provenance; a paywall that refuses to charge for what it cannot deliver |
 | **Agent economy**        | Native A2MCP + x402 on X Layer, free verification tier, background job rail, machine-readable manifest, published per-service input contracts                                                                                                                                                    |

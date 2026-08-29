@@ -4,6 +4,31 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ## [Unreleased]
 
+### Added
+
+- Added the GenLayer Network Doctrine and `docs/GENLAYER.md`, defining GenLayer as Assay's
+  consensus-critical public-evidence adjudication layer while preserving the existing Assay
+  claim gate/Tribunal, X Layer integrity seal, and OKX.AI/x402 settlement flows.
+- Added a context-continuity protocol requiring constitution/doc re-reads at phase boundaries,
+  source-dated SDK assumptions, diff/doc reconciliation, and measured checkpoint hand-offs.
+- Added the development-only `AssayAdjudicator` Intelligent Contract. It fetches one to three
+  allowlisted public HTTPS evidence sources inside GenLayer, applies a closed AS-1.1.0 criterion
+  through contract-controlled LLM prompts, requires validators to independently re-fetch and
+  reproduce the substantive decision, and persists only the consensus-accepted adjudication.
+- Added 17 GenLayer direct-mode tests, three Studio/localnet integration scenarios, GenVM lint,
+  deployment scaffolding, workspace scripts, and a dedicated CI job. No GenLayer wallet, external
+  transaction, network deployment, frontend integration, or production claim is included yet.
+
+### Changed
+
+- Reconciled the README with the measured pre-GenLayer baseline: 374 Vitest + 57 Playwright + 4
+  Foundry = 435 passing tests; full workspace typecheck is green.
+- Updated only the docs workspace to Fumadocs 16.15.4, Fumadocs MDX 15.4.0, and Next 16.3.3 to
+  remove newly disclosed transitive advisories while keeping the production web app on Next 15.
+  Patched transitive overrides keep the current lockfile at zero known npm advisories. The docs
+  generator now binds MCP schema introspection to the shipped Zod 3 instance so generated argument
+  descriptions and types cannot be erased by Fumadocs' Zod 4 dependency.
+
 ### Fixed
 
 - **A bare profile link no longer fails an entire dossier.** `CONTACT_VALIDITY` required a URL

@@ -6,6 +6,23 @@ on:
   pull_request:
 
 jobs:
+  genlayer-contract:
+    name: GenLayer contract
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/genlayer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: packages/genlayer/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: genvm-lint check contracts/assay_adjudicator.py
+      - run: pytest tests/direct -v
+
   verify:
     runs-on: ubuntu-latest
     steps:

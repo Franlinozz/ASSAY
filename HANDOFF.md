@@ -16,7 +16,8 @@ Read [`AGENTS.md`](./AGENTS.md) first — it is the constitution. This file is t
 - **Live:** https://assayed.xyz (web) · https://assayed.xyz/docs ·
   https://api.assayed.xyz/mcp deploy from `main`; all three systemd services must be active.
   Health must report v1.1.0 / AS-1.1.0 / OKX payment mode. ASP **#8599** retains all 13 registered
-  offers (11 canonical tools; the dossier job has three marketplace entry points). Ten mutable
+  offers (12 canonical tools; recovery-only order collection is not an offer, and the dossier job
+  has three marketplace entry points). Ten mutable
   records now point to concrete `/x402/:service` resources after tx `0x037d27b6…e6df17`; the three
   original in-use records remain locked to `/mcp` and require OKX support to migrate. The
   post-update readback is **not listed · Listing under review**, with “AI quality review suggested
@@ -85,7 +86,7 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 | `npm run sweep` (repo root)             | Route sweep: hits every route + validates a real PDF download + forged-token 403.                                                                       |
 | `npm test` (repo root)                  | 288 Vitest.                                                                                                                                             |
 | `npm run test:e2e` (repo root)          | 53 Playwright (boots the fake stack: `e2e/stack.mjs`, ports 8455/3400).                                                                                 |
-| `npm run check:marketplace` (repo root) | Regenerates and proves machine manifest = docs = pricing for all 11 tools.                                                                              |
+| `npm run check:marketplace` (repo root) | Regenerates and proves machine manifest = docs = pricing for all 12 tools.                                                                              |
 | `npm run check:judge` (repo root)       | Regenerates public facts, verifies README/test counts, and checks local + public links.                                                                 |
 | `npm run dossier` (repo root)           | Runs a deterministic dossier through real Chromium render + parse-back; no provider key required.                                                       |
 | `npm run studio:dev` (repo root)        | Starts the fake-provider MCP/API and local Studio on ports 8455/3400.                                                                                   |
@@ -98,7 +99,7 @@ Then commit `apps/web/lib/personas.generated.json` (+ any fixture changes) and u
 - **Surfacing audit:** findings table in `FEATURES.md`; `/docs/api` documents machine endpoints; `scripts/route-sweep.mjs` guards against invisible capabilities; bug-taxonomy defenses in `packages/mcp-server/src/taxonomy.test.ts`.
 - **P12 apex:** `packages/renderers/src/interview.ts`, variant writers in `forge.ts`, Studio Interview tab + Brief modes, and `asy_interview_prep`.
 - **P13 trust:** additive SQLite tables `dossier_versions`, `evidence_redactions`, `share_views`; owner controls in Studio Ledger/Report/Share; version-aware `asy_verify`; AS profile router in `packages/tribunal/src/hard/index.ts`; gallery re-grade script/data.
-- **ASP #8599 payment boundary:** `/mcp` serves GET discovery, `initialize`, and `tools/list` without payment. Only a paid JSON-RPC `tools/call` may return the x402 challenge there. Thirteen concrete `/x402/:service` resources exist for OKX.AI offer cards; paid routes challenge immediately and free status/result/verify routes return 200. Completed explicit idempotency keys recover their body-bound cached response even without the original payment header. Re-run the platform payment checks, concrete-route probes, and explicit initialize/list/call probes after every payment-layer deploy.
+- **ASP #8599 payment boundary:** `/mcp` serves GET discovery, `initialize`, and `tools/list` without payment. Only a paid JSON-RPC `tools/call` may return the x402 challenge there. Fourteen concrete `/x402/:service` resources exist: 13 OKX.AI offer cards plus recovery-only `asy_order_result`; paid routes challenge immediately and free status/result/order-result/verify routes return 200. Completed explicit idempotency keys recover their body-bound cached response even without the original payment header. Re-run the platform payment checks, concrete-route probes, and explicit initialize/list/call probes after every payment-layer deploy.
 - **P14 listing refresh:** ten services added successfully in tx `0xcf0a3f61e15e142d63e9931be3e27c8a48f32bf1e95af93588ee8f3c66e9e423`. Those ten now use their concrete x402 resources after tx `0x037d27b6bce4c174b7deb456d8f0e12fca45638c1fc59d9a13a0c4a8a9e6df17`. The three original services remain on `/mcp` because OKX blocks endpoint changes once a service is in use; do not create duplicates—request a support-side endpoint migration. The two-page public capture proved all 13 names/prices before the later review; `node scripts/capture-marketplace.mjs` fails closed unless that public state is available.
 - **P17 avatar refresh:** the approved 768×768 derivative is live on Agent #8599’s identity in tx
   `0x46b94488ce8b5e7435229d22a0cab33559f8833dc92c571714ef6a065e30b4b8`. The identity API

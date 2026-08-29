@@ -6,6 +6,36 @@
 
 Assay is an Agent Service Provider for the OKX.AI Genesis Hackathon (Lifestyle Companion track), built by **Xyndicate** — the studio behind Occestra (agent #5213) and Sigil. Assay is an evidence-backed career studio: it turns scattered work history into a **Career Dossier** where every claim traces to proof, every document is graded against a **published standard**, the ATS variant is machine-verified by actually re-parsing it, and the finished dossier is sealed with **EIP-712 provenance on X Layer**. It serves job seekers, career changers, and working professionals — _and_ other agents, via A2MCP. The promise, load-bearing and non-negotiable: **Assay will not write a sentence it cannot trace.** Tagline: **"Proof before polish."**
 
+## NETWORK DOCTRINE
+
+1. **GenLayer is Assay's primary consensus/adjudication layer.**
+2. **X Layer remains the dossier-integrity sealing layer and OKX.AI/x402 settlement rail.**
+3. Never remove, weaken, or silently rewrite the existing OKX.AI ASP or X Layer flows.
+4. GenLayer must make a real consensus-critical decision; it may not merely store an answer computed by Assay.
+5. Private career documents and PII never go to GenLayer by default.
+6. GenLayer adjudication means consensus that approved evidence supports a claim under stated criteria; it does **not** mean absolute factual truth or issuer verification.
+7. The Assay deterministic claim gate and Tribunal remain authoritative for deterministic rules.
+8. GenLayer adjudication occurs before the final X Layer seal so the resulting manifest can include the consensus receipt.
+9. `FEATURES.md`, `SECURITY.md`, `README.md`, and `CHANGELOG.md` must remain truthful and synchronized.
+10. Do not refactor unrelated working systems.
+
+## CONTEXT CONTINUITY PROTOCOL
+
+Use this protocol to prevent long-running work, hand-offs, and context compaction from eroding the
+constitution:
+
+1. At the start of every session **and every implementation phase**, re-read this file and the
+   current phase section in `docs/GENLAYER.md` before changing files.
+2. Before each checkpoint, re-read the Network Doctrine, inspect `git diff`, and verify every
+   changed capability against `FEATURES.md`, `SECURITY.md`, `README.md`, and `CHANGELOG.md`.
+3. After any context compaction or agent hand-off, reconstruct state from the branch, `git status`,
+   the latest checkpoint/deviation entry, and test output; never rely on conversational memory.
+4. Record current SDK/network assumptions with an official source and access date. Re-fetch the
+   GenLayer docs before contract, deployment, frontend, and submission phases.
+5. Stop at phase boundaries with measured tests, exact changed files, unresolved risks, and the
+   next safe action. Never infer that a deployment or external mutation was authorized by an
+   earlier documentation phase.
+
 ## HARD GUARDRAILS (never breach, no matter what)
 
 1. **CLAIM GATE:** no rendered sentence in any artifact without `claimIds[]` resolving to existing, approved claims backed by existing evidence. An unsupported statement becomes a question to the user, never prose.
@@ -191,3 +221,17 @@ Implement to THESE shapes (source: seller-sdk + howtomcp docs, fetched 2026-07-2
 - **POST-REVIEW #4 (2026-07-28) — the vacuous PASS.** Operator demo prep surfaced two paid Career Dossier runs: one good (11 claims, populated artifacts) graded **0/9 pass**, one empty (0 claims, 9 blank artifacts) graded **9/9 PASS**. Production data confirmed `DSR-6RTD7BG6` carried 0 claims, 0 sentences on every artifact, and `passed: true` on all nine reports. Root cause: `gradeArtifact` computed `proseBearing = (sentences?.length ?? 0) > 0`, so an _empty_ cover letter/résumé/story bank looked like a structured artifact — craft skipped, hard checks alone, vacuous pass. Fixed at the Standard level: `PROSE_ARTIFACT_KINDS` (standard.ts) + an early `not_delivered` verdict in `loop.ts`; genuinely structured kinds (`manifest_json`, `resume_docx`, `fit_map`, `gap_brief`) are untouched and still graded on hard checks. Second half: `runDossierPipeline` now throws when no claim reaches `confirmed`, so the job fails with an actionable message instead of forging shells and reporting success. **Lesson worth keeping:** the Tribunal is the product's central claim, and it was the component that lied — grade-skipping paths must fail closed, never open. Pinned by `loop.test.ts` (every prose kind, structured kinds unaffected, pass-rate math) and `jobs.test.ts` (zero-claim job fails with guidance, no dossier persisted). **380 tests.**
 
 - **POST-REVIEW #5 (2026-07-28) — the grader's own false positives, found by operator demo prep + an external test bot.** Craft calibration was investigated and is **correct** — the good dossier's craft scores were **86–91** against a 72 mean / 60 floor. The 0/9 pass came from **one hard-check false positive**: `CONTACT_VALIDITY` ran `new URL(link)`, which throws on `linkedin.com/in/mqreyes` (no scheme) → `BAD_LINK` on the profile link → and because contact links are checked for EVERY artifact, all nine failed. Fixed via `isUsableLink` (parses as-is or with an assumed scheme; still rejects junk). Three more, same session: **(2)** `STAR_COMPLETENESS` required a first-person pronoun so labelled `Action:` stories all failed; **(3)** `findLedgerContradictions` treated any unmatched answer number as a contradiction and paired it with `numericFacts[0]` — "20 people" vs a latency fact reported _"your ledger says 840"_; now compared within a unit only, and a figure the claim doesn't measure is not a contradiction; **(4)** `computeCoverage` scored requirements against claim text+tags only, ignoring the cited evidence, so stack requirements read `missing` while the evidence listed the stack — evidence is now an optional third arg (callers passing none are unchanged, so sealed persona fixtures do not move). **Lesson:** the Standard's hard checks are the part users cannot argue with, so a false POSITIVE there is as damaging as a false negative — every check needs a fixture written the way a real human writes it. **392 tests.** **(5)** `STAR_COMPLETENESS` also demanded the literal words "situation"/"task" — the Forge's own third-person narrative failed all three parts; detection is now structural and voice-agnostic. **(6)** a craft failure with no per-axis finding produced `pass:false, findings:[]`; the repair brief now derives the reason from the scores. **VERIFIED END TO END:** the same résumé that scored **0 of 9** re-run live through the fixed pipeline scores **7 of 9** with zero BAD_LINK findings; the 2 remaining are `story_bank` stories that genuinely lead with purpose rather than situation — a WRITER improvement, not a grader one. Deliberately did NOT loosen the check further: past that point it stops meaning anything.
+
+- **GENLAYER P1 (2026-08-29) — consensus contract checkpoint, no deployment.** Added
+  `AssayAdjudicator` with bounded public inputs, contract-owned AS-1.1.0 criteria, in-contract web
+  fetch + LLM judgment, substantive independent validator evaluation, and consensus-gated state.
+  GenVM lint is clean and 17 direct-mode tests pass. Three Studio/localnet scenarios are authored,
+  but a consensus-node run remains required before deployment; direct mode exposes validator
+  acceptance separately and therefore cannot alone prove disagreement leaves remote state
+  untouched. No wallet, GenLayer transaction, Studio flow, X Layer behavior, or OKX.AI/x402 flow
+  changed.
+- **GENLAYER P1 dependency deviation (2026-08-29).** The current npm advisory database made the
+  unchanged lockfile fail CI on Fumadocs' `image-size` plus patched Hono/JS-YAML/fast-uri/nanoid
+  releases. The docs workspace alone moved to Fumadocs 16 / Next 16 and binds generated MCP schema
+  introspection to Assay's Zod 3 instance; the production web app remains on Next 15. Reason: keep
+  the zero-advisory gate without weakening audit policy or mixing a web-app migration into GenLayer.
