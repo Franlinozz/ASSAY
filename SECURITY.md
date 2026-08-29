@@ -91,9 +91,10 @@ Tribunal report.
 
 ### GenLayer public-evidence adjudication
 
-`packages/genlayer` is a development-only Intelligent Contract package and is not yet deployed or
-connected to the production Studio. Its boundary is intentionally narrower than Assay's normal
-evidence ingestion:
+`packages/genlayer` is a development-only Intelligent Contract package whose three consensus
+scenarios pass on temporary Studionet deployments. It is not yet deployed to Bradbury or connected
+to the production Studio. Its boundary is intentionally narrower than Assay's normal evidence
+ingestion:
 
 - only one to three HTTPS URLs on the contract allowlist are accepted;
 - claim keys, claim text, URLs, source text, result prose, criterion IDs, and Standard versions are

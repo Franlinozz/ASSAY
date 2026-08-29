@@ -94,7 +94,7 @@ Assay's `AssayAdjudicator` Intelligent Contract now implements the consensus-cri
 planned trust stack: it fetches a bounded set of approved public evidence inside GenLayer, asks
 validators to independently decide whether that evidence supports a claim under a contract-owned
 AS-1.1.0 criterion, and persists only the accepted adjudication. It has 17 passing direct-mode
-tests and three authored Studio/localnet integration scenarios.
+tests and three passing hosted-Studionet consensus scenarios.
 
 It is **not yet deployed to Testnet Bradbury or connected to the production Studio**. No current
 dossier or X Layer seal contains a GenLayer receipt. The existing claim gate, Tribunal, X Layer
@@ -202,9 +202,9 @@ curl -sS https://api.assayed.xyz/mcp \
 ## Test evidence
 
 The existing Assay release gate runs **435 tests**. Its breakdown is 374 Vitest, 57 Playwright, and
-4 Foundry. The GenLayer contract job independently adds **17 direct-mode tests** (452 across the
-two green suites) plus GenVM lint; its three Studio/localnet scenarios are authored but are not
-counted as passing until a consensus node is available. The gates also typecheck every workspace,
+4 Foundry. The GenLayer contract job independently adds **17 direct-mode tests**, and its authorized
+Studionet checkpoint adds **3 consensus tests** (455 measured across all green suites), plus GenVM
+lint. The gates also typecheck every workspace,
 regenerate the published Standard and 12 tool pages, prove manifest/docs/pricing consistency, and
 run the repository dead-link gauntlet. See
 [CI](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml) and the

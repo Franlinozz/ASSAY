@@ -235,3 +235,13 @@ Implement to THESE shapes (source: seller-sdk + howtomcp docs, fetched 2026-07-2
   releases. The docs workspace alone moved to Fumadocs 16 / Next 16 and binds generated MCP schema
   introspection to Assay's Zod 3 instance; the production web app remains on Next 15. Reason: keep
   the zero-advisory gate without weakening audit policy or mixing a web-app migration into GenLayer.
+- **GENLAYER STUDIONET CHECKPOINT (2026-08-29).** The authorized hosted-Studionet run passes all
+  three consensus scenarios (positive evidence, unrelated evidence, persistent read-back) in
+  80.84s. The first attempt deployed three temporary fixtures but sent zero adjudications because
+  the authored tests used an obsolete convenience-call shape; current `genlayer-test` requires
+  `.call()` / `.transact()`. The corrected suite uses one module-scoped deployment. An encrypted,
+  external `assay-bradbury` keystore now exists at public address
+  `0x8163f5e43c8d5f067d3ea23f5795ac8510a5b120`; it has 0 GEN, and no Bradbury transaction has been
+  sent. CLI npm 0.39.2 is one patch ahead of its generated 0.39.1 docs, and its live
+  `estimate-fees` path is incompatible with published `genlayer-js@1.1.8`; retain a conservative
+  test-GEN buffer and record actual receipt cost after deployment.

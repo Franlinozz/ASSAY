@@ -1,10 +1,10 @@
 # GenLayer architecture
 
-> **Status:** Prompt 1 contract checkpoint. `AssayAdjudicator` is implemented, GenVM-lint clean,
-> and covered by 17 passing direct-mode tests. Three Studio/localnet integration scenarios are
-> authored but have not yet run against a consensus node. Assay has not deployed a GenLayer
-> contract, submitted a GenLayer transaction, created a deployment wallet, or changed the
-> production Studio. The existing X Layer and OKX.AI/x402 systems remain live and unchanged.
+> **Status:** Studionet consensus checkpoint. `AssayAdjudicator` is implemented, GenVM-lint clean,
+> and covered by 17 passing direct-mode tests plus 3 passing hosted-Studionet consensus tests.
+> Assay has not deployed to Testnet Bradbury or changed the production Studio. The Bradbury
+> deployer `0x8163f5e43c8d5f067d3ea23f5795ac8510a5b120` exists as an encrypted external keystore and is
+> currently unfunded. The existing X Layer and OKX.AI/x402 systems remain live and unchanged.
 
 Assay will use GenLayer for one narrowly defined decision that should not depend on Assay's server
 alone:
@@ -161,15 +161,16 @@ official progression is:
 2. Studionet for shared validation.
 3. Testnet Bradbury for production-like tests with real AI/LLM workloads.
 
-Deployment is the next explicitly gated phase. It requires the local/Studionet consensus scenarios
-to run green, a reviewed contract, secret-safe deployment credentials, sufficient test GEN, and
-operator approval. No wallet has been created and no funding is requested at this checkpoint.
+The three Studionet consensus scenarios ran green on 2026-08-29. Bradbury deployment remains gated
+on sufficient test GEN and a final preflight; operator authorization has been granted. The
+encrypted deployer is stored outside the repository, and neither its key nor password is logged or
+committed.
 
 ## Implementation phases and likely files
 
 The exact diff will be kept narrow, but implementation is expected to touch:
 
-1. **Contract and tests — implemented; consensus-node scenarios pending execution**
+1. **Contract and tests — implemented; consensus-node scenarios passing**
    - `packages/genlayer/contracts/assay_adjudicator.py`
    - `packages/genlayer/tests/direct/*`
    - `packages/genlayer/tests/integration/*`
@@ -210,8 +211,8 @@ Before deployment, the integration must have zero existing regressions plus:
 
 The untouched baseline measured on 2026-08-29 is 374 Vitest + 57 Playwright + 4 Foundry = **435
 passing tests**, with full workspace typecheck green. Prompt 1 adds 17 passing direct-mode tests
-and a clean GenVM lint result. The three integration scenarios are not counted as passing until
-they execute against Studio/local consensus.
+and a clean GenVM lint result. The three hosted-Studionet integration scenarios now pass, bringing
+the measured total across all suites to **455**.
 
 ## Prompt 1 implementation checkpoint
 
@@ -224,8 +225,32 @@ The direct suite covers all four verdicts, persistent reads, duplicate-key prote
 source availability, all-sources-unavailable failure, HTTPS/host/source-count/size bounds, unknown
 criteria, wrong Standard version, malformed model output, validator disagreement, and equivalent
 decisions with different prose. The GenLayer testing suite's direct mode exposes validator
-acceptance separately from leader execution, so the disagreement test asserts validator rejection;
-the authored consensus-node test is still required to prove non-commit behavior end to end.
+acceptance separately from leader execution, so the disagreement test asserts validator rejection.
+The three hosted-Studionet tests prove positive support, a negative unrelated-evidence verdict, and
+accepted state read-back under real consensus; they do not artificially force public validators
+into an `UNDETERMINED` result.
+
+## Studionet consensus checkpoint
+
+On 2026-08-29, the authorized hosted-Studionet run passed 3/3 scenarios in 80.84 seconds using one
+shared temporary deployment. The first attempt deployed three temporary fixtures but submitted no
+adjudications because the tests used an obsolete convenience-call API; the current
+`genlayer-test` contract interface requires `.call()` and `.transact()`. The corrected tests use a
+module-scoped deployment to avoid redeploying for every scenario.
+
+The Bradbury preflight uses the current official profile:
+
+- RPC host: `rpc-bradbury.genlayer.com` over HTTPS (JSON-RPC `POST`)
+- chain ID: `4221`
+- currency: test GEN
+- explorer: `https://explorer-bradbury.genlayer.com/`
+- deployer: `0x8163f5e43c8d5f067d3ea23f5795ac8510a5b120`
+- balance at checkpoint: `0 GEN`
+
+The locally installed CLI is npm `genlayer@0.39.2`, while the generated official CLI reference
+still labels itself 0.39.1. Its `estimate-fees` command currently calls an SDK method absent from
+the published `genlayer-js@1.1.8`, so live fee estimation fails before submission. Deployment must
+therefore retain a conservative funding buffer and record the actual receipt cost afterward.
 
 ## Current-document compatibility notes
 

@@ -23,6 +23,13 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 - Reconciled the README with the measured pre-GenLayer baseline: 374 Vitest + 57 Playwright + 4
   Foundry = 435 passing tests; full workspace typecheck is green.
+- Ran the three authorized consensus scenarios against hosted GenLayer Studionet: positive public
+  evidence, unrelated evidence, and persistent read-back all passed. Updated the integration tests
+  to the current `genlayer-test` `.call()` / `.transact()` API and a shared module deployment after
+  the first run exposed the obsolete convenience-call shape before any adjudication was submitted.
+- Created the encrypted `assay-bradbury` deployer outside the repository and selected the official
+  Testnet Bradbury profile. Its public address is documented in `docs/GENLAYER.md`; the wallet
+  remains unfunded and no Bradbury transaction has been submitted.
 - Updated only the docs workspace to Fumadocs 16.15.4, Fumadocs MDX 15.4.0, and Next 16.3.3 to
   remove newly disclosed transitive advisories while keeping the production web app on Next 15.
   Patched transitive overrides keep the current lockfile at zero known npm advisories. The docs
