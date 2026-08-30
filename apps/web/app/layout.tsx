@@ -5,6 +5,7 @@ import { SiteHeader } from '../components/SiteHeader'
 import { SiteFooter } from '../components/SiteFooter'
 import { SITE } from '../lib/site'
 import './globals.css'
+import './hero-background.css'
 
 // Self-hosted variable fonts (AGENTS.md §DESIGN TOKENS) — no network fetch, no layout shift.
 const fraunces = localFont({
