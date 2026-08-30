@@ -58,14 +58,14 @@ export default function AgentsPage() {
           artifacts over MCP and settle in USDT via x402 — the same pipeline humans use in the
           Studio, priced in cents.
         </p>
-        <p className="marketplace-count-note">
+        <p className="marketplace-count-note" style={{ animation: 'none' }}>
           <strong>Why 13 on OKX.AI?</strong> The 12-tool MCP manifest stays canonical. Recovery-only{' '}
           <span className="mono">asy_order_result</span> is not a separate purchasable offer, while
           the single <span className="mono">asy_create_dossier_job</span> tool has three
           discoverable marketplace modes—Career Dossier, Promotion Dossier, and Freelancer Proof
           Pack—so buyers can find the right outcome without adding duplicate API methods.
         </p>
-        <p className="caption" style={{ marginTop: '0.7rem' }}>
+        <p className="caption" style={{ marginTop: '0.7rem', animation: 'none' }}>
           MCP clients negotiate and discover tools at <span className="mono">/mcp</span>. Assay
           publishes concrete <span className="mono">/x402/&lt;service&gt;</span> resources so an
           unpaid marketplace probe can receive its service-specific 402 immediately.
