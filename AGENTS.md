@@ -265,3 +265,8 @@ Implement to THESE shapes (source: seller-sdk + howtomcp docs, fetched 2026-07-2
   385 Vitest + 57 Playwright + 4 Foundry, plus 17 direct and 3 Studionet tests = 466 across suites;
   typecheck/build/lint/audit/secrets/judged-artifact/dead-link gates green. The Portal evidence pack
   is prepared at `docs/GENLAYER-SUBMISSION.md`; it has not been submitted.
+- **GENLAYER APPLICATION DEPLOYMENT (2026-08-30).** Exact feature commit `cf5697d` is live on the
+  three Assay production services from a detached `/opt/assay` worktree; `main` remains untouched.
+  Public checks confirm the GenLayer-first homepage, established X Layer x402 challenge, and free
+  `asy_verify` mainnet response. The final distinct Bradbury contradiction adjudication remains
+  open; its earlier transaction finalized consensus `TIMEOUT` and must never be counted.

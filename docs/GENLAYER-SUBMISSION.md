@@ -18,6 +18,8 @@ Bradbury transaction lifecycle; X Layer separately seals the integrity of the fi
 
 **Source:** <https://github.com/Franlinozz/ASSAY>
 
+**Deployed application commit:** `cf5697d` on `feat/genlayer-integration`
+
 **Bradbury contract:**
 [`0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E`](https://explorer-bradbury.genlayer.com/address/0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E)
 
@@ -138,6 +140,12 @@ Full boundary: [`SECURITY.md`](../SECURITY.md).
   `asy_verify` remains free forever.
 
 ## Screenshots
+
+### Live GenLayer-first trust stack
+
+![Live assayed.xyz trust stack showing local rules, GenLayer consensus, and X Layer integrity](../assets/screenshots/genlayer-live-home.png)
+
+Captured from <https://assayed.xyz> after deploying commit `cf5697d` on 2026-08-30.
 
 ### Consensus receipt
 

@@ -55,6 +55,11 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
   tests, plus 17 direct-mode and 3 hosted-Studionet GenLayer tests (466 across independently run
   suites); full typecheck, production builds, GenVM lint, npm audit, secret scan, judged-artifact
   consistency, and 69-external-URL dead-link gates are green.
+- Deployed exact feature commit `cf5697d` to `assayed.xyz`, `api.assayed.xyz`, and the docs service.
+  All three services are active; the live homepage exposes the GenLayer-first trust stack, MCP GET
+  still returns the established X Layer x402 challenge, and free `asy_verify` still confirms the
+  existing mainnet dossier seal. The feature remains on `feat/genlayer-integration`; `main` was not
+  edited.
 - Updated only the docs workspace to Fumadocs 16.15.4, Fumadocs MDX 15.4.0, and Next 16.3.3 to
   remove newly disclosed transitive advisories while keeping the production web app on Next 15.
   Patched transitive overrides keep the current lockfile at zero known npm advisories. The docs
