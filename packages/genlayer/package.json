@@ -1,0 +1,16 @@
+{
+  "name": "@xyndicate/genlayer",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AssayAdjudicator — consensus adjudication of approved public career evidence",
+  "scripts": {
+    "lint:contract": "genvm-lint check contracts/assay_adjudicator.py",
+    "test:direct": "pytest tests/direct -v",
+    "test:integration": "gltest tests/integration -v -s",
+    "deploy": "genlayer deploy"
+  },
+  "devDependencies": {
+    "genlayer-js": "^1.1.8"
+  }
+}

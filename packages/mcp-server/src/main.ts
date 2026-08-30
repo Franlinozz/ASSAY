@@ -7,6 +7,7 @@ import { JobRunner, devPdf } from './jobs'
 import { AnchorWorker } from './anchor'
 import { buildApp } from './http'
 import { freeDiskBytes } from './util'
+import { FakeGenLayerVerifier } from './genlayer'
 
 // Env-driven assembly. Fakes are the default (zero spend); only ASY_PROVIDER_MODE=live wires real
 // providers + headless-chromium PDF rendering. Boots the HTTP server, the job worker and the anchor
@@ -39,6 +40,9 @@ export function main(): void {
     gate,
     toPdf,
     realPdf,
+    ...(cfg.paymentMode === 'dev' && process.env['ASY_GENLAYER_MODE'] === 'fake'
+      ? { genlayerVerifier: new FakeGenLayerVerifier() }
+      : {}),
     diskFreeBytes: () => freeDiskBytes(cfg.filesDir),
   })
   const server = app.listen(port, () => {

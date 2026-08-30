@@ -6,7 +6,7 @@ import { LoopDiagram } from '../components/LoopDiagram'
 import { GuillocheBand } from '../components/Guilloche'
 import { Reveal } from '../components/Reveal'
 import { EditorialImage } from '../components/EditorialImage'
-import { SITE } from '../lib/site'
+import { ADJUDICATION_LINE, SITE } from '../lib/site'
 import demo from '../lib/demo-run.generated.json'
 
 export const metadata: Metadata = {
@@ -92,12 +92,13 @@ export default function LandingPage() {
       <section className="hero">
         <div className="container hero-grid">
           <Reveal className="hero-copy">
-            <p className="hero-kicker overline">Evidence-backed career studio</p>
+            <p className="hero-kicker overline">Consensus-backed professional evidence</p>
             <h1 className="display">Proof before polish.</h1>
             <p className="lede">
-              Assay turns scattered work history into a sealed Career Dossier — every claim traced
-              to proof, every document graded against a published standard, machine-verified to
-              survive ATS parsing. In a world where AI makes everyone sound impressive,{' '}
+              Assay turns scattered work history into a Career Dossier — every claim traced to
+              proof, every document graded against a published standard, and approved public
+              evidence independently adjudicated by GenLayer validators before the final X Layer
+              integrity seal. In a world where AI makes everyone sound impressive,{' '}
               <strong>you&rsquo;re the one who can prove it.</strong>
             </p>
             <div className="hero-ctas">
@@ -128,12 +129,52 @@ export default function LandingPage() {
         <SealedStrip />
       </div>
 
+      {/* ── TRUST STACK ── */}
+      <section className="section-tight" data-testid="trust-stack">
+        <div className="container">
+          <p className="overline">The trust stack</p>
+          <h2 style={{ marginTop: '0.6rem' }}>
+            Local rules → GenLayer consensus → X Layer integrity.
+          </h2>
+          <p className="lede" style={{ maxWidth: '58rem' }}>
+            {ADJUDICATION_LINE}
+          </p>
+          <div className="pass-rule">
+            <div>
+              <span className="mono">01 · LOCAL RULES</span>
+              <span className="caption">
+                The claim gate and Tribunal enforce evidence linkage, numeric facts, format laws,
+                craft, and parse-back under AS-1.1.0.
+              </span>
+            </div>
+            <div>
+              <span className="mono">02 · GENLAYER CONSENSUS</span>
+              <span className="caption">
+                AssayAdjudicator fetches only explicitly approved public URLs; validators make the
+                consensus-critical support decision on Testnet Bradbury.
+              </span>
+            </div>
+            <div>
+              <span className="mono">03 · X LAYER INTEGRITY</span>
+              <span className="caption">
+                The finalized receipt enters the manifest before its salted commitment is sealed. X
+                Layer proves that dossier version is unchanged, not that every claim is true.
+              </span>
+            </div>
+          </div>
+          <p className="caption" style={{ marginTop: '1rem' }}>
+            GenLayer adjudication does not verify identity, employers, issuers, or absolute truth.
+            Private career documents and PII remain off GenLayer by default.
+          </p>
+        </div>
+      </section>
+
       {/* ── THE LOOP ── */}
       <section className="section">
         <div className="container">
-          <p className="overline">The whole product in six words</p>
+          <p className="overline">The complete evidence lifecycle</p>
           <h2 style={{ marginTop: '0.6rem', marginBottom: '2.2rem' }}>
-            Evidence in. Proof out. Sealed.
+            Evidence → Tribunal → Consensus → Seal.
           </h2>
           <LoopDiagram />
         </div>

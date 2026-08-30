@@ -22,6 +22,7 @@ import {
   type IntakeProblem,
 } from './intake'
 import { buildStudioRouter } from './studioHttp'
+import { BradburyVerifier, type GenLayerVerifier } from './genlayer'
 import { devPdf } from './jobs'
 import { TokenBucket, verifyFileToken, sha256Hex, toJson, freeDiskBytes } from './util'
 
@@ -36,6 +37,7 @@ export interface AppRuntime {
   toPdf?: (html: string) => Promise<Uint8Array>
   realPdf?: boolean
   diskFreeBytes?: () => number
+  genlayerVerifier?: GenLayerVerifier
 }
 
 interface JsonRpcBody {
@@ -134,6 +136,7 @@ export function buildApp(rt: AppRuntime): Express {
       cfg,
       toPdf: rt.toPdf ?? devPdf,
       realPdf: rt.realPdf ?? false,
+      genlayerVerifier: rt.genlayerVerifier ?? new BradburyVerifier(),
       diskFreeBytes: rt.diskFreeBytes ?? (() => freeDiskBytes(cfg.filesDir)),
     }),
   )

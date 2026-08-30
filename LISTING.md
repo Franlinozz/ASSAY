@@ -177,7 +177,8 @@ unchanged while all ten additions landed:
 - **Public listing was live before the later avatar update.** Agent #8599 was eligible for task
   recommendations, showed the registered endpoint, and reported 13 service offers across two
   paginated screens. The current re-review state is recorded above.
-- The 13 offers are a marketplace projection of **11 canonical MCP tools**, not 13 API methods:
+- The 13 offers are a marketplace projection of **12 canonical MCP tools**, not 13 API methods;
+  recovery-only `asy_order_result` is callable but is not sold as a separate offer:
   `asy_create_dossier_job` is deliberately presented as Career Dossier, Promotion Dossier, and
   Freelancer Proof Pack so each repeat-use case is discoverable while retaining one schema and one
   fixed 2.00 USDT price.

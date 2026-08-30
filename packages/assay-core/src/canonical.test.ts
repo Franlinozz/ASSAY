@@ -82,7 +82,44 @@ describe('buildManifest (privacy-preserving)', () => {
     ])
     expect(m.artifactHashes[0]).toMatchObject({ id: 'resume_ats', kind: 'resume_ats' })
     expect(m.artifactHashes[0].hash).toMatch(/^[0-9a-f]{64}$/)
+    expect(m.adjudicationReceipts).toEqual([])
     expect(m.standardVersion).toBe('AS-1.1.0')
+  })
+
+  it('includes only finalized consensus receipts, never consent prose or evidence URLs', () => {
+    const withReceipt = DossierSchema.parse({
+      ...dossier(),
+      adjudications: [
+        {
+          claimId: 'CLM-1',
+          claimKey: 'DSR-TEST0001.CLM-1.v1',
+          claimText: 'Private consent copy of the public claim.',
+          criterionId: 'ACTION_AND_OUTCOME',
+          standardVersion: 'AS-1.1.0',
+          evidenceUrls: ['https://github.com/example/public-proof'],
+          network: 'testnet-bradbury',
+          chainId: 4221,
+          contractAddress: `0x${'11'.repeat(20)}`,
+          txHash: `0x${'22'.repeat(32)}`,
+          wallet: `0x${'33'.repeat(20)}`,
+          status: 'finalized',
+          verdict: 'SUPPORTED',
+          reasonCode: 'EVIDENCE_SUPPORTS_CLAIM',
+          shortReason: 'Public evidence supports it.',
+          sourceCount: 1,
+          unavailableCount: 0,
+          submittedAt: '2026-08-30T00:00:00.000Z',
+          updatedAt: '2026-08-30T00:01:00.000Z',
+          finalizedAt: '2026-08-30T00:01:00.000Z',
+        },
+      ],
+    })
+    const json = JSON.stringify(buildManifest(withReceipt))
+    expect(buildManifest(withReceipt).adjudicationReceipts).toHaveLength(1)
+    expect(json).toContain(`0x${'22'.repeat(32)}`)
+    expect(json).not.toContain('Private consent copy')
+    expect(json).not.toContain('github.com/example/public-proof')
+    expect(json).not.toContain('Public evidence supports it')
   })
 
   it('manifest hash is stable regardless of profile key order or claim order', () => {

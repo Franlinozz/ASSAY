@@ -159,6 +159,24 @@ export async function sealDossier(id: string, token: string): Promise<SealReceip
   return jsonOrThrow(res) as Promise<SealReceipt>
 }
 
+export async function linkAdjudication(
+  id: string,
+  token: string,
+  input: {
+    claimId: string
+    criterionId: AdjudicationCriterion
+    evidenceUrls: string[]
+    txHash: `0x${string}`
+  },
+): Promise<AdjudicationReceipt> {
+  const res = await fetch(`${base}/d/${id}/adjudication?t=${encodeURIComponent(token)}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  return jsonOrThrow(res) as Promise<AdjudicationReceipt>
+}
+
 export async function createShare(
   id: string,
   token: string,
@@ -237,6 +255,7 @@ export interface StudioClaim {
   numericFacts: Array<{ value: number; unit?: string; context: string }>
   evidenceIds: string[]
   question?: string
+  adjudicationKey: string
 }
 
 export interface StudioEvidence {
@@ -245,6 +264,43 @@ export interface StudioEvidence {
   label: string
   fetchedOk?: boolean
   contentPreview?: string
+  publicUrl?: string
+}
+
+export type AdjudicationCriterion =
+  | 'ACTION_AND_OUTCOME'
+  | 'QUANTIFIED_OUTCOME'
+  | 'ROLE_AND_SCOPE'
+  | 'COMPETENCY_DEMONSTRATION'
+
+export interface AdjudicationReceipt {
+  claimId: string
+  claimKey: string
+  claimText: string
+  criterionId: AdjudicationCriterion
+  standardVersion: string
+  evidenceUrls: string[]
+  network: 'testnet-bradbury'
+  chainId: 4221
+  contractAddress: string
+  txHash: `0x${string}`
+  wallet: string
+  status:
+    | 'submitted'
+    | 'pending'
+    | 'accepted'
+    | 'finalized'
+    | 'rejected'
+    | 'undetermined'
+    | 'error'
+  verdict?: 'SUPPORTED' | 'PARTIAL' | 'INSUFFICIENT' | 'CONTRADICTED'
+  reasonCode?: string
+  shortReason?: string
+  sourceCount?: number
+  unavailableCount?: number
+  submittedAt: string
+  updatedAt: string
+  finalizedAt?: string
 }
 
 export interface CoverageRow {
@@ -370,6 +426,7 @@ export interface StudioState {
     }>
   }
   forge: ForgeResult | null
+  adjudications: AdjudicationReceipt[]
   seal: SealReceipt | null
   share: {
     shareId: string

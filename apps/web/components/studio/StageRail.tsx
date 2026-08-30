@@ -2,14 +2,15 @@
 
 import type { StudioState } from '../../lib/studio'
 
-export type Stage = 'ledger' | 'brief' | 'interview' | 'forge' | 'report'
+export type Stage = 'ledger' | 'brief' | 'interview' | 'forge' | 'report' | 'consensus'
 
 const STAGES: Array<{ id: Stage; label: string; sub: string }> = [
   { id: 'ledger', label: 'Ledger', sub: 'file your evidence' },
   { id: 'brief', label: 'Brief', sub: 'map the role' },
   { id: 'interview', label: 'Interview', sub: 'test your answers' },
   { id: 'forge', label: 'Forge', sub: 'write the dossier' },
-  { id: 'report', label: 'Report', sub: 'grade & seal' },
+  { id: 'report', label: 'Tribunal', sub: 'grade every artifact' },
+  { id: 'consensus', label: 'Consensus', sub: 'adjudicate, then seal' },
 ]
 
 // Which stages are reachable, from the server's canonical stage.
@@ -23,6 +24,7 @@ function reached(state: StudioState | null): Record<Stage, boolean> {
     interview: confirmed && hasBrief,
     forge: confirmed && hasBrief,
     report: forged,
+    consensus: forged,
   }
 }
 
@@ -41,7 +43,10 @@ export function StageRail({
     brief: !!state?.brief,
     interview: (state?.interview.questions.length ?? 0) > 0,
     forge: !!state?.forge,
-    report: state?.stage === 'sealed',
+    report: !!state?.forge,
+    consensus:
+      state?.stage === 'sealed' ||
+      !!state?.adjudications.some((adjudication) => adjudication.status === 'finalized'),
   }
   return (
     <nav className="stage-rail" aria-label="Dossier stages">

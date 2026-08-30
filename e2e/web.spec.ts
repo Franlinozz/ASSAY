@@ -133,6 +133,10 @@ test.describe('accessibility (axe)', () => {
     test(`${path} has no serious violations`, async ({ page }) => {
       await page.goto(path, { waitUntil: 'domcontentloaded' })
       await page.locator('body').waitFor({ state: 'visible' })
+      // Scan the settled UI, not the transient ~520 ms entrance-animation opacity. Axe computes
+      // contrast using intermediate opacity values, which made this gate timing-dependent even
+      // though the resting light/dark tokens satisfy the contrast requirement.
+      await page.waitForTimeout(700)
       const results = await new AxeBuilder({ page }).analyze()
       const serious = results.violations.filter(
         (v) => v.impact === 'serious' || v.impact === 'critical',

@@ -1,8 +1,7 @@
-import { docs } from '@/.source'
+import { docs } from '@/.source/server'
 import { loader } from 'fumadocs-core/source'
 
-// fumadocs-mdx 11.10 exposes `files` as a thunk while fumadocs-core 15.8 consumes an array —
-// normalize so the pairing works regardless of which shape this minor returns.
+// Normalize the generated collection shape at the source boundary.
 const raw = docs.toFumadocsSource() as { files: unknown }
 const files = (
   typeof raw.files === 'function' ? (raw.files as () => unknown[])() : raw.files

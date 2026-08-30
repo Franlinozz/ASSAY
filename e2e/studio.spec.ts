@@ -30,7 +30,7 @@ async function createDossier(page: Page): Promise<void> {
   await page.getByTestId('start-email').fill('chidinma.eze@example.com')
   await page.getByTestId('start-submit').click()
   await page.waitForURL(/\/d\/DSR-[A-Z0-9]+\?t=/, { timeout: 20_000 })
-  await expect(page.getByText('stage 1 / 5')).toBeVisible()
+  await expect(page.getByText('stage 1 / 6')).toBeVisible()
   await expect(page.getByText('Dossier flow')).toBeVisible()
   await expect(page.getByTestId('event-feed')).toBeVisible()
 }
@@ -51,10 +51,49 @@ test.describe('token security', () => {
 })
 
 test.describe('the full dossier flow', () => {
-  test('create → confirm → brief → forge → drawer → report(fail) → seal → share → verify → revoke', async ({
+  test('create → confirm → brief → forge → tribunal → GenLayer consensus → X Layer seal → share', async ({
     page,
   }) => {
     test.setTimeout(240_000)
+    const mockTx = `0x${'77'.repeat(32)}`
+    await page.addInitScript(
+      ({ txHash }) => {
+        let address: `0x${string}` | null = null
+        let chainId = 1
+        let reads = 0
+        let connectAttempts = 0
+        window.__ASSAY_GENLAYER_MOCK__ = {
+          async inspectWallet() {
+            return { address, chainId: address ? chainId : null }
+          },
+          async connectWallet() {
+            connectAttempts += 1
+            if (connectAttempts === 1) throw new Error('user rejected wallet connection')
+            address = '0x4444444444444444444444444444444444444444'
+            return { address, chainId }
+          },
+          async switchToBradbury() {
+            chainId = 4221
+          },
+          async writeAdjudication() {
+            const writes = Number(localStorage.getItem('assay:test:genlayer-writes') ?? '0') + 1
+            localStorage.setItem('assay:test:genlayer-writes', String(writes))
+            await new Promise((resolve) => setTimeout(resolve, 250))
+            return txHash as `0x${string}`
+          },
+          async getTransaction() {
+            reads += 1
+            if (reads <= 2) throw new Error('Bradbury RPC temporarily unavailable')
+            return {
+              status: reads === 3 ? 'ACCEPTED' : 'FINALIZED',
+              consensusResult: 'AGREE',
+              executionResult: 'FINISHED_WITH_RETURN',
+            }
+          },
+        }
+      },
+      { txHash: mockTx },
+    )
     await createDossier(page)
 
     // Desktop workspace uses three independent scroll regions. The dossier flow and run monitor
@@ -83,6 +122,17 @@ test.describe('the full dossier flow', () => {
     await page.getByTestId('intake-text').fill(FIXTURE_RESUME)
     await page.getByRole('button', { name: 'Read it' }).click()
     await page.waitForSelector('[data-testid=claim-card]', { timeout: 40_000 })
+
+    // Add a separately fetched, public source whose content grounds the first existing claim.
+    // Private résumé evidence remains ineligible; only this explicit public link reaches GenLayer.
+    await page.getByRole('tab', { name: 'Add links' }).click()
+    await page
+      .getByTestId('intake-links')
+      .fill(
+        'https://github.com/example/reduced-api-p95-latency-38-introducing-postgresql-connection-pooling',
+      )
+    await page.getByTestId('intake-links-submit').click()
+    await expect(page.getByTestId('intake-links')).toHaveValue('', { timeout: 30_000 })
 
     // Answer the one needs_confirmation card (the demo fixture's unsourced figure).
     const needsCard = page.locator('[data-status=needs_confirmation]').first()
@@ -163,18 +213,68 @@ test.describe('the full dossier flow', () => {
     await page.getByTestId('to-report').click()
     await page.waitForSelector('[data-testid=report-rollup]', { timeout: 15_000 })
     await expect(page.getByText('Stage 5 · the Report')).toBeVisible()
-    await expect(page.getByTestId('gallery-privacy-note')).toContainText(
-      'never appears in the public Gallery automatically',
-    )
     const history = page.locator('.report-history').first()
     if (await history.count()) await history.locator('summary').click()
     await expect(page.locator('.verdict-fail').first()).toBeVisible()
     await expect(page.locator('.repair-brief').first()).toBeVisible()
 
-    // ── SEAL (unsigned dev mode) ──
+    // ── CONSENSUS: mocked browser wallet, real UI + server linkage lifecycle ──
+    await page.getByTestId('to-consensus').click()
+    await expect(page.getByText('Stage 6 · Consensus')).toBeVisible()
+    await expect(page.getByTestId('consensus-review')).toContainText(
+      'Reduced API p95 latency by 38%',
+    )
+    await expect(page.getByTestId('consensus-review')).toContainText('github.com/example')
+    await page.getByTestId('genlayer-connect').click()
+    await expect(page.getByTestId('consensus-status')).toHaveAttribute('data-status', 'error')
+    await expect(page.getByText('Wallet connection was refused or failed.')).toBeVisible()
+    await page.getByTestId('genlayer-connect').click()
+    await expect(page.getByTestId('consensus-status')).toHaveAttribute(
+      'data-status',
+      'wrong_network',
+    )
+    await page.getByTestId('genlayer-switch').click()
+    await page.getByLabel(/I approve publishing this exact claim/).check()
+    await page.getByTestId('genlayer-submit').click()
+    await expect(page.getByTestId('consensus-status')).toHaveAttribute(
+      'data-status',
+      'awaiting_signature',
+    )
+    await expect(
+      page.getByText('Bradbury RPC unavailable or not indexed yet; retrying safely.'),
+    ).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByTestId('consensus-status')).not.toHaveAttribute(
+      'data-status',
+      'finalized',
+    )
+
+    // Refresh while pending: local linkage resumes the same hash and never creates a second write.
+    await page.reload()
+    await expect(page.getByText('Stage 6 · Consensus')).toBeVisible()
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('assay:test:genlayer-writes')))
+      .toBe('1')
+    await expect(page.getByTestId('consensus-receipt')).toContainText('SUPPORTED', {
+      timeout: 30_000,
+    })
+    await expect(page.getByTestId('consensus-receipt')).toContainText('finalized')
+    await expect(page.getByTestId('consensus-receipt').locator('a')).toHaveAttribute(
+      'href',
+      new RegExp(mockTx),
+    )
+    if (process.env['CAPTURE_GENLAYER_EVIDENCE'] === '1') {
+      await page.locator('.studio').screenshot({
+        path: 'assets/screenshots/genlayer-consensus.png',
+      })
+    }
+
+    // ── SEAL (existing X Layer semantics; unsigned dev mode) ──
     await page.getByTestId('seal-button').click()
     await expect(page.getByTestId('seal-receipt')).toBeVisible({ timeout: 20_000 })
     await expect(page.getByTestId('seal-receipt')).toContainText('0x')
+    await expect(page.getByTestId('gallery-privacy-note')).toContainText(
+      'never appears in the public Gallery automatically',
+    )
 
     // ── SHARE ──
     await page.getByTestId('issue-share').click()

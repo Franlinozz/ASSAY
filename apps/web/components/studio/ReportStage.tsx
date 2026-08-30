@@ -2,8 +2,6 @@
 
 import type { StudioState, Report } from '../../lib/studio'
 import type { StudioActions } from './StudioWorkspace'
-import { SealMoment } from './SealMoment'
-import { ShareControls } from './ShareControls'
 import { STANDARD } from '../../lib/standard.generated'
 
 const AXIS_TITLE: Record<string, string> = Object.fromEntries(
@@ -176,7 +174,7 @@ export function ReportStage({
           <h2>The Tribunal&rsquo;s verdict.</h2>
           <p className="stage-lede">
             Every artifact graded against the published Standard — draft by draft, findings and all.
-            Then seal it, and share.
+            Consensus is next; the X Layer seal follows only after GenLayer finality.
           </p>
         </div>
       </header>
@@ -363,9 +361,6 @@ export function ReportStage({
         </div>
       ) : null}
 
-      {/* THE SEAL MOMENT */}
-      <SealMoment seal={state.seal} busy={actions.busy} onSeal={actions.seal} />
-
       {/* downloads */}
       {Object.keys(forge.fileUrls).length > 0 ? (
         <div className="downloads">
@@ -385,25 +380,17 @@ export function ReportStage({
         </div>
       ) : null}
 
-      {/* share — only once sealed */}
-      {state.seal ? (
-        <ShareControls state={state} actions={actions} />
-      ) : (
-        <p className="caption">Seal the dossier to issue a recruiter link.</p>
-      )}
-
-      <div className="gallery-privacy-note" data-testid="gallery-privacy-note">
-        <p className="overline">Private by default</p>
-        <p className="caption">
-          This dossier never appears in the public Gallery automatically. A recruiter link exposes
-          only the fields and evidence you choose, and it remains revocable. The Gallery contains
-          curated, clearly labeled demonstration dossiers—not private Studio work.
-        </p>
-      </div>
-
       <div className="stage-footer">
         <button type="button" className="btn btn-ghost" onClick={() => actions.goTo('forge')}>
           ← Back to the Forge
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          data-testid="to-consensus"
+          onClick={() => actions.goTo('consensus')}
+        >
+          Continue to Consensus →
         </button>
       </div>
     </div>

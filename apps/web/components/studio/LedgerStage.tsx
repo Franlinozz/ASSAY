@@ -307,6 +307,7 @@ export function LedgerStage({ state, actions }: { state: StudioState; actions: S
           <div className="intake-body">
             <textarea
               className="field-input intake-textarea"
+              data-testid="intake-links"
               value={links}
               onChange={(e) => setLinks(e.target.value)}
               rows={4}
@@ -318,6 +319,7 @@ export function LedgerStage({ state, actions }: { state: StudioState; actions: S
             <button
               type="button"
               className="btn btn-primary"
+              data-testid="intake-links-submit"
               disabled={!links.trim() || actions.busy}
               onClick={async () => {
                 const list = links

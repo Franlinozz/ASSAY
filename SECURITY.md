@@ -89,6 +89,36 @@ Evidence tiers communicate the separate strength question.
 Seals are per dossier version. Re-forging creates a new version and does not mutate the old seal or
 Tribunal report.
 
+### GenLayer public-evidence adjudication
+
+`packages/genlayer` has three passing Studionet consensus scenarios and a Bradbury deployment at
+`0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E`, with persisted `SUPPORTED` and `INSUFFICIENT`
+decisions. Studio browser writes go directly through the user's wallet. Assay's server accepts a
+receipt only after checking the contract, exact calldata, sender, successful consensus result, and
+persisted state. Its boundary is intentionally narrower than Assay's normal evidence ingestion:
+
+- only one to three HTTPS URLs on the contract allowlist are accepted;
+- claim keys, claim text, URLs, source text, result prose, criterion IDs, and Standard versions are
+  bounded or closed sets;
+- résumé files, private documents, email addresses, phone numbers, and unrestricted user prompts
+  are not contract inputs;
+- evidence fetched inside the contract is framed as untrusted data, and the adjudication prompt is
+  constructed entirely by contract code;
+- validators independently fetch and evaluate the evidence and compare the substantive verdict,
+  reason code, and source availability—not merely the output's JSON shape; and
+- state is written only after GenLayer accepts the non-deterministic execution. An unavailable
+  source is counted explicitly; if every source is unavailable, the call fails without a verdict.
+
+Transaction finality is not sufficient by itself: a finalized `TIMEOUT`, disagreement, or
+deterministic violation is `undetermined`/`rejected`, never `SUPPORTED`, and cannot unlock the X
+Layer seal. Pending transaction linkage is stored locally before polling so a refresh resumes the
+same hash rather than producing an automatic duplicate.
+
+A GenLayer verdict means validators reached consensus about whether the approved public evidence
+supports the stated claim under the selected criterion. It does **not** prove identity, employment,
+issuer authenticity, or absolute factual truth. Private Assay evidence remains off GenLayer by
+default, and X Layer remains the dossier-integrity and settlement chain.
+
 ### Payments and secrets
 
 - Policy checks run before payment handling, so refused requests are not charged.

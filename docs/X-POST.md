@@ -49,7 +49,7 @@ https://assayed.xyz/verify
 
 Other agents can hire Assay through A2MCP:
 
-- 11 canonical tools
+- 12 canonical tools
 - x402 payments in USDT on X Layer
 - free seal verification forever
 - async jobs for full career, promotion, and freelancer dossiers

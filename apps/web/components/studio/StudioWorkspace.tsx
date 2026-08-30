@@ -18,10 +18,13 @@ import {
   revokeShare,
   saveRedactions,
   importCredential,
+  linkAdjudication,
   type RedactionRecord,
   type StudioState,
   type FeedEvent,
   type SealReceipt,
+  type AdjudicationCriterion,
+  type AdjudicationReceipt,
 } from '../../lib/studio'
 import { StageRail, type Stage } from './StageRail'
 import { EventFeed } from './EventFeed'
@@ -30,11 +33,13 @@ import { BriefStage } from './BriefStage'
 import { ForgeStage } from './ForgeStage'
 import { ReportStage } from './ReportStage'
 import { InterviewStage } from './InterviewStage'
+import { ConsensusStage } from './ConsensusStage'
 
-function stageForServer(s: StudioState['stage']): Stage {
-  if (s === 'forged' || s === 'sealed') return 'report'
-  if (s === 'forging') return 'forge'
-  if (s === 'brief') return 'brief'
+function stageForState(s: StudioState): Stage {
+  if (s.stage === 'sealed' || s.adjudications.length > 0) return 'consensus'
+  if (s.stage === 'forged') return 'report'
+  if (s.stage === 'forging') return 'forge'
+  if (s.stage === 'brief') return 'brief'
   return 'ledger'
 }
 
@@ -56,6 +61,13 @@ export interface StudioActions {
   prepareInterview: () => Promise<void>
   evaluateInterview: (questionId: string, answer: string) => Promise<void>
   runForge: (selected?: string[]) => Promise<void>
+  linkAdjudication: (input: {
+    claimId: string
+    criterionId: AdjudicationCriterion
+    evidenceUrls: string[]
+    txHash: `0x${string}`
+  }) => Promise<AdjudicationReceipt | null>
+  refresh: () => Promise<void>
   seal: () => Promise<SealReceipt | null>
   share: (config: {
     exposedClaimIds?: string[]
@@ -82,7 +94,7 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
   const didInitStage = useRef(false)
   const previousServerStage = useRef<StudioState['stage'] | null>(null)
   const reduced = useReducedMotion()
-  const stageOrder: Stage[] = ['ledger', 'brief', 'interview', 'forge', 'report']
+  const stageOrder: Stage[] = ['ledger', 'brief', 'interview', 'forge', 'report', 'consensus']
   const stageIndex = stageOrder.indexOf(active)
   const serverWorking = state?.stage === 'forging'
   const working = busy || serverWorking
@@ -96,7 +108,7 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
       const s = await fetchState(id, token)
       setState(s)
       if (!didInitStage.current) {
-        setActive(stageForServer(s.stage))
+        setActive(stageForState(s))
         didInitStage.current = true
       }
       return s
@@ -246,6 +258,20 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
     runForge: (selected) => {
       setForgeTargetCount(selected?.length ?? defaultArtifactCount)
       return runJob(() => startForge(id, token, selected))
+    },
+    linkAdjudication: async (input) => {
+      setError(null)
+      try {
+        const receipt = await linkAdjudication(id, token, input)
+        await refresh()
+        return receipt
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'could not verify that GenLayer transaction')
+        return null
+      }
+    },
+    refresh: async () => {
+      await refresh()
     },
     seal: async () => {
       setBusy(true)
@@ -408,8 +434,10 @@ export function StudioWorkspace({ id, token }: { id: string; token: string }) {
                   <InterviewStage state={state} actions={actions} />
                 ) : active === 'forge' ? (
                   <ForgeStage state={state} actions={actions} />
-                ) : (
+                ) : active === 'report' ? (
                   <ReportStage id={id} token={token} state={state} actions={actions} />
+                ) : (
+                  <ConsensusStage id={id} state={state} actions={actions} />
                 )}
               </motion.div>
             </AnimatePresence>

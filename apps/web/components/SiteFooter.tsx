@@ -28,7 +28,8 @@ export function SiteFooter() {
           </Link>
           <p className="caption" style={{ maxWidth: '26rem' }}>
             {SITE.tagline} An evidence-backed career studio by {SITE.studio} — every claim traced to
-            proof, graded against a published standard, sealed on X Layer.
+            proof, public evidence adjudicated on GenLayer, and finalized integrity sealed on X
+            Layer.
           </p>
         </div>
 
@@ -77,14 +78,22 @@ export function SiteFooter() {
           <p className="overline">On-chain</p>
           <ul className="footer-list footer-onchain">
             <li>
-              <span className="caption">OKX.AI agent</span>
-              <span className="mono">#{SITE.agentId}</span>
+              <span className="caption">GenLayer · {SITE.genlayerNetwork}</span>
+              <a href={SITE.genlayerContractExplorer} rel="noopener" className="mono footer-addr">
+                AssayAdjudicator · {SITE.genlayerContract}
+              </a>
             </li>
             <li>
               <span className="caption">AssayRegistry · X Layer ({SITE.network})</span>
               <a href={SITE.explorerRegistry} rel="noopener" className="mono footer-addr">
                 {SITE.registry}
               </a>
+            </li>
+            <li>
+              <span className="caption">OKX.AI agent · x402 settlement</span>
+              <Link href="/agents" className="mono">
+                #{SITE.agentId}
+              </Link>
             </li>
           </ul>
         </div>

@@ -5,7 +5,8 @@ import { Reveal } from '../../components/Reveal'
 
 export const metadata: Metadata = {
   title: 'The Studio',
-  description: 'Begin a Career Dossier — every claim traced to proof, sealed on X Layer.',
+  description:
+    'Begin a Career Dossier — every claim traced to proof, approved public evidence adjudicated on GenLayer, then sealed for integrity on X Layer.',
 }
 
 export default function StudioPage() {
@@ -17,7 +18,8 @@ export default function StudioPage() {
         <p className="lede">
           Bring whatever you have — an old résumé, project docs, links, or just your answers. Assay
           files the proof, grades every document against the published Standard, and seals the
-          result on X Layer. It never writes a sentence it can&rsquo;t trace.
+          result on X Layer after GenLayer consensus. It never writes a sentence it can&rsquo;t
+          trace.
         </p>
       </Reveal>
       <GuillocheBand height={20} opacity={0.4} className="motion-band" />

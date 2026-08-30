@@ -14,6 +14,7 @@ import {
   setRedactions,
   importCredential,
   compareVersions,
+  verifyAndStoreAdjudication,
   type ShareConfig,
 } from './studio'
 import { verifyCapabilityToken } from './util'
@@ -298,6 +299,51 @@ export function buildStudioRouter(deps: StudioDeps): Router {
     return ok(res, { events, cursor })
   })
 
+  // The browser submits the write directly through the user's wallet. This endpoint is read-only
+  // with respect to GenLayer: it verifies exact calldata + contract state, then links the receipt
+  // into the private dossier so the later X Layer manifest can commit to it.
+  router.post(
+    '/d/:id/adjudication',
+    requireToken,
+    json,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const b = (req.body ?? {}) as Record<string, unknown>
+        if (
+          typeof b['claimId'] !== 'string' ||
+          ![
+            'ACTION_AND_OUTCOME',
+            'QUANTIFIED_OUTCOME',
+            'ROLE_AND_SCOPE',
+            'COMPETENCY_DEMONSTRATION',
+          ].includes(String(b['criterionId'])) ||
+          !Array.isArray(b['evidenceUrls']) ||
+          typeof b['txHash'] !== 'string' ||
+          !/^0x[0-9a-fA-F]{64}$/.test(b['txHash'])
+        )
+          return bad(res, 400, 'claim, criterion, public evidence URLs and transaction are required')
+        const evidenceUrls = b['evidenceUrls'].filter(
+          (value): value is string => typeof value === 'string',
+        )
+        return ok(
+          res,
+          await verifyAndStoreAdjudication(deps, String(req.params['id']), {
+            claimId: b['claimId'],
+            criterionId: b['criterionId'] as
+              | 'ACTION_AND_OUTCOME'
+              | 'QUANTIFIED_OUTCOME'
+              | 'ROLE_AND_SCOPE'
+              | 'COMPETENCY_DEMONSTRATION',
+            evidenceUrls,
+            txHash: b['txHash'] as `0x${string}`,
+          }),
+        )
+      } catch (e) {
+        next(e)
+      }
+    },
+  )
+
   // ── seal (inline) ──
   router.post(
     '/d/:id/seal',
@@ -305,6 +351,13 @@ export function buildStudioRouter(deps: StudioDeps): Router {
     json,
     async (req: Request, res: Response, next: NextFunction) => {
       try {
+        const dossier = store.getDossier(String(req.params['id']))
+        if (!dossier?.adjudications.some((adjudication) => adjudication.status === 'finalized'))
+          return bad(
+            res,
+            409,
+            'finalize at least one GenLayer adjudication before sealing on X Layer',
+          )
         const receipt = await sealDossier(deps, String(req.params['id']))
         return ok(res, receipt)
       } catch (e) {

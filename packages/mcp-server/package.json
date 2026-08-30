@@ -33,6 +33,7 @@
     "@xyndicate/tribunal": "*",
     "better-sqlite3": "^13.0.1",
     "express": "^5.2.1",
+    "genlayer-js": "^1.1.8",
     "viem": "^2.21.0",
     "zod": "^3.24.0"
   },

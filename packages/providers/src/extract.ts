@@ -73,12 +73,14 @@ export async function extractProfile(input: ExtractInput): Promise<ExtractResult
 
   // One evidence item per document (kind 'document'), plus an attestation for typed answers.
   for (const doc of input.documents) {
+    const publicLink = !!doc.sourceRef && /^https?:\/\//i.test(doc.sourceRef)
     evidence.push({
       id: newEvidenceId(),
-      kind: 'document',
+      kind: publicLink ? 'link' : 'document',
       label: doc.label,
       sourceRef: doc.sourceRef ?? doc.label,
       contentText: doc.contentText,
+      ...(publicLink ? { fetchedOk: true } : {}),
       addedAt: new Date().toISOString(),
     })
   }

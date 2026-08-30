@@ -28,7 +28,7 @@ preparation. It builds a tiered claim ledger before writing, maps briefs to hone
 and refuses to render unsupported claims. Artifacts are graded against the code-published Assay
 Standard; ATS résumés are rendered and re-parsed to verify machine-readable fidelity. Each dossier
 version can be signed with EIP-712 and anchored as a privacy-preserving salted commitment on X
-Layer. Humans use the Studio and proof portals; other agents call 11 tools through A2MCP with x402
+Layer. Humans use the Studio and proof portals; other agents call 12 tools through A2MCP with x402
 USDT payments, asynchronous dossier jobs, and free seal verification.
 
 The detailed paste-ready form answer, compact fallback, judging rationale, and operator-only

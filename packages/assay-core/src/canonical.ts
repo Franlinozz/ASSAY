@@ -47,11 +47,23 @@ export interface ClaimDigest {
   strength: string
 }
 
+export interface AdjudicationReceipt {
+  claimId: string
+  network: string
+  chainId: number
+  contractAddress: string
+  txHash: string
+  verdict: string
+  reasonCode: string
+  standardVersion: string
+}
+
 export interface Manifest {
   dossierId: string
   profileDigest: string
   artifactHashes: ArtifactHash[]
   claimDigests: ClaimDigest[]
+  adjudicationReceipts: AdjudicationReceipt[]
   standardVersion: string
   createdAt: string
 }
@@ -73,11 +85,29 @@ export function buildManifest(dossier: Dossier): Manifest {
     .map((c) => ({ id: c.id, strength: c.strength }))
     .sort((x, y) => x.id.localeCompare(y.id))
 
+  const adjudicationReceipts: AdjudicationReceipt[] = dossier.adjudications
+    .filter(
+      (a): a is typeof a & { verdict: string; reasonCode: string } =>
+        a.status === 'finalized' && !!a.verdict && !!a.reasonCode,
+    )
+    .map((a) => ({
+      claimId: a.claimId,
+      network: a.network,
+      chainId: a.chainId,
+      contractAddress: a.contractAddress,
+      txHash: a.txHash,
+      verdict: a.verdict,
+      reasonCode: a.reasonCode,
+      standardVersion: a.standardVersion,
+    }))
+    .sort((x, y) => x.claimId.localeCompare(y.claimId))
+
   return {
     dossierId: dossier.id,
     profileDigest,
     artifactHashes,
     claimDigests,
+    adjudicationReceipts,
     standardVersion: STANDARD_VERSION,
     createdAt: dossier.createdAt,
   }
