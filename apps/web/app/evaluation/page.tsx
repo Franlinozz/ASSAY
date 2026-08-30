@@ -170,7 +170,10 @@ export default function EvaluationPage() {
           by the same tribunal that grades every dossier. Draft by draft, findings and all. Honesty
           is the aesthetic.
         </p>
-        <p className="caption" style={{ marginTop: '1rem', maxWidth: '48rem' }}>
+        <p
+          className="caption"
+          style={{ marginTop: '1rem', maxWidth: '48rem', animation: 'none' }}
+        >
           The Tribunal remains authoritative for deterministic rules. After it finishes, GenLayer
           validators independently adjudicate whether user-approved public evidence supports a
           selected professional claim; that consensus is a separate decision, not another craft
@@ -258,49 +261,42 @@ export default function EvaluationPage() {
             <table className="office" data-testid="parseback-table">
               <thead>
                 <tr>
-                  <th scope="col">Field</th>
-                  <th scope="col">Source profile</th>
-                  <th scope="col">Machine read-back</th>
-                  <th scope="col">Verdict</th>
+                  <th>Field</th>
+                  <th>Expected</th>
+                  <th>Parsed</th>
+                  <th>Match</th>
                 </tr>
               </thead>
               <tbody>
-                {parseRows.map((row) => {
-                  const okRow =
-                    row.expected.trim().toLowerCase() === row.got.trim().toLowerCase() ||
-                    (row.field.endsWith('endYm') &&
-                      row.expected === 'Present' &&
-                      row.got === 'Present')
-                  return (
-                    <tr key={row.field}>
-                      <td className="mono">{row.field}</td>
-                      <td>{row.expected || '—'}</td>
-                      <td>{row.got || '—'}</td>
-                      <td>
-                        <span className={`chip ${okRow ? 'chip-ok' : 'chip-fail'}`}>
-                          {okRow ? 'survived' : 'diff'}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                })}
+                {parseRows.map((row) => (
+                  <tr key={row.field}>
+                    <td className="mono">{row.field}</td>
+                    <td>{row.expected}</td>
+                    <td>{row.got}</td>
+                    <td className="mono">{row.expected === row.got ? '✓' : '×'}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-          <p className="caption" style={{ marginTop: '0.9rem' }}>
-            {pb?.label}
-          </p>
         </div>
       </section>
 
       <section className="section-tight">
-        <div className="container" style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-          <Link href="/standard" className="btn btn-ghost">
-            Read the Standard it grades against
-          </Link>
-          <Link href="/studio" className="btn btn-primary">
-            Run yours
-          </Link>
+        <div className="container prose">
+          <h2>What this evaluation proves — and what it doesn&rsquo;t.</h2>
+          <p>
+            This page proves that Assay grades its own generated artifacts against the same
+            published Standard that users can inspect. It also shows that failed drafts are
+            retained instead of hidden and that the ATS résumé is re-parsed after rendering.
+          </p>
+          <p>
+            It does not prove that a career claim is objectively true, nor does parse-back predict
+            recruiter ranking. Evidence strength, artifact integrity, and editorial quality remain
+            separate dimensions. Read the{' '}
+            <Link href="/standard">published Standard</Link> and{' '}
+            <Link href="/verify">public verifier</Link> for those boundaries.
+          </p>
         </div>
       </section>
     </>
