@@ -32,7 +32,7 @@ export default async function VerifyPage({
             found. A seal proves the artifact is unchanged; the registry holds only salted
             commitments, never personal data.
           </p>
-          <p className="caption">
+          <p className="caption" style={{ animation: 'none' }}>
             This page verifies the separate X Layer integrity seal. When present in the sealed
             manifest, a GenLayer receipt records consensus about approved public evidence; neither
             layer verifies a person or guarantees absolute factual truth.
