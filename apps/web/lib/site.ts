@@ -4,7 +4,13 @@ export const SITE = {
   tagline: 'Proof before polish.',
   url: 'https://assayed.xyz',
   description:
-    'An evidence-backed career studio: every claim traced to proof, every document graded against a published standard, machine-verified to survive ATS parsing, and sealed with checkable provenance on X Layer.',
+    'A GenLayer-first evidence adjudication studio: public claims reach validator consensus under the Assay Standard, then finalized dossiers receive checkable integrity seals on X Layer.',
+  genlayerNetwork: 'Testnet Bradbury',
+  genlayerChainId: 4221,
+  genlayerContract: '0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E',
+  genlayerExplorer: 'https://explorer-bradbury.genlayer.com',
+  genlayerContractExplorer:
+    'https://explorer-bradbury.genlayer.com/address/0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E',
   agentId: '8599',
   registry: '0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4',
   chainId: 196,
@@ -21,6 +27,9 @@ export const SITE = {
 // The integrity-vs-truth line, verbatim from ASSAY.md (the honesty guarantee).
 export const INTEGRITY_LINE =
   'A seal proves the artifact is unchanged — not that a claim is objectively true. We say exactly which tier each claim earned, and we never imply more than that.'
+
+export const ADJUDICATION_LINE =
+  'GenLayer validators independently adjudicate whether approved public evidence supports a professional claim under the Assay Standard.'
 
 export type Tier = 'attested' | 'documented' | 'linked' | 'sealed'
 

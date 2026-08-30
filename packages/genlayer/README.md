@@ -24,6 +24,8 @@ npm run test:integration
 
 ## Deployment
 
-Deployment is intentionally not part of the contract phase. After review and explicit approval,
-select the target network with the current CLI and run `npm run deploy`. Never put a private key in
-this directory, a command argument, committed config, or logs.
+The reviewed contract is deployed to GenLayer Testnet Bradbury at
+[`0xa0A37DEf…1B96E`](https://explorer-bradbury.genlayer.com/address/0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E).
+See [`docs/GENLAYER-BRADBURY.md`](../../docs/GENLAYER-BRADBURY.md) for the source hash, deployment
+transaction, accepted adjudications, failed-closed fixture, and measured testnet cost. Never put a
+private key in this directory, a command argument, committed config, or logs.

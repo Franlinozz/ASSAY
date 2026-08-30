@@ -16,8 +16,19 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
   through contract-controlled LLM prompts, requires validators to independently re-fetch and
   reproduce the substantive decision, and persists only the consensus-accepted adjudication.
 - Added 17 GenLayer direct-mode tests, three Studio/localnet integration scenarios, GenVM lint,
-  deployment scaffolding, workspace scripts, and a dedicated CI job. No GenLayer wallet, external
-  transaction, network deployment, frontend integration, or production claim is included yet.
+  deployment scaffolding, workspace scripts, and a dedicated CI job. That contract-only checkpoint
+  made no external transaction and changed no frontend or production flow.
+- Added a first-class Studio Consensus stage after Tribunal and before the existing X Layer seal.
+  The browser uses `genlayer-js@1.1.8` and the user's wallet for Bradbury writes, shows exact public
+  consent and transaction lifecycle states, resumes pending hashes after refresh, and exposes the
+  verdict, reason, contract, transaction, network, and explorer receipt.
+- Added server-side Bradbury verification of the exact contract, method, calldata, sender,
+  consensus result, and persisted adjudication. Only finalized bounded receipt fields enter the
+  canonical X Layer manifest; private claim prose, URLs, source text, PII, and reason prose do not.
+- Added a submission-ready GenLayer Project evidence pack with current Portal-program mapping,
+  source/deployment/decision links, a clearly labeled lifecycle-test screenshot, measured release
+  evidence, a 75-second storyboard, suggested X post, and a manual operator checklist. Nothing was
+  submitted automatically.
 
 ### Changed
 
@@ -30,6 +41,20 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 - Created the encrypted `assay-bradbury` deployer outside the repository and selected the official
   Testnet Bradbury profile. Its public address is documented in `docs/GENLAYER.md`; the wallet
   remains unfunded and no Bradbury transaction has been submitted.
+- Deployed `AssayAdjudicator` to GenLayer Testnet Bradbury at
+  `0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E`; deployment transaction
+  `0x49547349ddc6ef6c49bd822b55f43d3da647915cefcc5e20f8ab7363382b85ba` reached
+  `ACCEPTED / AGREE / FINISHED_WITH_RETURN`. An accepted public-README smoke persisted a
+  `SUPPORTED` verdict. `docs/GENLAYER-BRADBURY.md` records the exact command, source hash, explorer
+  evidence, cost, and failed-closed Bradbury timeout cases without counting them as adjudications.
+- Re-read the Bradbury contract and all fixture transactions: `SUPPORTED` and `INSUFFICIENT` are
+  persisted as two distinct decisions. The contradiction transaction finalized with consensus
+  `TIMEOUT` and no state. Receipt handling now checks consensus result separately from transaction
+  status so finality can never turn timeout or deterministic rejection into support.
+- Completed the GenLayer release audit: 385 Vitest + 57 Playwright + 4 Foundry = 446 application
+  tests, plus 17 direct-mode and 3 hosted-Studionet GenLayer tests (466 across independently run
+  suites); full typecheck, production builds, GenVM lint, npm audit, secret scan, judged-artifact
+  consistency, and 69-external-URL dead-link gates are green.
 - Updated only the docs workspace to Fumadocs 16.15.4, Fumadocs MDX 15.4.0, and Next 16.3.3 to
   remove newly disclosed transitive advisories while keeping the production web app on Next 15.
   Patched transitive overrides keep the current lockfile at zero known npm advisories. The docs

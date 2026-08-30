@@ -113,6 +113,7 @@ export async function startStack({ webDev = false } = {}) {
       // (fails the cover letter's first draft). Both are e2e/prod-only knobs, never in unit tests.
       ASY_STUDIO_REAL_PDF: '1',
       ASY_FAKE_REPAIR_DEMO: '1',
+      ASY_GENLAYER_MODE: 'fake',
     },
     stdio: ['ignore', logFd(dataDir, 'api.log'), logFd(dataDir, 'api.log')],
     detached: true,

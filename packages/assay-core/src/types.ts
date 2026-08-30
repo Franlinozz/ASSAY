@@ -26,6 +26,10 @@ import {
   DossierVariantEnum,
   InterviewQuestionSchema,
   InterviewEvaluationSchema,
+  AdjudicationSchema,
+  AdjudicationCriterionEnum,
+  AdjudicationVerdictEnum,
+  AdjudicationStatusEnum,
 } from './schemas'
 
 // Types are inferred from the zod schemas so the two can never drift.
@@ -56,3 +60,7 @@ export type ArtifactKind = z.infer<typeof ArtifactKindEnum>
 export type DossierVariant = z.infer<typeof DossierVariantEnum>
 export type InterviewQuestion = z.infer<typeof InterviewQuestionSchema>
 export type InterviewEvaluation = z.infer<typeof InterviewEvaluationSchema>
+export type Adjudication = z.infer<typeof AdjudicationSchema>
+export type AdjudicationCriterion = z.infer<typeof AdjudicationCriterionEnum>
+export type AdjudicationVerdict = z.infer<typeof AdjudicationVerdictEnum>
+export type AdjudicationStatus = z.infer<typeof AdjudicationStatusEnum>

@@ -170,6 +170,12 @@ export default function EvaluationPage() {
           by the same tribunal that grades every dossier. Draft by draft, findings and all. Honesty
           is the aesthetic.
         </p>
+        <p className="caption" style={{ marginTop: '1rem', maxWidth: '48rem' }}>
+          The Tribunal remains authoritative for deterministic rules. After it finishes, GenLayer
+          validators independently adjudicate whether user-approved public evidence supports a
+          selected professional claim; that consensus is a separate decision, not another craft
+          grade.
+        </p>
       </div>
 
       <section className="section-tight">

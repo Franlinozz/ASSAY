@@ -10,6 +10,27 @@ export const RequirementKindEnum = z.enum(['must', 'nice'])
 export const CoverageStatusEnum = z.enum(['strong', 'partial', 'missing', 'confirm'])
 export const DossierVariantEnum = z.enum(['job', 'promotion', 'freelance'])
 export const BriefModeEnum = z.enum(['job', 'promotion', 'freelance'])
+export const AdjudicationCriterionEnum = z.enum([
+  'ACTION_AND_OUTCOME',
+  'QUANTIFIED_OUTCOME',
+  'ROLE_AND_SCOPE',
+  'COMPETENCY_DEMONSTRATION',
+])
+export const AdjudicationVerdictEnum = z.enum([
+  'SUPPORTED',
+  'PARTIAL',
+  'INSUFFICIENT',
+  'CONTRADICTED',
+])
+export const AdjudicationStatusEnum = z.enum([
+  'submitted',
+  'pending',
+  'accepted',
+  'finalized',
+  'rejected',
+  'undetermined',
+  'error',
+])
 export const ArtifactKindEnum = z.enum([
   'resume_ats',
   'resume_designed',
@@ -189,6 +210,32 @@ export const SealSchema = z.object({
   standardVersion: z.string().default(STANDARD_VERSION),
 })
 
+// A user-wallet GenLayer write linked back to one confirmed Assay claim. Claim text and evidence
+// URLs are retained in the private dossier because they are the exact consent payload; only the
+// bounded receipt fields enter the privacy-preserving X Layer manifest.
+export const AdjudicationSchema = z.object({
+  claimId: z.string(),
+  claimKey: z.string(),
+  claimText: z.string(),
+  criterionId: AdjudicationCriterionEnum,
+  standardVersion: z.string(),
+  evidenceUrls: z.array(z.string().url()).min(1).max(3),
+  network: z.literal('testnet-bradbury'),
+  chainId: z.literal(4221),
+  contractAddress: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
+  txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
+  wallet: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
+  status: AdjudicationStatusEnum,
+  verdict: AdjudicationVerdictEnum.optional(),
+  reasonCode: z.string().optional(),
+  shortReason: z.string().optional(),
+  sourceCount: z.number().int().nonnegative().optional(),
+  unavailableCount: z.number().int().nonnegative().optional(),
+  submittedAt: IsoDateTime,
+  updatedAt: IsoDateTime,
+  finalizedAt: IsoDateTime.optional(),
+})
+
 // Provisional — filled out in the tribunal phase (P4).
 export const TribunalFindingSchema = z.object({
   code: z.string(),
@@ -212,6 +259,7 @@ export const DossierSchema = z.object({
   claims: z.array(ClaimSchema).default([]),
   artifacts: z.array(ArtifactSchema).default([]),
   tribunalReports: z.array(TribunalReportSchema).default([]),
+  adjudications: z.array(AdjudicationSchema).default([]),
   variant: DossierVariantEnum.default('job'),
   version: z.number().int().positive().default(1),
   interview: InterviewRoomSchema.default({}),

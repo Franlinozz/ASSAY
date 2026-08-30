@@ -13,7 +13,10 @@ import {
   revokeShare,
   getShareView,
   type StudioDeps,
+  verifyAndStoreAdjudication,
 } from './studio'
+import { FakeGenLayerVerifier } from './genlayer'
+import { buildManifest } from '@xyndicate/assay-core'
 import { signCapabilityToken, verifyCapabilityToken } from './util'
 
 const SAMPLE = `Chidinma Eze — Senior Backend Engineer, Lagos. chidinma.eze@example.com.
@@ -34,6 +37,7 @@ function deps(rig: TestRig): StudioDeps {
     toPdf: devPdf,
     realPdf: false,
     sampleContrast: async () => 12.4,
+    genlayerVerifier: new FakeGenLayerVerifier(),
   }
 }
 
@@ -173,6 +177,82 @@ describe('studio flow', () => {
     const prose = state.forge!.artifacts.filter((a) => a.sentences.length > 0)
     expect(prose.length).toBeGreaterThan(0)
     for (const a of prose) for (const s of a.sentences) expect(s.claimIds.length).toBeGreaterThan(0)
+  })
+
+  it('links only approved public evidence, persists lifecycle, and puts finality in the seal manifest', async () => {
+    const rig = testRuntime()
+    const d = deps(rig)
+    const { id } = await buildConfirmed(rig)
+    const dossier = rig.store.getDossier(id)!
+    const claim = dossier.claims.find((candidate) => candidate.status === 'confirmed')!
+    dossier.evidence.push({
+      id: 'EV-PUBLIC',
+      kind: 'link',
+      label: 'Public project evidence',
+      sourceRef: 'https://github.com/example/public-project',
+      contentText: claim.text,
+      fetchedOk: true,
+      addedAt: '2026-08-30T00:00:00.000Z',
+    })
+    claim.evidenceIds.push('EV-PUBLIC')
+    rig.store.saveDossier(dossier)
+
+    await expect(
+      verifyAndStoreAdjudication(d, id, {
+        claimId: claim.id,
+        criterionId: 'ACTION_AND_OUTCOME',
+        evidenceUrls: ['https://github.com/example/public-project'],
+        txHash: `0x${'42'.repeat(32)}`,
+      }),
+    ).rejects.toThrow('complete the Forge and Tribunal')
+
+    await runBrief(d, id, '- Backend engineering with PostgreSQL')
+    await runStudioForge(d, { dossierId: id, selected: ['manifest_json'] })
+    const input = {
+      claimId: claim.id,
+      criterionId: 'ACTION_AND_OUTCOME' as const,
+      evidenceUrls: ['https://github.com/example/public-project'],
+      txHash: `0x${'42'.repeat(32)}` as `0x${string}`,
+    }
+    expect((await verifyAndStoreAdjudication(d, id, input)).status).toBe('pending')
+    await expect(
+      verifyAndStoreAdjudication(d, id, {
+        ...input,
+        txHash: `0x${'43'.repeat(32)}`,
+      }),
+    ).rejects.toThrow('already has a different GenLayer transaction')
+    expect((await verifyAndStoreAdjudication(d, id, input)).status).toBe('accepted')
+    const finalized = await verifyAndStoreAdjudication(d, id, input)
+    expect(finalized).toMatchObject({
+      status: 'finalized',
+      verdict: 'SUPPORTED',
+      reasonCode: 'EVIDENCE_SUPPORTS_CLAIM',
+      network: 'testnet-bradbury',
+      chainId: 4221,
+    })
+    const stored = rig.store.getDossier(id)!
+    expect(buildManifest(stored).adjudicationReceipts).toEqual([
+      expect.objectContaining({ claimId: claim.id, txHash: input.txHash, verdict: 'SUPPORTED' }),
+    ])
+    const receipt = await sealDossier(d, id)
+    expect(receipt.manifestHash).toMatch(/^0x[0-9a-f]{64}$/)
+  })
+
+  it('refuses private documents and URLs outside the contract allowlist', async () => {
+    const rig = testRuntime()
+    const d = deps(rig)
+    const { id } = await buildConfirmed(rig)
+    await runBrief(d, id, '- Backend engineering')
+    await runStudioForge(d, { dossierId: id, selected: ['manifest_json'] })
+    const claim = rig.store.getDossier(id)!.claims[0]!
+    await expect(
+      verifyAndStoreAdjudication(d, id, {
+        claimId: claim.id,
+        criterionId: 'ROLE_AND_SCOPE',
+        evidenceUrls: ['https://drive.google.com/private-document'],
+        txHash: `0x${'43'.repeat(32)}`,
+      }),
+    ).rejects.toThrow('approved public HTTPS URL')
   })
 
   it('re-forges as vN+1 and keeps each version seal independently', async () => {

@@ -245,3 +245,23 @@ Implement to THESE shapes (source: seller-sdk + howtomcp docs, fetched 2026-07-2
   sent. CLI npm 0.39.2 is one patch ahead of its generated 0.39.1 docs, and its live
   `estimate-fees` path is incompatible with published `genlayer-js@1.1.8`; retain a conservative
   test-GEN buffer and record actual receipt cost after deployment.
+- **GENLAYER BRADBURY DEPLOYMENT (2026-08-29 UTC; re-read 2026-08-30).** `AssayAdjudicator` deployed at
+  `0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E`; tx
+  `0x49547349ddc6ef6c49bd822b55f43d3da647915cefcc5e20f8ab7363382b85ba` reached
+  `ACCEPTED / AGREE / FINISHED_WITH_RETURN`. Public-README smoke tx
+  `0xce27f6f78412c5cb4d4575760d2a92ad708d7d3bd8113dbd4fed5705f72f59b5` accepted and
+  persisted `SUPPORTED`. A controlled smaller-source transaction later persisted `INSUFFICIENT`.
+  The contradicted fixture finalized with consensus result `TIMEOUT` and no state; finality without
+  `AGREE` is not adjudication. Exact evidence and costs are in `docs/GENLAYER-BRADBURY.md`.
+- **GENLAYER P3/P4 (2026-08-30).** Studio now inserts Consensus between Tribunal and the unchanged X
+  Layer seal. `genlayer-js@1.1.8` performs user-wallet Bradbury writes; the server verifies exact
+  calldata, sender, consensus result, and persisted contract state before adding a bounded receipt
+  to the canonical manifest. Private uploads remain ineligible. Public copy now leads with
+  GenLayer, while the Assay Standard, X Layer registry, and OKX.AI/x402 responsibilities remain
+  explicit and unchanged.
+- **GENLAYER P5/P6 (2026-08-30).** Finality is no longer mistaken for consensus success: browser and
+  server check the transaction result plus persisted state, pinned by wallet-refusal, wrong-chain,
+  RPC-loss, timeout/rejection, refresh-resume, and duplicate-request coverage. Release audit:
+  385 Vitest + 57 Playwright + 4 Foundry, plus 17 direct and 3 Studionet tests = 466 across suites;
+  typecheck/build/lint/audit/secrets/judged-artifact/dead-link gates green. The Portal evidence pack
+  is prepared at `docs/GENLAYER-SUBMISSION.md`; it has not been submitted.

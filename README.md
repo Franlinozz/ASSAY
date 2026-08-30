@@ -1,23 +1,24 @@
 <div align="center">
 
-<img src="assets/brand/github-banner.webp" width="100%" alt="Assay — evidence-backed career dossiers with structured assessment, traceable verification, and X Layer sealing">
+<img src="assets/brand/github-banner.webp" width="100%" alt="Assay — consensus-backed professional evidence with GenLayer adjudication and X Layer integrity sealing">
 
 # ASSAY
 
 ### _Proof before polish._
 
-Assay turns scattered work history into an evidence-backed Career Dossier: every sentence traces
-to confirmed proof, every artifact is graded against a published standard, the ATS résumé is
-re-parsed by machine, and each immutable version can be sealed on X Layer. It is a career system
-for job seekers, career changers, freelancers, and working professionals—and an A2MCP service
-other agents can hire by the call.
+Assay turns scattered work history into an evidence-backed Career Dossier. Every sentence traces
+to confirmed proof, every artifact is graded against a published standard, and GenLayer validators
+independently adjudicate whether user-approved public evidence supports a professional claim. The
+resulting consensus receipt enters the manifest before its privacy-preserving integrity seal on X
+Layer. Assay serves people directly and remains an A2MCP service other agents can hire by the call.
 
 [![Live site](https://img.shields.io/badge/live-assayed.xyz-205C4C)](https://assayed.xyz)
+[![GenLayer Bradbury](https://img.shields.io/badge/GenLayer-Testnet_Bradbury-205C4C)](https://explorer-bradbury.genlayer.com/address/0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E)
 [![OKX.AI agent](https://img.shields.io/badge/OKX.AI_agent-%238599-1B1F2A)](https://assayed.xyz/agents)
 [![X Layer registry](https://img.shields.io/badge/X_Layer_registry-196-C63D21)](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
 [![Assay Standard](https://img.shields.io/badge/Assay_Standard-AS--1.1.0-205C4C)](https://assayed.xyz/standard)
 [![Release](https://img.shields.io/badge/release-v1.1.0-1B1F2A)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/core_tests-435_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/release_tests-446_passing-2FA96B)](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml)
 
 **[Open the Studio](https://assayed.xyz/studio)** ·
 **[Watch the 90-second judged run](https://assayed.xyz/judge)** ·
@@ -37,8 +38,9 @@ evidence is usually scattered across documents, links, memories, and systems tha
 2. **[Brief](https://assayed.xyz/docs/tools/asy_fit_brief)** — decompose a job, promotion, or client brief into honest strong/partial/confirm/missing coverage.
 3. **[Forge](https://assayed.xyz/docs/tools/asy_create_dossier_job)** — produce evidence-gated résumés, letters, stories, review packs, proof packs, portfolios, and manifests.
 4. **[Tribunal](https://assayed.xyz/standard)** — grade deterministic laws and craft, then issue a bounded repair brief instead of quietly lowering the bar.
-5. **[Seal](https://assayed.xyz/docs/verify)** — sign the canonical version and anchor only its salted commitment leaf on X Layer.
-6. **[Share](https://assayed.xyz/gallery)** — expose a redacted recruiter portal, selected work samples, or a machine-readable agent hand-off.
+5. **Consensus** — explicitly approve the exact public claim, criterion, and URLs; your wallet sends them directly to `AssayAdjudicator` on GenLayer Testnet Bradbury.
+6. **[Seal](https://assayed.xyz/docs/verify)** — after GenLayer finality, sign the receipt-bearing canonical version and anchor only its salted commitment leaf on X Layer.
+7. **[Share](https://assayed.xyz/gallery)** — expose a redacted recruiter portal, selected work samples, or a machine-readable agent hand-off.
 
 ## See the system
 
@@ -60,6 +62,22 @@ evidence is usually scattered across documents, links, memories, and systems tha
     <td align="center"><sub><b>Public verification</b> — no wallet and no payment required.</sub></td>
   </tr>
 </table>
+
+## The trust stack
+
+1. **GenLayer — primary adjudication.** `AssayAdjudicator` fetches bounded, approved public evidence
+   inside the Intelligent Contract. Validators independently evaluate the substantive decision
+   under the Equivalence Principle, and only consensus-accepted results change contract state.
+2. **Assay Standard — deterministic authority.** The claim gate and Tribunal own evidence linkage,
+   numeric facts, format laws, parse-back, policy, and the published AS-1.1.0 grading rules.
+3. **X Layer — dossier integrity.** A finalized GenLayer reference enters the canonical manifest;
+   X Layer then anchors only its salted commitment. This preserves the exact dossier version.
+4. **OKX.AI — agent distribution and settlement.** The existing 12-tool A2MCP surface, 13 offers,
+   fixed prices, x402 settlement, and free `asy_verify` flow remain unchanged.
+
+GenLayer consensus means approved evidence supports—or does not support—a claim under stated
+criteria. It does not prove identity, employment, issuer authenticity, or absolute factual truth.
+Private career documents and PII never go to GenLayer by default.
 
 ## Four moats
 
@@ -88,18 +106,24 @@ sealable commitment. Only `keccak256(manifestHash || salt)` reaches
 [`AssayRegistry`](https://www.oklink.com/x-layer/address/0x96f8b5f0bfa06e065a861ac220bd86f5722b8ef4)
 on X Layer; source documents, career prose, contact data, and salts stay off-chain.
 
-## GenLayer development status
+## GenLayer live integration
 
 Assay's `AssayAdjudicator` Intelligent Contract now implements the consensus-critical part of the
-planned trust stack: it fetches a bounded set of approved public evidence inside GenLayer, asks
+trust stack: it fetches a bounded set of approved public evidence inside GenLayer, asks
 validators to independently decide whether that evidence supports a claim under a contract-owned
 AS-1.1.0 criterion, and persists only the accepted adjudication. It has 17 passing direct-mode
 tests and three passing hosted-Studionet consensus scenarios.
 
-It is **not yet deployed to Testnet Bradbury or connected to the production Studio**. No current
-dossier or X Layer seal contains a GenLayer receipt. The existing claim gate, Tribunal, X Layer
-registry, and OKX.AI/x402 services are unchanged. See [`docs/GENLAYER.md`](docs/GENLAYER.md) for the
-reviewed architecture, privacy boundary, current-doc notes, and deployment gates.
+It is deployed to **GenLayer Testnet Bradbury** at
+[`0xa0A…1B96E`](https://explorer-bradbury.genlayer.com/address/0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E),
+with persisted `SUPPORTED` and `INSUFFICIENT` public-evidence adjudications. The Studio now uses
+`genlayer-js@1.1.8` for user-wallet writes, exposes the real transaction lifecycle, independently
+verifies exact calldata and contract state server-side, and includes only finalized bounded receipt
+fields in the later X Layer manifest. The claim gate, Tribunal, X Layer registry, and OKX.AI/x402
+services remain unchanged. See
+[`docs/GENLAYER.md`](docs/GENLAYER.md) and the
+[`Bradbury transcript`](docs/GENLAYER-BRADBURY.md) for the architecture, deployment evidence, and
+honestly recorded network-liveness failures.
 
 ## MCP tools and prices
 
@@ -152,6 +176,27 @@ writes local artifacts to `packages/renderers/artifacts-out/`. When the developm
 its ready lines, open **http://127.0.0.1:3400/studio**. The local stack uses fake providers, a
 temporary SQLite store, and the development payment gate.
 
+### Five-minute GenLayer reproduction
+
+The deterministic contract gate needs Python 3.12, but no wallet or network:
+
+```bash
+python3 -m venv packages/genlayer/.venv
+packages/genlayer/.venv/bin/pip install -r packages/genlayer/requirements.txt
+export PATH="$PWD/packages/genlayer/.venv/bin:$PATH"
+npm run test:genlayer
+npm run typecheck -w @xyndicate/mcp-server
+npx vitest run packages/mcp-server/src/genlayer.test.ts packages/mcp-server/src/studio.test.ts
+```
+
+Then inspect the deployed [AssayAdjudicator on Testnet Bradbury](https://explorer-bradbury.genlayer.com/address/0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E), its
+[`SUPPORTED` transaction](https://explorer-bradbury.genlayer.com/tx/0xce27f6f78412c5cb4d4575760d2a92ad708d7d3bd8113dbd4fed5705f72f59b5),
+and its [`INSUFFICIENT` transaction](https://explorer-bradbury.genlayer.com/tx/0x7456fff2aae9f82814066bcfc30f3326ef8a81180aa93d112837a88f1cdcc6be).
+To exercise a new browser write, run the Studio, add a fetched public GitHub/GitLab/Assay link to a
+confirmed claim, finish the Tribunal, connect a funded GenLayer wallet, review the exact public
+payload, and submit from Consensus. Assay never proxies that write through its backend. Testnet GEN
+has no revenue value.
+
 ## Verify it yourself
 
 The featured fictional persona, Adaeze Okonkwo, has dossier ID `DSR-WC0Q7NZ7` and commitment leaf
@@ -201,10 +246,10 @@ curl -sS https://api.assayed.xyz/mcp \
 
 ## Test evidence
 
-The existing Assay release gate runs **435 tests**. Its breakdown is 374 Vitest, 57 Playwright, and
-4 Foundry. The GenLayer contract job independently adds **17 direct-mode tests**, and its authorized
-Studionet checkpoint adds **3 consensus tests** (455 measured across all green suites), plus GenVM
-lint. The gates also typecheck every workspace,
+The Assay release gate runs **446 tests**: 385 Vitest, 57 Playwright, and 4 Foundry. The GenLayer
+contract job independently adds **17 direct-mode tests**, and its authorized Studionet checkpoint
+adds **3 consensus tests** (466 measured across all green suites), plus GenVM lint. The gates also
+typecheck every workspace,
 regenerate the published Standard and 12 tool pages, prove manifest/docs/pricing consistency, and
 run the repository dead-link gauntlet. See
 [CI](https://github.com/Franlinozz/ASSAY/actions/workflows/ci.yml) and the
@@ -223,6 +268,7 @@ run the repository dead-link gauntlet. See
 | [`apps/docs`](apps/docs)                                         | Generated tool schemas, Standard mirror, integration notes, and case studies |
 | [`docs/QUICKSTART-TRANSCRIPT.md`](docs/QUICKSTART-TRANSCRIPT.md) | Exact v1.0.0 fresh-clone execution proof                                     |
 | [`docs/HARDENING-DRILLS.md`](docs/HARDENING-DRILLS.md)           | Executed failure, performance, dependency, and security drill record         |
+| [`docs/GENLAYER-SUBMISSION.md`](docs/GENLAYER-SUBMISSION.md)     | GenLayer Project evidence, live transactions, demo script, and operator gate |
 | [`docs/DEMO-KIT.md`](docs/DEMO-KIT.md)                           | Exact 90-second storyboard and operator capture instructions                 |
 | [`docs/X-POST.md`](docs/X-POST.md)                               | Honest launch-thread copy and required real-proof media                      |
 | [`SUBMISSION.md`](SUBMISSION.md)                                 | Pinned deadline, submission fields, and twelve-check verify-day runbook      |

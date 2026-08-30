@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1080" role="img" aria-labelledby="title desc">
   <title id="title">Assay architecture</title>
-  <desc id="desc">The Assay evidence-to-provenance architecture, from human and agent callers through the MCP payment gate, evidence pipeline, Tribunal, receipts, and X Layer registry.</desc>
+  <desc id="desc">The Assay trust architecture: local deterministic rules feed a consensus-critical public-evidence decision on GenLayer, whose receipt enters the dossier before its X Layer integrity seal; OKX.AI and x402 remain the agent and settlement rail.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#205C4C"/>
@@ -58,7 +58,8 @@
   <path class="flow" d="M 500 538 L 610 538"/>
   <path class="flow" d="M 990 538 L 1100 538"/>
   <path class="flow" d="M 1290 595 L 1290 630 L 445 630 L 445 674"/>
-  <path class="flow" d="M 770 742 L 900 742"/>
+  <path class="flow" d="M 500 742 L 540 742"/>
+  <path class="flow" d="M 1060 742 L 1100 742"/>
   <path class="flow" d="M 290 674 L 290 640 L 1120 640 L 1120 595"/>
   <path class="seal-flow" d="M 1190 815 L 1190 850 L 1050 850 L 1050 884"/>
   <path class="verify-flow" d="M 1385 884 L 1385 824 L 1300 824"/>
@@ -89,7 +90,7 @@
   <text x="102" y="379" class="caption">x402 · eip155:196 · policy first</text>
 
   <rect x="430" y="328" width="340" height="72" rx="12" class="box"/>
-  <text x="452" y="356" class="name">11 MCP Tools + Job Rail</text>
+  <text x="452" y="356" class="name">12 MCP Tools + Job Rail</text>
   <text x="452" y="379" class="caption">fast calls inline · dossiers async</text>
 
   <rect x="800" y="328" width="340" height="72" rx="12" class="box"/>
@@ -118,18 +119,25 @@
   <text x="1124" y="575" class="micro">claim gate — no sentence without proof</text>
 
   <!-- Band 4 -->
-  <text x="48" y="658" class="band">QUALITY &amp; PROVENANCE</text>
-  <rect x="120" y="674" width="650" height="142" rx="12" class="box"/>
-  <text x="144" y="706" class="name">TRIBUNAL — Assay Standard AS-1.1.0</text>
-  <text x="144" y="732" class="caption">deterministic: parse-back · dates · links · consistency</text>
-  <path d="M 177 780 A 26 26 0 1 1 219 758" fill="none" stroke="#C24141" stroke-width="2" marker-end="url(#fail-arrow)"/>
-  <text x="238" y="765" class="micro" fill="#C24141">fail → repair (max 2)</text>
-  <text x="238" y="787" class="micro" fill="#2FA96B">pass → immutable report</text>
+  <text x="48" y="658" class="band">RULES → CONSENSUS → INTEGRITY</text>
+  <rect x="80" y="674" width="420" height="142" rx="12" class="box"/>
+  <text x="104" y="706" class="name">LOCAL RULES — AS-1.1.0</text>
+  <text x="104" y="732" class="caption">claim gate · Tribunal · parse-back · policy</text>
+  <path d="M 137 780 A 26 26 0 1 1 179 758" fill="none" stroke="#C24141" stroke-width="2" marker-end="url(#fail-arrow)"/>
+  <text x="198" y="765" class="micro" fill="#C24141">fail → repair (max 2)</text>
+  <text x="198" y="787" class="micro" fill="#2FA96B">pass → public consent</text>
 
-  <rect x="900" y="674" width="580" height="142" rx="12" class="box"/>
-  <text x="924" y="706" class="name">RECEIPTS</text>
-  <text x="924" y="732" class="caption">EIP-712 seal · salted commitment · per-version lineage</text>
-  <text x="924" y="758" class="micro">integrity proof, not an oracle of objective truth</text>
+  <rect x="540" y="674" width="520" height="142" rx="12" class="container"/>
+  <text x="564" y="706" class="name">GENLAYER — PRIMARY ADJUDICATION</text>
+  <text x="564" y="732" class="caption">AssayAdjudicator · Testnet Bradbury · chain 4221</text>
+  <text x="564" y="758" class="micro">validators independently fetch approved public evidence</text>
+  <text x="564" y="782" class="micro">consensus decides support under the stated criterion</text>
+
+  <rect x="1100" y="674" width="380" height="142" rx="12" class="box"/>
+  <text x="1124" y="706" class="name">X LAYER INTEGRITY</text>
+  <text x="1124" y="732" class="caption">receipt-bearing manifest · EIP-712 seal</text>
+  <text x="1124" y="758" class="micro">salted commitment · per-version lineage</text>
+  <text x="1124" y="782" class="micro">integrity proof, not absolute truth</text>
 
   <rect x="1008" y="620" width="224" height="24" rx="12" class="pill"/>
   <text x="1025" y="636" class="micro">repair brief</text>
@@ -161,6 +169,6 @@
   <rect x="1080" y="833" width="164" height="24" rx="12" fill="#FBF9F3" stroke="#E6E0D2"/>
   <text x="1095" y="849" class="micro" fill="#C63D21">sealBatch(leaf)</text>
 
-  <text x="48" y="1043" class="micro">Every artifact sentence resolves to confirmed claims and evidence. Only salted commitment leaves reach X Layer.</text>
-  <text x="1435" y="1043" class="micro">v1.0</text>
+  <text x="48" y="1043" class="micro">Private documents stay in Assay. Only approved public inputs reach GenLayer; only salted receipt-bearing manifest commitments reach X Layer.</text>
+  <text x="1435" y="1043" class="micro">v1.1</text>
 </svg>

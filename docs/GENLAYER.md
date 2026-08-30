@@ -1,10 +1,11 @@
 # GenLayer architecture
 
-> **Status:** Studionet consensus checkpoint. `AssayAdjudicator` is implemented, GenVM-lint clean,
-> and covered by 17 passing direct-mode tests plus 3 passing hosted-Studionet consensus tests.
-> Assay has not deployed to Testnet Bradbury or changed the production Studio. The Bradbury
-> deployer `0x8163f5e43c8d5f067d3ea23f5795ac8510a5b120` exists as an encrypted external keystore and is
-> currently unfunded. The existing X Layer and OKX.AI/x402 systems remain live and unchanged.
+> **Status:** Browser integration checkpoint. `AssayAdjudicator` is GenVM-lint clean, covered by 17
+> direct tests and 3 hosted-Studionet consensus tests, and deployed to Testnet Bradbury at
+> `0xa0A37DEf61d5C621FDeF43b604D8059779D1B96E`. `SUPPORTED` and `INSUFFICIENT` records are persisted;
+> a contradiction fixture finalized `TIMEOUT` and committed no state. Studio now writes through the
+> user's GenLayer wallet, verifies receipts server-side, and includes finalized bounded receipt
+> fields before the unchanged X Layer seal. OKX.AI/x402 remains unchanged.
 
 Assay will use GenLayer for one narrowly defined decision that should not depend on Assay's server
 alone:
@@ -135,9 +136,9 @@ not be removed or semantically rewritten.
 
 ## Studio lifecycle
 
-The existing insertion point is in `ReportStage`, after Tribunal reports and ATS parse-back and
-before `SealMoment`. Browser writes must use the user's wallet through current `genlayer-js`; the
-Assay backend must not impersonate a user transaction.
+The implemented insertion point is a first-class `ConsensusStage`, after Tribunal reports and ATS
+parse-back and before `SealMoment`. Browser writes use the user's wallet through `genlayer-js@1.1.8`;
+the Assay backend never impersonates a user transaction.
 
 The UI must represent the real lifecycle rather than an instant success animation:
 
@@ -161,10 +162,11 @@ official progression is:
 2. Studionet for shared validation.
 3. Testnet Bradbury for production-like tests with real AI/LLM workloads.
 
-The three Studionet consensus scenarios ran green on 2026-08-29. Bradbury deployment remains gated
-on sufficient test GEN and a final preflight; operator authorization has been granted. The
-encrypted deployer is stored outside the repository, and neither its key nor password is logged or
-committed.
+The three Studionet consensus scenarios ran green on 2026-08-29. The authorized Bradbury deployment
+then reached `ACCEPTED / AGREE / FINISHED_WITH_RETURN`; see `docs/GENLAYER-BRADBURY.md`. The
+encrypted deployer remains outside the repository, and neither its key nor password is logged or
+committed. Two distinct decisions are persisted. The third accepted-decision requirement remains
+open because the contradiction transaction finalized `TIMEOUT` and correctly wrote no state.
 
 ## Implementation phases and likely files
 
@@ -213,6 +215,11 @@ The untouched baseline measured on 2026-08-29 is 374 Vitest + 57 Playwright + 4 
 passing tests**, with full workspace typecheck green. Prompt 1 adds 17 passing direct-mode tests
 and a clean GenVM lint result. The three hosted-Studionet integration scenarios now pass, bringing
 the measured total across all suites to **455**.
+
+The 2026-08-30 integration release audit measures 385 Vitest + 57 Playwright + 4 Foundry = **446**
+application tests, plus the 17 direct-mode and 3 hosted-Studionet scenarios = **466** across
+independently run suites. Full typecheck, production builds, GenVM lint, npm audit, repository
+secret scan, judged-artifact consistency, and the 69-external-URL dead-link gate are green.
 
 ## Prompt 1 implementation checkpoint
 

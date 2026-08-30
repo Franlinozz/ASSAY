@@ -1,5 +1,7 @@
 import type {
   Artifact,
+  Adjudication,
+  AdjudicationCriterion,
   Claim,
   Coverage,
   Dossier,
@@ -43,6 +45,14 @@ import type { ServerConfig } from './config'
 import { versionRef, type Store } from './store'
 import { signedLink } from './pipelines'
 import { signCapabilityToken, decodeUpload } from './util'
+import {
+  GENLAYER_CHAIN_ID,
+  GENLAYER_CONTRACT,
+  GENLAYER_NETWORK,
+  GENLAYER_STANDARD,
+  isApprovedPublicEvidenceUrl,
+  type GenLayerVerifier,
+} from './genlayer'
 
 // The Studio: the interactive, browser-driven dossier flow. It reuses the SAME packages the paid
 // MCP tools use (ingest, extract, decompose, coverage, forge, tribunal repair loop, receipts) —
@@ -60,6 +70,7 @@ export interface StudioDeps {
   realPdf: boolean
   sampleContrast?: (html: string) => Promise<number>
   diskFreeBytes?: () => number
+  genlayerVerifier?: GenLayerVerifier
 }
 
 const WRITER_KINDS = new Set([
@@ -263,9 +274,22 @@ export async function runStudioExtract(deps: StudioDeps, input: StudioExtractInp
       )
     },
   )
+  const extractedByText = new Map(extracted.claims.map((claim) => [normText(claim.text), claim]))
   const existingClaimTexts = new Set(dossier.claims.map((c) => normText(c.text)))
   const newClaims = extracted.claims.filter((c) => !existingClaimTexts.has(normText(c.text)))
   const allEvidence = [...dossier.evidence, ...linkEvidence, ...extracted.evidence]
+
+  // A later public link can strengthen an already-filed claim. Keep the existing claim identity
+  // and attach the newly grounded evidence instead of dropping the duplicate extraction.
+  const enrichedExisting = dossier.claims.map((claim) => {
+    const duplicate = extractedByText.get(normText(claim.text))
+    if (!duplicate) return claim
+    const merged = {
+      ...claim,
+      evidenceIds: [...new Set([...claim.evidenceIds, ...duplicate.evidenceIds])],
+    }
+    return { ...merged, strength: computeStrength(merged, allEvidence) }
+  })
 
   // Re-strength any link-backed claims against the full evidence set.
   const restrengthed = newClaims.map((c) => ({ ...c, strength: computeStrength(c, allEvidence) }))
@@ -274,7 +298,7 @@ export async function runStudioExtract(deps: StudioDeps, input: StudioExtractInp
     ...dossier,
     profile: mergedProfile,
     evidence: allEvidence,
-    claims: [...dossier.claims, ...restrengthed],
+    claims: [...enrichedExisting, ...restrengthed],
   })
   store.saveDossier(next)
   const needs = restrengthed.filter((c) => c.status === 'needs_confirmation').length
@@ -324,6 +348,9 @@ export function updateClaim(
   }
   claim.strength = computeStrength(claim, dossier.evidence)
   dossier.claims[idx] = claim
+  if (action === 'edit' || action === 'reject') {
+    dossier.adjudications = dossier.adjudications.filter((a) => a.claimId !== claimId)
+  }
   store.saveDossier(DossierSchema.parse(dossier))
   store.recordStudioEvent(
     dossierId,
@@ -331,6 +358,105 @@ export function updateClaim(
     `claim ${action === 'reject' ? 'set aside' : action === 'edit' ? 'edited' : 'confirmed'}`,
   )
   return { ok: true, claim }
+}
+
+// ── GenLayer adjudication linkage ───────────────────────────────────────────
+export interface LinkAdjudicationInput {
+  claimId: string
+  criterionId: AdjudicationCriterion
+  evidenceUrls: string[]
+  txHash: `0x${string}`
+}
+
+export function adjudicationClaimKey(dossierId: string, claimId: string, version: number): string {
+  return `${dossierId}.${claimId}.v${version}`
+}
+
+export async function verifyAndStoreAdjudication(
+  deps: StudioDeps,
+  dossierId: string,
+  input: LinkAdjudicationInput,
+): Promise<Adjudication> {
+  const dossier = deps.store.getDossier(dossierId)
+  if (!dossier) throw new Error('dossier not found')
+  if (dossier.seal) throw new Error('a sealed dossier cannot accept a new adjudication')
+  if (deps.store.getStage(dossierId) !== 'forged')
+    throw new Error('complete the Forge and Tribunal before GenLayer adjudication')
+  const claim = dossier.claims.find((candidate) => candidate.id === input.claimId)
+  if (!claim || claim.status !== 'confirmed')
+    throw new Error('GenLayer adjudication requires a confirmed claim')
+  if (!deps.genlayerVerifier) throw new Error('GenLayer verification is unavailable')
+
+  const evidenceUrls = [...new Set(input.evidenceUrls)]
+  if (evidenceUrls.length < 1 || evidenceUrls.length > 3)
+    throw new Error('select between one and three public evidence URLs')
+  if (evidenceUrls.some((url) => !isApprovedPublicEvidenceUrl(url)))
+    throw new Error('GenLayer evidence must be an approved public HTTPS URL')
+  const eligible = new Set(
+    dossier.evidence
+      .filter(
+        (evidence) =>
+          claim.evidenceIds.includes(evidence.id) &&
+          evidence.kind === 'link' &&
+          evidence.fetchedOk === true &&
+          isApprovedPublicEvidenceUrl(evidence.sourceRef),
+      )
+      .map((evidence) => evidence.sourceRef),
+  )
+  if (evidenceUrls.some((url) => !eligible.has(url)))
+    throw new Error('the selected URL is not approved public evidence for this claim')
+
+  const claimKey = adjudicationClaimKey(dossier.id, claim.id, dossier.version)
+  if (claimKey.length > 96) throw new Error('the claim linkage key exceeds the contract limit')
+  const existing = dossier.adjudications.find((a) => a.claimId === claim.id)
+  if (existing && existing.txHash.toLowerCase() !== input.txHash.toLowerCase())
+    throw new Error('this claim already has a different GenLayer transaction')
+
+  const verified = await deps.genlayerVerifier.verify({
+    claimKey,
+    claimText: claim.text,
+    criterionId: input.criterionId,
+    standardVersion: GENLAYER_STANDARD,
+    evidenceUrls,
+    txHash: input.txHash,
+  })
+  const now = new Date().toISOString()
+  const adjudication = {
+    claimId: claim.id,
+    claimKey,
+    claimText: claim.text,
+    criterionId: input.criterionId,
+    standardVersion: GENLAYER_STANDARD,
+    evidenceUrls,
+    network: GENLAYER_NETWORK,
+    chainId: GENLAYER_CHAIN_ID,
+    contractAddress: GENLAYER_CONTRACT,
+    txHash: input.txHash,
+    wallet: verified.wallet,
+    status: verified.status,
+    ...(verified.verdict ? { verdict: verified.verdict } : {}),
+    ...(verified.reasonCode ? { reasonCode: verified.reasonCode } : {}),
+    ...(verified.shortReason ? { shortReason: verified.shortReason } : {}),
+    ...(verified.sourceCount !== undefined ? { sourceCount: verified.sourceCount } : {}),
+    ...(verified.unavailableCount !== undefined
+      ? { unavailableCount: verified.unavailableCount }
+      : {}),
+    submittedAt: existing?.submittedAt ?? now,
+    updatedAt: now,
+    ...(verified.status === 'finalized' ? { finalizedAt: existing?.finalizedAt ?? now } : {}),
+  } satisfies Adjudication
+  dossier.adjudications = [
+    ...dossier.adjudications.filter((a) => a.claimId !== claim.id),
+    adjudication,
+  ]
+  deps.store.saveDossier(DossierSchema.parse(dossier))
+  if (existing?.status !== adjudication.status)
+    deps.store.recordStudioEvent(
+      dossierId,
+      'Consensus',
+      `${claim.id} · ${adjudication.status}${adjudication.verdict ? ` · ${adjudication.verdict}` : ''}`,
+    )
+  return adjudication
 }
 
 // ── brief (inline) ────────────────────────────────────────────────────────────
@@ -1153,6 +1279,9 @@ export function getStudioState(
       label: e.label,
       contentPreview: (e.contentText ?? '').slice(0, 800),
       ...(e.fetchedOk !== undefined ? { fetchedOk: e.fetchedOk } : {}),
+      ...(e.kind === 'link' && e.fetchedOk === true && isApprovedPublicEvidenceUrl(e.sourceRef)
+        ? { publicUrl: e.sourceRef }
+        : {}),
     })),
     claims: dossier.claims.map((c) => ({
       id: c.id,
@@ -1163,6 +1292,7 @@ export function getStudioState(
       tierExplanation: tierExplanation(c),
       numericFacts: c.numericFacts,
       evidenceIds: c.evidenceIds,
+      adjudicationKey: adjudicationClaimKey(dossier.id, c.id, dossier.version),
       // The specific question for a needs_confirmation card.
       ...(c.status === 'needs_confirmation'
         ? { question: `Which number is correct here, and where is it from?` }
@@ -1183,6 +1313,7 @@ export function getStudioState(
     coverage,
     interview: dossier.interview,
     forge: forge ?? null,
+    adjudications: dossier.adjudications,
     seal: seal
       ? {
           leaf: seal.commitment,

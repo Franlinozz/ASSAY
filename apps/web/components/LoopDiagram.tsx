@@ -1,4 +1,4 @@
-// The six-step loop as a hairline diagram — the whole product in six words.
+// The seven-step loop as a hairline diagram — GenLayer decides before X Layer seals.
 // Pure SVG, both orientations: horizontal ≥720px, vertical below (CSS swaps them).
 
 const STEPS = [
@@ -6,6 +6,7 @@ const STEPS = [
   { id: 'BRIEF', caption: 'the Role Lab — an honest coverage map, never a fake %' },
   { id: 'FORGE', caption: 'the Studio — no sentence renders without a claim' },
   { id: 'TRIBUNAL', caption: 'graded against the published Standard, repair ≤2' },
+  { id: 'CONSENSUS', caption: 'GenLayer validators adjudicate approved public evidence' },
   { id: 'SEAL', caption: 'EIP-712 · salted commitment on X Layer' },
   { id: 'SHARE', caption: 'the recruiter portal — evidence threads, revocable' },
 ] as const
@@ -25,7 +26,7 @@ export function LoopDiagram() {
         viewBox={`0 0 ${w} ${h}`}
         className="loop-h"
         role="img"
-        aria-label="The Assay loop: evidence, brief, forge, tribunal, seal, share"
+        aria-label="The Assay loop: evidence, brief, forge, tribunal, GenLayer consensus, X Layer seal, share"
       >
         <line x1={pad} y1={y} x2={w - pad} y2={y} stroke="var(--hairline-strong)" strokeWidth="1" />
         {STEPS.map((s, i) => {
