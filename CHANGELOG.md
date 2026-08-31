@@ -68,6 +68,11 @@ All notable changes to Assay are documented here. Format follows [Keep a Changel
 
 ### Fixed
 
+- **The selected homepage photograph now renders as the hero background.** The editorial
+  stylesheet pointed at a WebP that was absent from the deployed commit and inherited the previous
+  pseudo-elements' fixed dimensions, rounded border, and orbit animation. The asset now ships with
+  the build, both overlays explicitly reset the obsolete geometry/animation, and the existing
+  landing browser test requires a `200` image response plus the computed background URL.
 - **A bare profile link no longer fails an entire dossier.** `CONTACT_VALIDITY` required a URL
   scheme, so `linkedin.com/in/jane` — the way people actually write a profile link on a résumé —
   was a `BAD_LINK` finding. Contact links are checked for every artifact, so that single finding

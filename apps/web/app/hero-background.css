@@ -1,76 +1,123 @@
 /* Homepage hero — exact selected "Proof in Review" photograph. */
-.hero { background: var(--paper); }
+.hero {
+  background: var(--paper);
+}
+
+.hero::before,
+.hero::after {
+  inset: 0;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  animation: none;
+  transform: none;
+}
 
 .hero::before {
   content: '';
   position: absolute;
-  inset: 0;
   z-index: 0;
   pointer-events: none;
   background: url('/media/editorial/assay/hero-proof-in-review.webp') 50% 50% / cover no-repeat;
-  opacity: .36;
-  filter: saturate(.72) contrast(.94) brightness(1.02);
+  opacity: 0.36;
+  filter: saturate(0.72) contrast(0.94) brightness(1.02);
 }
 
 .hero::after {
   content: '';
   position: absolute;
-  inset: 0;
   z-index: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg,
-      rgba(251,249,243,.98) 0%,
-      rgba(251,249,243,.90) 28%,
-      rgba(251,249,243,.56) 47%,
-      rgba(251,249,243,.20) 68%,
-      rgba(251,249,243,.30) 100%),
-    linear-gradient(180deg,
-      rgba(251,249,243,0) 0%,
-      rgba(251,249,243,.04) 66%,
-      rgba(251,249,243,.90) 100%);
+    linear-gradient(
+      90deg,
+      rgba(251, 249, 243, 0.98) 0%,
+      rgba(251, 249, 243, 0.9) 28%,
+      rgba(251, 249, 243, 0.56) 47%,
+      rgba(251, 249, 243, 0.2) 68%,
+      rgba(251, 249, 243, 0.3) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(251, 249, 243, 0) 0%,
+      rgba(251, 249, 243, 0.04) 66%,
+      rgba(251, 249, 243, 0.9) 100%
+    );
 }
 
 :root[data-theme='dark'] .hero::before {
-  opacity: .72;
-  filter: saturate(.72) contrast(.94) brightness(.82);
+  opacity: 0.72;
+  filter: saturate(0.72) contrast(0.94) brightness(0.82);
 }
 
 :root[data-theme='dark'] .hero::after {
   background:
-    linear-gradient(90deg,
-      rgba(19,21,25,.97) 0%,
-      rgba(19,21,25,.86) 27%,
-      rgba(19,21,25,.46) 47%,
-      rgba(19,21,25,.14) 67%,
-      rgba(19,21,25,.24) 100%),
-    linear-gradient(180deg,
-      rgba(19,21,25,0) 0%,
-      rgba(19,21,25,.04) 65%,
-      rgba(19,21,25,.88) 100%);
+    linear-gradient(
+      90deg,
+      rgba(19, 21, 25, 0.97) 0%,
+      rgba(19, 21, 25, 0.86) 27%,
+      rgba(19, 21, 25, 0.46) 47%,
+      rgba(19, 21, 25, 0.14) 67%,
+      rgba(19, 21, 25, 0.24) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(19, 21, 25, 0) 0%,
+      rgba(19, 21, 25, 0.04) 65%,
+      rgba(19, 21, 25, 0.88) 100%
+    );
 }
 
-.hero-grid { position: relative; z-index: 1; }
+.hero-grid {
+  position: relative;
+  z-index: 1;
+}
 
 @media (max-width: 980px) {
   .hero::before {
     background-size: auto 74%;
     background-position: 80% 4%;
-    opacity: .24;
+    opacity: 0.24;
   }
-  :root[data-theme='dark'] .hero::before { opacity: .42; }
+  :root[data-theme='dark'] .hero::before {
+    opacity: 0.42;
+  }
   .hero::after {
     background:
-      linear-gradient(180deg, rgba(251,249,243,.20) 0%, rgba(251,249,243,.68) 54%, rgba(251,249,243,.98) 100%),
-      linear-gradient(90deg, rgba(251,249,243,.95) 0%, rgba(251,249,243,.68) 50%, rgba(251,249,243,.34) 100%);
+      linear-gradient(
+        180deg,
+        rgba(251, 249, 243, 0.2) 0%,
+        rgba(251, 249, 243, 0.68) 54%,
+        rgba(251, 249, 243, 0.98) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(251, 249, 243, 0.95) 0%,
+        rgba(251, 249, 243, 0.68) 50%,
+        rgba(251, 249, 243, 0.34) 100%
+      );
   }
   :root[data-theme='dark'] .hero::after {
     background:
-      linear-gradient(180deg, rgba(19,21,25,.14) 0%, rgba(19,21,25,.60) 54%, rgba(19,21,25,.98) 100%),
-      linear-gradient(90deg, rgba(19,21,25,.95) 0%, rgba(19,21,25,.66) 50%, rgba(19,21,25,.30) 100%);
+      linear-gradient(
+        180deg,
+        rgba(19, 21, 25, 0.14) 0%,
+        rgba(19, 21, 25, 0.6) 54%,
+        rgba(19, 21, 25, 0.98) 100%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(19, 21, 25, 0.95) 0%,
+        rgba(19, 21, 25, 0.66) 50%,
+        rgba(19, 21, 25, 0.3) 100%
+      );
   }
 }
 
 @media (max-width: 640px) {
-  .hero::before { background-size: auto 58%; background-position: 82% 2%; }
+  .hero::before {
+    background-size: auto 58%;
+    background-position: 82% 2%;
+  }
 }

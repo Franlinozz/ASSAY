@@ -35,9 +35,20 @@ async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
 test.describe('landing', () => {
   test('renders in light theme with the hero and honesty line', async ({ page }) => {
     await setTheme(page, 'light')
+    const heroImageResponse = page.waitForResponse((response) =>
+      response.url().endsWith('/media/editorial/assay/hero-proof-in-review.webp'),
+    )
     await page.goto('/')
+    expect((await heroImageResponse).status()).toBe(200)
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
     await expect(page.getByRole('heading', { name: 'Proof before polish.' })).toBeVisible()
+    await expect
+      .poll(() =>
+        page
+          .locator('.hero')
+          .evaluate((element) => getComputedStyle(element, '::before').backgroundImage),
+      )
+      .toContain('/media/editorial/assay/hero-proof-in-review.webp')
     await expect(page.getByTestId('integrity-line')).toContainText(
       'A seal proves the artifact is unchanged — not that a claim is objectively true.',
     )
